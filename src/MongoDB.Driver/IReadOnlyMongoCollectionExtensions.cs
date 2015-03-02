@@ -207,6 +207,7 @@ namespace MongoDB.Driver
         /// <summary>
         /// Finds the documents matching the filter.
         /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
         /// <param name="collection">The collection.</param>
         /// <param name="filter">The filter.</param>
         /// <param name="options">The options.</param>
@@ -223,6 +224,88 @@ namespace MongoDB.Driver
             
             var projection = new IdentityProjection<TDocument>(collection.DocumentSerializer);
             return collection.FindAsync(filter, projection, options, cancellationToken);
+        }
+
+        /// <summary>
+        /// Finds the documents matching the filter.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <param name="filter">The filter.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A Task whose result is a cursor.</returns>
+        public static Task<IAsyncCursor<TDocument>> FindAsync<TDocument>(
+            this IReadOnlyMongoCollection<TDocument> collection,
+            Expression<Func<TDocument, bool>> filter,
+            FindOptions<TDocument> options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Ensure.IsNotNull(collection, "collection");
+            Ensure.IsNotNull(filter, "filter");
+
+            var projection = new IdentityProjection<TDocument>(collection.DocumentSerializer);
+            return collection.FindAsync(
+                new ExpressionFilter<TDocument>(filter),
+                projection,
+                options,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Finds the documents matching the filter.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <typeparam name="TResult">The type of the result.</typeparam>"
+        /// <param name="collection">The collection.</param>
+        /// <param name="filter">The filter.</param>
+        /// <param name="projection">The projection.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A Task whose result is a cursor.</returns>
+        public static Task<IAsyncCursor<TResult>> FindAsync<TDocument, TResult>(
+            this IReadOnlyMongoCollection<TDocument> collection,
+            Expression<Func<TDocument, bool>> filter,
+            Expression<Func<TDocument, TResult>> projection,
+            FindOptions<TDocument> options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Ensure.IsNotNull(collection, "collection");
+            Ensure.IsNotNull(filter, "filter");
+
+            return collection.FindAsync(
+                new ExpressionFilter<TDocument>(filter),
+                new FindExpressionProjection<TDocument, TResult>(projection),
+                options,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Finds the documents matching the filter.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <typeparam name="TResult">The type of the result.</typeparam>"
+        /// <param name="collection">The collection.</param>
+        /// <param name="filter">The filter.</param>
+        /// <param name="projection">The projection.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A Task whose result is a cursor.</returns>
+        public static Task<IAsyncCursor<TResult>> FindAsync<TDocument, TResult>(
+            this IReadOnlyMongoCollection<TDocument> collection,
+            Expression<Func<TDocument, bool>> filter,
+            Projection<TDocument, TResult> projection,
+            FindOptions<TDocument> options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Ensure.IsNotNull(collection, "collection");
+            Ensure.IsNotNull(filter, "filter");
+
+            return collection.FindAsync(
+                new ExpressionFilter<TDocument>(filter),
+                projection,
+                options,
+                cancellationToken);
         }
     }
 }

@@ -480,25 +480,69 @@ namespace MongoDB.Driver
         }
     }
 
-    internal sealed class IdentityProjection<TSource> : Projection<TSource, TSource>
+    /// <summary>
+    /// Represents an identity projection.
+    /// </summary>
+    /// <typeparam name="TSource">The type of the source.</typeparam>
+    public sealed class IdentityProjection<TSource> : Projection<TSource, TSource>
     {
         private readonly IBsonSerializer<TSource> _resultSerializer;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IdentityProjection{TSource}"/> class.
+        /// </summary>
+        /// <param name="resultSerializer">The result serializer.</param>
         public IdentityProjection(IBsonSerializer<TSource> resultSerializer = null)
         {
             _resultSerializer = Ensure.IsNotNull(resultSerializer, "resultSerializer");
         }
 
+        /// <inheritdoc />
         public IBsonSerializer<TSource> ResultSerializer
         {
             get { return _resultSerializer; }
         }
 
+        /// <inheritdoc />
         public override RenderedProjection<TSource> Render(IBsonSerializer<TSource> sourceSerializer, IBsonSerializerRegistry serializerRegistry)
         {
             return new RenderedProjection<TSource>(
                 null,
                 _resultSerializer ?? sourceSerializer ?? serializerRegistry.GetSerializer<TSource>());
+        }
+    }
+
+    /// <summary>
+    /// Represents an identity projection that uses an alternate return type.
+    /// The alternate serializer must be able to deserialize the documents as they exist since no projection is being done.
+    /// </summary>
+    /// <typeparam name="TSource">The type of the source.</typeparam>
+    /// <typeparam name="TAlternate">The type of the alternate return type.</typeparam>
+    public sealed class IdentityProjection<TSource, TAlternate> : Projection<TSource, TAlternate>
+    {
+        private readonly IBsonSerializer<TAlternate> _alternateSerializer;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IdentityProjection{TSource, TAlternate}"/> class.
+        /// </summary>
+        /// <param name="alternateSerializer">The alternate result serializer.</param>
+        public IdentityProjection(IBsonSerializer<TAlternate> alternateSerializer = null)
+        {
+            _alternateSerializer = Ensure.IsNotNull(alternateSerializer, "alternateSerializer");
+        }
+
+        /// <inheritdoc />
+        public IBsonSerializer<TAlternate> ResultSerializer
+        {
+            get { return _alternateSerializer; }
+        }
+
+        /// <inheritdoc />
+        public override RenderedProjection<TAlternate> Render(IBsonSerializer<TSource> sourceSerializer, IBsonSerializerRegistry serializerRegistry)
+        {
+            return new RenderedProjection<TAlternate>(
+                null,
+                _alternateSerializer ?? (sourceSerializer as IBsonSerializer<TAlternate>) ?? serializerRegistry.GetSerializer<TAlternate>());
         }
     }
 }

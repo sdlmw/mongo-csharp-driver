@@ -521,7 +521,7 @@ namespace MongoDB.Driver
             var filter = BsonDocument.Parse("{x:1}");
             var projection = BsonDocument.Parse("{y:1}");
             var sort = BsonDocument.Parse("{a:1}");
-            var options = new FindOptions<BsonDocument, BsonDocument>
+            var options = new FindOptions<BsonDocument>
             {
                 AllowPartialResults = true,
                 BatchSize = 20,
@@ -531,7 +531,6 @@ namespace MongoDB.Driver
                 MaxTime = TimeSpan.FromSeconds(3),
                 Modifiers = BsonDocument.Parse("{$snapshot: true}"),
                 NoCursorTimeout = true,
-                Projection = projection,
                 Skip = 40,
                 Sort = sort
             };
@@ -540,7 +539,7 @@ namespace MongoDB.Driver
             _operationExecutor.EnqueueResult(fakeCursor);
 
             var subject = CreateSubject<BsonDocument>();
-            await subject.FindAsync(filter, options, CancellationToken.None);
+            await subject.FindAsync<BsonDocument>(filter, projection, options, CancellationToken.None);
 
             var call = _operationExecutor.GetReadCall<IAsyncCursor<BsonDocument>>();
 
@@ -567,7 +566,7 @@ namespace MongoDB.Driver
             Expression<Func<BsonDocument, bool>> filter = doc => doc["x"] == 1;
             var projection = BsonDocument.Parse("{y:1}");
             var sort = BsonDocument.Parse("{a:1}");
-            var options = new FindOptions<BsonDocument, BsonDocument>
+            var options = new FindOptions<BsonDocument>
             {
                 AllowPartialResults = true,
                 BatchSize = 20,
@@ -577,7 +576,6 @@ namespace MongoDB.Driver
                 MaxTime = TimeSpan.FromSeconds(3),
                 Modifiers = BsonDocument.Parse("{$snapshot: true}"),
                 NoCursorTimeout = true,
-                Projection = projection,
                 Skip = 40,
                 Sort = sort
             };
@@ -586,7 +584,7 @@ namespace MongoDB.Driver
             _operationExecutor.EnqueueResult(fakeCursor);
 
             var subject = CreateSubject<BsonDocument>();
-            await subject.FindAsync(filter, options, CancellationToken.None);
+            await subject.FindAsync<BsonDocument>(filter, projection, options, CancellationToken.None);
 
             var call = _operationExecutor.GetReadCall<IAsyncCursor<BsonDocument>>();
 
@@ -613,15 +611,14 @@ namespace MongoDB.Driver
             var filter = BsonDocument.Parse("{x: 1}");
             var projection = BsonDocument.Parse("{x: 1}");
             var sort = BsonDocument.Parse("{a: -1}");
-            var options = new FindOneAndDeleteOptions<BsonDocument, BsonDocument>()
+            var options = new FindOneAndDeleteOptions<BsonDocument>()
             {
-                Projection = projection,
                 Sort = sort,
                 MaxTime = TimeSpan.FromSeconds(2)
             };
 
             var subject = CreateSubject<BsonDocument>();
-            await subject.FindOneAndDeleteAsync<BsonDocument>(filter, options, CancellationToken.None);
+            await subject.FindOneAndDeleteAsync<BsonDocument>(filter, projection, options, CancellationToken.None);
 
             var call = _operationExecutor.GetWriteCall<BsonDocument>();
 
@@ -645,17 +642,16 @@ namespace MongoDB.Driver
             var replacement = BsonDocument.Parse("{a: 2}");
             var projection = BsonDocument.Parse("{x: 1}");
             var sort = BsonDocument.Parse("{a: -1}");
-            var options = new FindOneAndReplaceOptions<BsonDocument, BsonDocument>()
+            var options = new FindOneAndReplaceOptions<BsonDocument>()
             {
                 IsUpsert = isUpsert,
-                Projection = projection,
                 ReturnDocument = returnDocument,
                 Sort = sort,
                 MaxTime = TimeSpan.FromSeconds(2)
             };
 
             var subject = CreateSubject<BsonDocument>();
-            await subject.FindOneAndReplaceAsync<BsonDocument>(filter, replacement, options, CancellationToken.None);
+            await subject.FindOneAndReplaceAsync<BsonDocument>(filter, replacement, projection, options, CancellationToken.None);
 
             var call = _operationExecutor.GetWriteCall<BsonDocument>();
 
@@ -682,17 +678,16 @@ namespace MongoDB.Driver
             var update = BsonDocument.Parse("{$set: {a: 2}}");
             var projection = BsonDocument.Parse("{x: 1}");
             var sort = BsonDocument.Parse("{a: -1}");
-            var options = new FindOneAndUpdateOptions<BsonDocument, BsonDocument>()
+            var options = new FindOneAndUpdateOptions<BsonDocument>()
             {
                 IsUpsert = isUpsert,
-                Projection = projection,
                 ReturnDocument = returnDocument,
                 Sort = sort,
                 MaxTime = TimeSpan.FromSeconds(2)
             };
 
             var subject = CreateSubject<BsonDocument>();
-            await subject.FindOneAndUpdateAsync<BsonDocument>(filter, update, options, CancellationToken.None);
+            await subject.FindOneAndUpdateAsync<BsonDocument>(filter, projection, update, options, CancellationToken.None);
 
             var call = _operationExecutor.GetWriteCall<BsonDocument>();
 

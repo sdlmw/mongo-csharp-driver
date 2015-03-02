@@ -106,12 +106,10 @@ namespace MongoDB.Driver
     /// Options for finding documents.
     /// </summary>
     /// <typeparam name="TDocument">The type of the document.</typeparam>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    public class FindOptions<TDocument, TResult> : FindOptionsBase
+    public class FindOptions<TDocument> : FindOptionsBase
     {
         // fields
         private int? _limit;
-        private Projection<TDocument, TResult> _projection;
         private int? _skip;
         private Sort<TDocument> _sort;
 
@@ -123,15 +121,6 @@ namespace MongoDB.Driver
         {
             get { return _limit; }
             set { _limit = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the projection.
-        /// </summary>
-        public Projection<TDocument, TResult> Projection
-        {
-            get { return _projection; }
-            set { _projection = value; }
         }
 
         /// <summary>

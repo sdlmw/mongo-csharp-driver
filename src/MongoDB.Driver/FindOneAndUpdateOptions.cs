@@ -26,19 +26,17 @@ namespace MongoDB.Driver
     /// Options for a findAndModify command to update an object.
     /// </summary>
     /// <typeparam name="TDocument">The type of the document.</typeparam>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    public class FindOneAndUpdateOptions<TDocument, TResult>
+    public class FindOneAndUpdateOptions<TDocument>
     {
         // fields
         private bool _isUpsert;
         private TimeSpan? _maxTime;
-        private Projection<TDocument, TResult> _projection;
         private ReturnDocument _returnDocument;
         private Sort<TDocument> _sort;
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="FindOneAndUpdateOptions{TDocument, TResult}"/> class.
+        /// Initializes a new instance of the <see cref="FindOneAndUpdateOptions{TDocument}"/> class.
         /// </summary>
         public FindOneAndUpdateOptions()
         {
@@ -62,15 +60,6 @@ namespace MongoDB.Driver
         {
             get { return _maxTime; }
             set { _maxTime = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the projection.
-        /// </summary>
-        public Projection<TDocument, TResult> Projection
-        {
-            get { return _projection; }
-            set { _projection = value; }
         }
 
         /// <summary>

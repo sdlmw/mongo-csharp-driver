@@ -46,7 +46,7 @@ namespace MongoDB.Driver
         public abstract Task<IAsyncCursor<TField>> DistinctAsync<TField>(FieldName<TDocument, TField> fieldName, Filter<TDocument> filter, DistinctOptions options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <inheritdoc />
-        public abstract Task<IAsyncCursor<TResult>> FindAsync<TResult>(Filter<TDocument> filter, FindOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        public abstract Task<IAsyncCursor<TResult>> FindAsync<TResult>(Filter<TDocument> filter, Projection<TDocument, TResult> projection, FindOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <inheritdoc />
         public abstract Task<IAsyncCursor<TResult>> MapReduceAsync<TResult>(BsonJavaScript map, BsonJavaScript reduce, MapReduceOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));

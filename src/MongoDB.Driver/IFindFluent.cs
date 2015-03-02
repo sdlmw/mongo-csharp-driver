@@ -40,7 +40,15 @@ namespace MongoDB.Driver
         /// <summary>
         /// Gets the options.
         /// </summary>
-        FindOptions<TDocument, TResult> Options { get; }
+        FindOptions<TDocument> Options { get; }
+
+        /// <summary>
+        /// Gets the projection.
+        /// </summary>
+        /// <value>
+        /// The projection.
+        /// </value>
+        Projection<TDocument, TResult> Projection { get; }
 
         /// <summary>
         /// Counts the number of documents.

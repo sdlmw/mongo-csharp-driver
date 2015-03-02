@@ -29,7 +29,10 @@ namespace MongoDB.Driver
         public abstract Filter<TDocument> Filter { get; set; }
 
         /// <inheritdoc />
-        public abstract FindOptions<TDocument, TResult> Options { get; }
+        public abstract FindOptions<TDocument> Options { get; }
+
+        /// <inheritdoc />
+        public abstract Projection<TDocument, TResult> Projection { get; }
 
         /// <inheritdoc />
         public abstract Task<long> CountAsync(CancellationToken cancellationToken = default(CancellationToken));

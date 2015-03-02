@@ -131,10 +131,12 @@ namespace MongoDB.Driver.Tests
                 .Skip(40);
 
             Filter<Person> actualFilter = null;
-            FindOptions<Person, BsonDocument> actualOptions = null;
+            Projection<Person, BsonDocument> actualProjection = null;
+            FindOptions<Person> actualOptions = null;
             subject.FindAsync(
                 Arg.Do<Filter<Person>>(x => actualFilter = x),
-                Arg.Do<FindOptions<Person, BsonDocument>>(x => actualOptions = x),
+                Arg.Do<Projection<Person, BsonDocument>>(x => actualProjection = x),
+                Arg.Do<FindOptions<Person>>(x => actualOptions = x),
                 Arg.Any<CancellationToken>());
 
             fluent.ToCursorAsync(CancellationToken.None).GetAwaiter().GetResult();
@@ -148,9 +150,9 @@ namespace MongoDB.Driver.Tests
             actualOptions.MaxTime.Should().Be(fluent.Options.MaxTime);
             actualOptions.Modifiers.Should().Be(fluent.Options.Modifiers);
             actualOptions.NoCursorTimeout.Should().Be(fluent.Options.NoCursorTimeout);
-            actualOptions.Projection.Should().Be(fluent.Options.Projection);
             actualOptions.Skip.Should().Be(fluent.Options.Skip);
             actualOptions.Sort.Should().Be(fluent.Options.Sort);
+            actualProjection.Should().Be(fluent.Projection);
         }
 
         [Test]
@@ -178,10 +180,12 @@ namespace MongoDB.Driver.Tests
                 .Skip(40);
 
             Filter<Person> actualFilter = null;
-            FindOptions<Person, BsonDocument> actualOptions = null;
+            Projection<Person, BsonDocument> actualProjection = null;
+            FindOptions<Person> actualOptions = null;
             subject.FindAsync(
                 Arg.Do<Filter<Person>>(x => actualFilter = x),
-                Arg.Do<FindOptions<Person, BsonDocument>>(x => actualOptions = x),
+                Arg.Do<Projection<Person, BsonDocument>>(x => actualProjection = x),
+                Arg.Do<FindOptions<Person>>(x => actualOptions = x),
                 Arg.Any<CancellationToken>());
 
             fluent.ToCursorAsync(CancellationToken.None).GetAwaiter().GetResult();
@@ -196,9 +200,9 @@ namespace MongoDB.Driver.Tests
             actualOptions.MaxTime.Should().Be(fluent.Options.MaxTime);
             actualOptions.Modifiers.Should().Be(fluent.Options.Modifiers);
             actualOptions.NoCursorTimeout.Should().Be(fluent.Options.NoCursorTimeout);
-            actualOptions.Projection.Should().Be(fluent.Options.Projection);
             actualOptions.Skip.Should().Be(fluent.Options.Skip);
             actualOptions.Sort.Should().Be(fluent.Options.Sort);
+            actualProjection.Should().Be(fluent.Projection);
         }
 
         [Test]
@@ -207,17 +211,17 @@ namespace MongoDB.Driver.Tests
             var subject = CreateSubject();
             subject.FindOneAndDeleteAsync(x => x.FirstName == "Jack");
 
-            subject.Received().FindOneAndDeleteAsync<Person>(Arg.Any<Filter<Person>>(), null, default(CancellationToken));
+            subject.Received().FindOneAndDeleteAsync(Arg.Any<Filter<Person>>(), Arg.Any<IdentityProjection<Person>>(), null, default(CancellationToken));
         }
 
         [Test]
         public void FindOneAndDeleteAsync_with_an_expression_and_result_options_should_call_collection_with_the_correct_filter()
         {
             var subject = CreateSubject();
-            var options = new FindOneAndDeleteOptions<Person, BsonDocument>();
+            var options = new FindOneAndDeleteOptions<Person>();
             subject.FindOneAndDeleteAsync(x => x.FirstName == "Jack", options);
 
-            subject.Received().FindOneAndDeleteAsync<BsonDocument>(Arg.Any<Filter<Person>>(), options, default(CancellationToken));
+            subject.Received().FindOneAndDeleteAsync(Arg.Any<Filter<Person>>(), Arg.Any<IdentityProjection<Person>>(), options, default(CancellationToken));
         }
 
         [Test]
@@ -227,7 +231,7 @@ namespace MongoDB.Driver.Tests
             var replacement = new Person();
             subject.FindOneAndReplaceAsync(x => x.FirstName == "Jack", replacement);
 
-            subject.Received().FindOneAndReplaceAsync<Person>(Arg.Any<Filter<Person>>(), replacement, null, default(CancellationToken));
+            subject.Received().FindOneAndReplaceAsync(Arg.Any<Filter<Person>>(), replacement, Arg.Any<IdentityProjection<Person>>(), null, default(CancellationToken));
         }
 
         [Test]
@@ -235,10 +239,10 @@ namespace MongoDB.Driver.Tests
         {
             var subject = CreateSubject();
             var replacement = new Person();
-            var options = new FindOneAndReplaceOptions<Person, BsonDocument>();
+            var options = new FindOneAndReplaceOptions<Person>();
             subject.FindOneAndReplaceAsync(x => x.FirstName == "Jack", replacement, options);
 
-            subject.Received().FindOneAndReplaceAsync<BsonDocument>(Arg.Any<Filter<Person>>(), replacement, options, default(CancellationToken));
+            subject.Received().FindOneAndReplaceAsync(Arg.Any<Filter<Person>>(), replacement, Arg.Any<IdentityProjection<Person>>(), options, default(CancellationToken));
         }
 
         [Test]
@@ -248,8 +252,9 @@ namespace MongoDB.Driver.Tests
             var update = new BsonDocument();
             subject.FindOneAndUpdateAsync(x => x.FirstName == "Jack", update);
 
-            subject.Received().FindOneAndUpdateAsync<Person>(
+            subject.Received().FindOneAndUpdateAsync(
                 Arg.Any<ExpressionFilter<Person>>(),
+                Arg.Any<IdentityProjection<Person>>(),
                 Arg.Is<BsonDocumentUpdate<Person>>(x => x.Document == update),
                 null,
                 default(CancellationToken));
@@ -260,11 +265,12 @@ namespace MongoDB.Driver.Tests
         {
             var subject = CreateSubject();
             var update = new BsonDocument();
-            var options = new FindOneAndUpdateOptions<Person, BsonDocument>();
+            var options = new FindOneAndUpdateOptions<Person>();
             subject.FindOneAndUpdateAsync(x => x.FirstName == "Jack", update, options);
 
-            subject.Received().FindOneAndUpdateAsync<BsonDocument>(
+            subject.Received().FindOneAndUpdateAsync(
                 Arg.Any<ExpressionFilter<Person>>(),
+                Arg.Any<IdentityProjection<Person>>(),
                 Arg.Is<BsonDocumentUpdate<Person>>(x => x.Document == update),
                 options,
                 default(CancellationToken));

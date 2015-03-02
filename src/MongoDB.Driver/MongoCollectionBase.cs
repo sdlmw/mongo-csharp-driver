@@ -70,13 +70,13 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
-        public abstract Task<TResult> FindOneAndDeleteAsync<TResult>(Filter<TDocument> filter, FindOneAndDeleteOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        public abstract Task<TResult> FindOneAndDeleteAsync<TResult>(Filter<TDocument> filter, Projection<TDocument, TResult> projection, FindOneAndDeleteOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <inheritdoc />
-        public abstract Task<TResult> FindOneAndReplaceAsync<TResult>(Filter<TDocument> filter, TDocument replacement, FindOneAndReplaceOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        public abstract Task<TResult> FindOneAndReplaceAsync<TResult>(Filter<TDocument> filter, TDocument replacement, Projection<TDocument, TResult> projection, FindOneAndReplaceOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <inheritdoc />
-        public abstract Task<TResult> FindOneAndUpdateAsync<TResult>(Filter<TDocument> filter, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        public abstract Task<TResult> FindOneAndUpdateAsync<TResult>(Filter<TDocument> filter, Projection<TDocument, TResult> projection, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <inheritdoc />
         public virtual async Task InsertOneAsync(TDocument document, CancellationToken cancellationToken = default(CancellationToken))

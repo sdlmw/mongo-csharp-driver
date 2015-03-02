@@ -68,12 +68,13 @@ namespace MongoDB.Driver
         /// </summary>
         /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <param name="filter">The filter.</param>
+        /// <param name="projection">The projection.</param>
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The returned document.
         /// </returns>
-        Task<TResult> FindOneAndDeleteAsync<TResult>(Filter<TDocument> filter, FindOneAndDeleteOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<TResult> FindOneAndDeleteAsync<TResult>(Filter<TDocument> filter, Projection<TDocument, TResult> projection, FindOneAndDeleteOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Finds a single document and replaces it atomically.
@@ -81,25 +82,27 @@ namespace MongoDB.Driver
         /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <param name="filter">The filter.</param>
         /// <param name="replacement">The replacement.</param>
+        /// <param name="projection">The projection.</param>
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The returned document.
         /// </returns>
-        Task<TResult> FindOneAndReplaceAsync<TResult>(Filter<TDocument> filter, TDocument replacement, FindOneAndReplaceOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<TResult> FindOneAndReplaceAsync<TResult>(Filter<TDocument> filter, TDocument replacement, Projection<TDocument, TResult> projection, FindOneAndReplaceOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Finds a single document and updates it atomically.
         /// </summary>
         /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <param name="filter">The filter.</param>
+        /// <param name="projection">The projection.</param>
         /// <param name="update">The update.</param>
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The returned document.
         /// </returns>
-        Task<TResult> FindOneAndUpdateAsync<TResult>(Filter<TDocument> filter, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<TResult> FindOneAndUpdateAsync<TResult>(Filter<TDocument> filter, Projection<TDocument, TResult> projection, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Inserts a single document.

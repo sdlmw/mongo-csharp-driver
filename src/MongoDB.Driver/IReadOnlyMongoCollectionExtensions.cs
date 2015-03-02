@@ -152,16 +152,22 @@ namespace MongoDB.Driver
         /// <returns>
         /// A fluent find interface.
         /// </returns>
-        public static IFindFluent<TDocument, TDocument> Find<TDocument>(this IReadOnlyMongoCollection<TDocument> collection, Filter<TDocument> filter, FindOptions options = null)
+        public static IFindFluent<TDocument, TDocument> Find<TDocument>(
+            this IReadOnlyMongoCollection<TDocument> collection, 
+            Filter<TDocument> filter, 
+            FindOptions options = null)
         {
-            FindOptions<TDocument, TDocument> genericOptions;
+            Ensure.IsNotNull(collection, "collection");
+            Ensure.IsNotNull(filter, "filter");
+            
+            FindOptions<TDocument> genericOptions;
             if (options == null)
             {
-                genericOptions = new FindOptions<TDocument, TDocument>();
+                genericOptions = new FindOptions<TDocument>();
             }
             else
             {
-                genericOptions = new FindOptions<TDocument, TDocument>
+                genericOptions = new FindOptions<TDocument>
                 {
                     AllowPartialResults = options.AllowPartialResults,
                     BatchSize = options.BatchSize,
@@ -173,7 +179,8 @@ namespace MongoDB.Driver
                 };
             }
 
-            return new FindFluent<TDocument, TDocument>(collection, filter, genericOptions);
+            var projection = new IdentityProjection<TDocument>(collection.DocumentSerializer);
+            return new FindFluent<TDocument, TDocument>(collection, filter, projection, genericOptions);
         }
 
         /// <summary>
@@ -186,12 +193,36 @@ namespace MongoDB.Driver
         /// <returns>
         /// A fluent interface.
         /// </returns>
-        public static IFindFluent<TDocument, TDocument> Find<TDocument>(this IReadOnlyMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, FindOptions options = null)
+        public static IFindFluent<TDocument, TDocument> Find<TDocument>(
+            this IReadOnlyMongoCollection<TDocument> collection, 
+            Expression<Func<TDocument, bool>> filter, 
+            FindOptions options = null)
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
 
             return collection.Find(new ExpressionFilter<TDocument>(filter), options);
+        }
+
+        /// <summary>
+        /// Finds the documents matching the filter.
+        /// </summary>
+        /// <param name="collection">The collection.</param>
+        /// <param name="filter">The filter.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A Task whose result is a cursor.</returns>
+        public static Task<IAsyncCursor<TDocument>> FindAsync<TDocument>(
+            this IReadOnlyMongoCollection<TDocument> collection, 
+            Filter<TDocument> filter, 
+            FindOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Ensure.IsNotNull(collection, "collection");
+            Ensure.IsNotNull(filter, "filter");
+            
+            var projection = new IdentityProjection<TDocument>(collection.DocumentSerializer);
+            return collection.FindAsync(filter, projection, options, cancellationToken);
         }
     }
 }

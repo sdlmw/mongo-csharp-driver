@@ -26,12 +26,10 @@ namespace MongoDB.Driver
     /// Options for a findAndModify command to delete an object.
     /// </summary>
     /// <typeparam name="TDocument">The type of the document.</typeparam>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    public class FindOneAndDeleteOptions<TDocument, TResult>
+    public class FindOneAndDeleteOptions<TDocument>
     {
         // fields
         private TimeSpan? _maxTime;
-        private Projection<TDocument, TResult> _projection;
         private Sort<TDocument> _sort;
 
         // properties
@@ -42,15 +40,6 @@ namespace MongoDB.Driver
         {
             get { return _maxTime; }
             set { _maxTime = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the projection.
-        /// </summary>
-        public Projection<TDocument, TResult> Projection
-        {
-            get { return _projection; }
-            set { _projection = value; }
         }
 
         /// <summary>

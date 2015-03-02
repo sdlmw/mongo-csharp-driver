@@ -198,12 +198,16 @@ namespace MongoDB.Driver
             return ExecuteReadOperation(operation, cancellationToken);
         }
 
-        public override Task<IAsyncCursor<TResult>> FindAsync<TResult>(Filter<TDocument> filter, FindOptions<TDocument, TResult> options, CancellationToken cancellationToken)
+        public override Task<IAsyncCursor<TResult>> FindAsync<TResult>(
+            Filter<TDocument> filter, 
+            Projection<TDocument, TResult> projection, 
+            FindOptions<TDocument> options, 
+            CancellationToken cancellationToken)
         {
             Ensure.IsNotNull(filter, "filter");
+            Ensure.IsNotNull(projection, "projection");
 
-            options = options ?? new FindOptions<TDocument, TResult>();
-            var projection = options.Projection ?? new EntireDocumentProjection<TDocument, TResult>();
+            options = options ?? new FindOptions<TDocument>();
             var renderedProjection = projection.Render(_documentSerializer, _settings.SerializerRegistry);
 
             var operation = new FindOperation<TResult>(
@@ -228,12 +232,16 @@ namespace MongoDB.Driver
             return ExecuteReadOperation(operation, cancellationToken);
         }
 
-        public override Task<TResult> FindOneAndDeleteAsync<TResult>(Filter<TDocument> filter, FindOneAndDeleteOptions<TDocument, TResult> options, CancellationToken cancellationToken)
+        public override Task<TResult> FindOneAndDeleteAsync<TResult>(
+            Filter<TDocument> filter, 
+            Projection<TDocument, TResult> projection, 
+            FindOneAndDeleteOptions<TDocument> options, 
+            CancellationToken cancellationToken)
         {
             Ensure.IsNotNull(filter, "filter");
+            Ensure.IsNotNull(projection, "projection");
 
-            options = options ?? new FindOneAndDeleteOptions<TDocument, TResult>();
-            var projection = options.Projection ?? new EntireDocumentProjection<TDocument, TResult>();
+            options = options ?? new FindOneAndDeleteOptions<TDocument>();
             var renderedProjection = projection.Render(_documentSerializer, _settings.SerializerRegistry);
 
             var operation = new FindOneAndDeleteOperation<TResult>(
@@ -250,14 +258,19 @@ namespace MongoDB.Driver
             return ExecuteWriteOperation(operation, cancellationToken);
         }
 
-        public override Task<TResult> FindOneAndReplaceAsync<TResult>(Filter<TDocument> filter, TDocument replacement, FindOneAndReplaceOptions<TDocument, TResult> options, CancellationToken cancellationToken)
+        public override Task<TResult> FindOneAndReplaceAsync<TResult>(
+            Filter<TDocument> filter,
+            TDocument replacement,
+            Projection<TDocument, TResult> projection,
+            FindOneAndReplaceOptions<TDocument> options, 
+            CancellationToken cancellationToken)
         {
             var replacementObject = (object)replacement; // only box once if it's a struct
             Ensure.IsNotNull(filter, "filter");
             Ensure.IsNotNull(replacementObject, "replacement");
+            Ensure.IsNotNull(projection, "projection");
 
-            options = options ?? new FindOneAndReplaceOptions<TDocument, TResult>();
-            var projection = options.Projection ?? new EntireDocumentProjection<TDocument, TResult>();
+            options = options ?? new FindOneAndReplaceOptions<TDocument>();
             var renderedProjection = projection.Render(_documentSerializer, _settings.SerializerRegistry);
 
             var operation = new FindOneAndReplaceOperation<TResult>(
@@ -277,13 +290,18 @@ namespace MongoDB.Driver
             return ExecuteWriteOperation(operation, cancellationToken);
         }
 
-        public override Task<TResult> FindOneAndUpdateAsync<TResult>(Filter<TDocument> filter, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument, TResult> options, CancellationToken cancellationToken)
+        public override Task<TResult> FindOneAndUpdateAsync<TResult>(
+            Filter<TDocument> filter, 
+            Projection<TDocument, TResult> projection,
+            Update2<TDocument> update, 
+            FindOneAndUpdateOptions<TDocument> options, 
+            CancellationToken cancellationToken)
         {
             Ensure.IsNotNull(filter, "filter");
+            Ensure.IsNotNull(projection, "projection");
             Ensure.IsNotNull(update, "update");
 
-            options = options ?? new FindOneAndUpdateOptions<TDocument, TResult>();
-            var projection = options.Projection ?? new EntireDocumentProjection<TDocument, TResult>();
+            options = options ?? new FindOneAndUpdateOptions<TDocument>();
             var renderedProjection = projection.Render(_documentSerializer, _settings.SerializerRegistry);
 
             var operation = new FindOneAndUpdateOperation<TResult>(

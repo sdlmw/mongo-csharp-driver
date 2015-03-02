@@ -65,7 +65,6 @@ namespace MongoDB.Driver
         /// <summary>
         /// Finds a single document and deletes it atomically.
         /// </summary>
-        /// <typeparam name="TDocument">The type of the document.</typeparam>
         /// <param name="collection">The collection.</param>
         /// <param name="filter">The filter.</param>
         /// <param name="options">The options.</param>
@@ -73,12 +72,17 @@ namespace MongoDB.Driver
         /// <returns>
         /// The deleted document if one was deleted.
         /// </returns>
-        public static Task<TDocument> FindOneAndDeleteAsync<TDocument>(this IMongoCollection<TDocument> collection, Filter<TDocument> filter, FindOneAndDeleteOptions<TDocument, TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TDocument> FindOneAndDeleteAsync<TDocument>(
+            this IMongoCollection<TDocument> collection, 
+            Filter<TDocument> filter, 
+            FindOneAndDeleteOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
 
-            return collection.FindOneAndDeleteAsync<TDocument>(filter, options, cancellationToken);
+            var projection = new IdentityProjection<TDocument>(collection.DocumentSerializer);
+            return collection.FindOneAndDeleteAsync(filter, projection, options, cancellationToken);
         }
 
         /// <summary>
@@ -92,12 +96,16 @@ namespace MongoDB.Driver
         /// <returns>
         /// The deleted document if one was deleted.
         /// </returns>
-        public static Task<TDocument> FindOneAndDeleteAsync<TDocument>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, FindOneAndDeleteOptions<TDocument, TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TDocument> FindOneAndDeleteAsync<TDocument>(
+            this IMongoCollection<TDocument> collection, 
+            Expression<Func<TDocument, bool>> filter, 
+            FindOneAndDeleteOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
 
-            return collection.FindOneAndDeleteAsync<TDocument>(new ExpressionFilter<TDocument>(filter), options, cancellationToken);
+            return collection.FindOneAndDeleteAsync(new ExpressionFilter<TDocument>(filter), options, cancellationToken);
         }
 
         /// <summary>
@@ -107,17 +115,28 @@ namespace MongoDB.Driver
         /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <param name="collection">The collection.</param>
         /// <param name="filter">The filter.</param>
+        /// <param name="projection">The projection.</param>
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The returned document.
         /// </returns>
-        public static Task<TResult> FindOneAndDeleteAsync<TDocument, TResult>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, FindOneAndDeleteOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TResult> FindOneAndDeleteAsync<TDocument, TResult>(
+            this IMongoCollection<TDocument> collection, 
+            Expression<Func<TDocument, bool>> filter, 
+            Expression<Func<TDocument, TResult>> projection, 
+            FindOneAndDeleteOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
+            Ensure.IsNotNull(projection, "projection");
 
-            return collection.FindOneAndDeleteAsync<TResult>(new ExpressionFilter<TDocument>(filter), options, cancellationToken);
+            return collection.FindOneAndDeleteAsync(
+                new ExpressionFilter<TDocument>(filter),
+                new FindExpressionProjection<TDocument, TResult>(projection),
+                options,
+                cancellationToken);
         }
 
         /// <summary>
@@ -132,12 +151,18 @@ namespace MongoDB.Driver
         /// <returns>
         /// The returned document.
         /// </returns>
-        public static Task<TDocument> FindOneAndReplaceAsync<TDocument>(this IMongoCollection<TDocument> collection, Filter<TDocument> filter, TDocument replacement, FindOneAndReplaceOptions<TDocument, TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TDocument> FindOneAndReplaceAsync<TDocument>(
+            this IMongoCollection<TDocument> collection, 
+            Filter<TDocument> filter, 
+            TDocument replacement, 
+            FindOneAndReplaceOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
 
-            return collection.FindOneAndReplaceAsync<TDocument>(filter, replacement, options, cancellationToken);
+            var projection = new IdentityProjection<TDocument>(collection.DocumentSerializer);
+            return collection.FindOneAndReplaceAsync(filter, replacement, projection, options, cancellationToken);
         }
 
         /// <summary>
@@ -152,12 +177,17 @@ namespace MongoDB.Driver
         /// <returns>
         /// The returned document.
         /// </returns>
-        public static Task<TDocument> FindOneAndReplaceAsync<TDocument>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, TDocument replacement, FindOneAndReplaceOptions<TDocument, TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TDocument> FindOneAndReplaceAsync<TDocument>(
+            this IMongoCollection<TDocument> collection, 
+            Expression<Func<TDocument, bool>> filter, 
+            TDocument replacement, 
+            FindOneAndReplaceOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
 
-            return collection.FindOneAndReplaceAsync<TDocument>(new ExpressionFilter<TDocument>(filter), replacement, options, cancellationToken);
+            return collection.FindOneAndReplaceAsync(new ExpressionFilter<TDocument>(filter), replacement, options, cancellationToken);
         }
 
         /// <summary>
@@ -168,17 +198,30 @@ namespace MongoDB.Driver
         /// <param name="collection">The collection.</param>
         /// <param name="filter">The filter.</param>
         /// <param name="replacement">The replacement.</param>
+        /// <param name="projection">The projection.</param>
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The returned document.
         /// </returns>
-        public static Task<TResult> FindOneAndReplaceAsync<TDocument, TResult>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, TDocument replacement, FindOneAndReplaceOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TResult> FindOneAndReplaceAsync<TDocument, TResult>(
+            this IMongoCollection<TDocument> collection, 
+            Expression<Func<TDocument, bool>> filter,
+            TDocument replacement,
+            Expression<Func<TDocument, TResult>> projection,
+            FindOneAndReplaceOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
+            Ensure.IsNotNull(projection, "projection");
 
-            return collection.FindOneAndReplaceAsync<TResult>(filter, replacement, options, cancellationToken);
+            return collection.FindOneAndReplaceAsync(
+                new ExpressionFilter<TDocument>(filter),
+                replacement,
+                new FindExpressionProjection<TDocument, TResult>(projection),
+                options, 
+                cancellationToken);
         }
 
         /// <summary>
@@ -193,13 +236,21 @@ namespace MongoDB.Driver
         /// <returns>
         /// The returned document.
         /// </returns>
-        public static Task<TDocument> FindOneAndUpdateAsync<TDocument>(this IMongoCollection<TDocument> collection, Filter<TDocument> filter, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument, TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TDocument> FindOneAndUpdateAsync<TDocument>(
+            this IMongoCollection<TDocument> collection, 
+            Filter<TDocument> filter, 
+            Update2<TDocument> update, 
+            FindOneAndUpdateOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(collection, "filter");
+            Ensure.IsNotNull(update, "update");
 
-            return collection.FindOneAndUpdateAsync<TDocument>(
+            var projection = new IdentityProjection<TDocument>(collection.DocumentSerializer);
+            return collection.FindOneAndUpdateAsync(
                 filter,
+                projection,
                 update,
                 options,
                 cancellationToken);
@@ -217,12 +268,18 @@ namespace MongoDB.Driver
         /// <returns>
         /// The returned document.
         /// </returns>
-        public static Task<TDocument> FindOneAndUpdateAsync<TDocument>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument, TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TDocument> FindOneAndUpdateAsync<TDocument>(
+            this IMongoCollection<TDocument> collection, 
+            Expression<Func<TDocument, bool>> filter, 
+            Update2<TDocument> update, 
+            FindOneAndUpdateOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(collection, "filter");
+            Ensure.IsNotNull(update, "update");
 
-            return collection.FindOneAndUpdateAsync<TDocument>(
+            return collection.FindOneAndUpdateAsync(
                 new ExpressionFilter<TDocument>(filter),
                 update,
                 options,
@@ -236,18 +293,32 @@ namespace MongoDB.Driver
         /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <param name="collection">The collection.</param>
         /// <param name="filter">The filter.</param>
+        /// <param name="projection">The projection.</param>
         /// <param name="update">The update.</param>
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The returned document.
         /// </returns>
-        public static Task<TResult> FindOneAndUpdateAsync<TDocument, TResult>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, Update2<TDocument> update, FindOneAndUpdateOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<TResult> FindOneAndUpdateAsync<TDocument, TResult>(
+            this IMongoCollection<TDocument> collection, 
+            Expression<Func<TDocument, bool>> filter, 
+            Expression<Func<TDocument, TResult>> projection,
+            Update2<TDocument> update, 
+            FindOneAndUpdateOptions<TDocument> options = null, 
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, "collection");
             Ensure.IsNotNull(filter, "filter");
+            Ensure.IsNotNull(projection, "projection");
+            Ensure.IsNotNull(update, "update");
 
-            return collection.FindOneAndUpdateAsync(new ExpressionFilter<TDocument>(filter), update, options, cancellationToken);
+            return collection.FindOneAndUpdateAsync(
+                new ExpressionFilter<TDocument>(filter),
+                new FindExpressionProjection<TDocument, TResult>(projection),
+                update,
+                options,
+                cancellationToken);
         }
 
         /// <summary>

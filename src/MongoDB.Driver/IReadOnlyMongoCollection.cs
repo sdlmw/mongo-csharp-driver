@@ -83,10 +83,11 @@ namespace MongoDB.Driver
         /// </summary>
         /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <param name="filter">The filter.</param>
+        /// <param name="projection">The projection.</param>
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A Task whose result is a cursor.</returns>
-        Task<IAsyncCursor<TResult>> FindAsync<TResult>(Filter<TDocument> filter, FindOptions<TDocument, TResult> options = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IAsyncCursor<TResult>> FindAsync<TResult>(Filter<TDocument> filter, Projection<TDocument, TResult> projection, FindOptions<TDocument> options = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Executes a map-reduce command.

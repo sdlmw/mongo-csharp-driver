@@ -140,7 +140,7 @@ namespace MongoDB.Driver.Tests
 
         private static void AssertProjection<TResult>(IFindFluent<Person, TResult> subject, BsonDocument expectedProjection)
         {
-            Assert.AreEqual(expectedProjection, subject.Options.Projection.Render(BsonSerializer.SerializerRegistry.GetSerializer<Person>(), BsonSerializer.SerializerRegistry).Document);
+            Assert.AreEqual(expectedProjection, subject.Projection.Render(BsonSerializer.SerializerRegistry.GetSerializer<Person>(), BsonSerializer.SerializerRegistry).Document);
         }
 
         private static void AssertSort(IFindFluent<Person, Person> subject, BsonDocument expectedSort)
@@ -153,8 +153,9 @@ namespace MongoDB.Driver.Tests
             var settings = new MongoCollectionSettings();
             var collection = Substitute.For<IMongoCollection<Person>>();
             collection.Settings.Returns(settings);
-            var options = new FindOptions<Person, Person>();
-            var subject = new FindFluent<Person, Person>(collection, new BsonDocument(), options);
+            var options = new FindOptions<Person>();
+            var projection = new IdentityProjection<Person>(collection.DocumentSerializer);
+            var subject = new FindFluent<Person, Person>(collection, new BsonDocument(), projection, options);
 
             return subject;
         }

@@ -480,25 +480,25 @@ namespace MongoDB.Driver
         }
     }
 
-    internal sealed class EntireDocumentProjection<TSource, TResult> : Projection<TSource, TResult>
+    internal sealed class IdentityProjection<TSource> : Projection<TSource, TSource>
     {
-        private readonly IBsonSerializer<TResult> _resultSerializer;
+        private readonly IBsonSerializer<TSource> _resultSerializer;
 
-        public EntireDocumentProjection(IBsonSerializer<TResult> resultSerializer = null)
+        public IdentityProjection(IBsonSerializer<TSource> resultSerializer = null)
         {
-            _resultSerializer = resultSerializer;
+            _resultSerializer = Ensure.IsNotNull(resultSerializer, "resultSerializer");
         }
 
-        public IBsonSerializer<TResult> ResultSerializer
+        public IBsonSerializer<TSource> ResultSerializer
         {
             get { return _resultSerializer; }
         }
 
-        public override RenderedProjection<TResult> Render(IBsonSerializer<TSource> sourceSerializer, IBsonSerializerRegistry serializerRegistry)
+        public override RenderedProjection<TSource> Render(IBsonSerializer<TSource> sourceSerializer, IBsonSerializerRegistry serializerRegistry)
         {
-            return new RenderedProjection<TResult>(
+            return new RenderedProjection<TSource>(
                 null,
-                _resultSerializer ?? (sourceSerializer as IBsonSerializer<TResult>) ?? serializerRegistry.GetSerializer<TResult>());
+                _resultSerializer ?? sourceSerializer ?? serializerRegistry.GetSerializer<TSource>());
         }
     }
 }

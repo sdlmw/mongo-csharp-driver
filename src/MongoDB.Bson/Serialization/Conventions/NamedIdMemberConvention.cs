@@ -94,29 +94,36 @@ namespace MongoDB.Bson.Serialization.Conventions
             foreach (var name in _names)
             {
                 var member = classMap.ClassType.GetMember(name, _memberTypes, _bindingFlags).SingleOrDefault();
-
                 if (member != null)
                 {
-                    if (IsValidIdMember(classMap, member))
+                    if (BaseClassHasId(classMap))
                     {
-                        classMap.MapIdMember(member);
                         return;
                     }
+
+                    classMap.MapIdMember(member);
+                    return;
                 }
             }
         }
 
-        private bool IsValidIdMember(BsonClassMap classMap, MemberInfo member)
+        private bool BaseClassHasId(BsonClassMap classMap)
         {
-            if (member.MemberType == MemberTypes.Property)
+            var baseType = classMap.ClassType.BaseType;
+            if (baseType == typeof(object))
             {
-                var getMethodInfo = ((PropertyInfo)member).GetGetMethod(true);
-                if (getMethodInfo.IsVirtual && getMethodInfo.GetBaseDefinition().DeclaringType != classMap.ClassType)
-                {
-                    return false;
-                }
+                return false;
             }
-            return true;
+
+            var baseClassMap = classMap.BaseClassMap ?? BsonClassMap.LookupClassMap(baseType);
+            baseClassMap.Freeze();
+
+            if (baseClassMap.GetMemberMapForElement("_id") != null)
+            {
+                return true;
+            }
+
+            return BaseClassHasId(baseClassMap);
         }
     }
 }

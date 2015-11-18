@@ -621,6 +621,46 @@ namespace MongoDB.Driver
         }
 
         /// <summary>
+        /// Combines an existing update with a push operator.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <typeparam name="TItem">The type of the item.</typeparam>
+        /// <param name="update">The update.</param>
+        /// <param name="field">The field.</param>
+        /// <param name="values">The values.</param>
+        /// <param name="sortDirection">The sortDirection.</param>
+        /// <param name="slice">The slice.</param>
+        /// <param name="position">The position.</param>
+        /// <returns>
+        /// A combined update.
+        /// </returns>
+        public static UpdateDefinition<TDocument> PushEach<TDocument, TItem>(this UpdateDefinition<TDocument> update, FieldDefinition<TDocument> field, IEnumerable<TItem> values, SortDirection sortDirection, int? slice = null, int? position = null)
+        {
+            var builder = Builders<TDocument>.Update;
+            return builder.Combine(update, builder.PushEach(field, values, sortDirection, slice, position));
+        }
+
+        /// <summary>
+        /// Combines an existing update with a push operator.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <typeparam name="TItem">The type of the item.</typeparam>
+        /// <param name="update">The update.</param>
+        /// <param name="field">The field.</param>
+        /// <param name="values">The values.</param>
+        /// <param name="sortDirection">The sortDirection.</param>
+        /// <param name="slice">The slice.</param>
+        /// <param name="position">The position.</param>
+        /// <returns>
+        /// A combined update.
+        /// </returns>
+        public static UpdateDefinition<TDocument> PushEach<TDocument, TItem>(this UpdateDefinition<TDocument> update, Expression<Func<TDocument, IEnumerable<TItem>>> field, SortDirection sortDirection, IEnumerable<TItem> values, int? slice = null, int? position = null)
+        {
+            var builder = Builders<TDocument>.Update;
+            return builder.Combine(update, builder.PushEach(field, values, sortDirection, slice, position));
+        }
+
+        /// <summary>
         /// Combines an existing update with a field renaming operator.
         /// </summary>
         /// <typeparam name="TDocument">The type of the document.</typeparam>
@@ -1231,6 +1271,36 @@ namespace MongoDB.Driver
         }
 
         /// <summary>
+        /// Creates a push operator.
+        /// </summary>
+        /// <typeparam name="TItem">The type of the item.</typeparam>
+        /// <param name="field">The field.</param>
+        /// <param name="values">The values.</param>
+        /// <param name="sortDirection">The sort direction.</param>
+        /// <param name="slice">The slice.</param>
+        /// <param name="position">The position.</param>
+        /// <returns>A push operator.</returns>
+        public UpdateDefinition<TDocument> PushEach<TItem>(FieldDefinition<TDocument> field, IEnumerable<TItem> values, SortDirection sortDirection, int? slice = null, int? position = null)
+        {
+            return new PushUpdateDefinition<TDocument, TItem>(field, values, sortDirection, slice, position);
+        }
+
+        /// <summary>
+        /// Creates a push operator.
+        /// </summary>
+        /// <typeparam name="TItem">The type of the item.</typeparam>
+        /// <param name="field">The field.</param>
+        /// <param name="values">The values.</param>
+        /// <param name="sortDirection">The sort direction.</param>
+        /// <param name="slice">The slice.</param>
+        /// <param name="position">The position.</param>
+        /// <returns>A push operator.</returns>
+        public UpdateDefinition<TDocument> PushEach<TItem>(Expression<Func<TDocument, IEnumerable<TItem>>> field, IEnumerable<TItem> values, SortDirection sortDirection, int? slice = null, int? position = null)
+        {
+            return PushEach(new ExpressionFieldDefinition<TDocument>(field), values, sortDirection, slice, position);
+        }
+
+        /// <summary>
         /// Creates a field renaming operator.
         /// </summary>
         /// <param name="field">The field.</param>
@@ -1593,6 +1663,7 @@ namespace MongoDB.Driver
         private readonly int? _position;
         private readonly int? _slice;
         private SortDefinition<TItem> _sort;
+        private SortDirection? _sortDirection;
         private readonly List<TItem> _values;
 
         public PushUpdateDefinition(FieldDefinition<TDocument> field, IEnumerable<TItem> values, int? slice = null, int? position = null, SortDefinition<TItem> sort = null)
@@ -1602,6 +1673,15 @@ namespace MongoDB.Driver
             _slice = slice;
             _position = position;
             _sort = sort;
+        }
+
+        public PushUpdateDefinition(FieldDefinition<TDocument> field, IEnumerable<TItem> values, SortDirection sortDirection, int? slice = null, int? position = null)
+        {
+            _field = Ensure.IsNotNull(field, nameof(field));
+            _values = Ensure.IsNotNull(values, nameof(values)).ToList();
+            _slice = slice;
+            _position = position;
+            _sortDirection = sortDirection;
         }
 
         public override BsonDocument Render(IBsonSerializer<TDocument> documentSerializer, IBsonSerializerRegistry serializerRegistry)
@@ -1666,6 +1746,10 @@ namespace MongoDB.Driver
             if (_sort != null)
             {
                 document["$push"][renderedField.FieldName]["$sort"] = _sort.Render((IBsonSerializer<TItem>)itemSerializer, serializerRegistry);
+            }
+            else if (_sortDirection.HasValue)
+            {
+                document["$push"][renderedField.FieldName]["$sort"] = _sortDirection.Value == SortDirection.Descending ? -1 : 1;
             }
 
             return document;

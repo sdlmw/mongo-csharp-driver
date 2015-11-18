@@ -439,6 +439,30 @@ namespace MongoDB.Driver.Tests
         }
 
         [Test]
+        public void PushEach(
+            [Values(null, 10)] int? slice,
+            [Values(null, 20)] int? position,
+            [Values(SortDirection.Ascending, SortDirection.Descending)] SortDirection sortDirection)
+        {
+            var subject = CreateSubject<BsonDocument>();
+
+            var expectedPushValue = BsonDocument.Parse("{$each: [1, 2]}");
+            if (slice.HasValue)
+            {
+                expectedPushValue.Add("$slice", slice.Value);
+            }
+            if (position.HasValue)
+            {
+                expectedPushValue.Add("$position", position.Value);
+            }
+            expectedPushValue.Add("$sort", sortDirection == SortDirection.Descending ? -1 : 1);
+
+            var expectedPush = new BsonDocument("$push", new BsonDocument("a", expectedPushValue));
+
+            Assert(subject.PushEach("a", new[] { 1, 2 }, sortDirection, slice, position), expectedPush);
+        }
+
+        [Test]
         public void PushEach_Typed(
             [Values(null, 10)] int? slice,
             [Values(null, 20)] int? position,

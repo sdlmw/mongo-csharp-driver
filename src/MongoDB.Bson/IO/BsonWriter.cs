@@ -238,10 +238,10 @@ namespace MongoDB.Bson.IO
             {
                 throw new ArgumentNullException("name");
             }
-            if (name.IndexOf('\0') != -1)
-            {
-                throw new BsonSerializationException("Element names cannot contain nulls.");
-            }
+            //if (name.IndexOf('\0') != -1)
+            //{
+            //    throw new BsonSerializationException("Element names cannot contain nulls.");
+            //}
             if (_disposed) { throw new ObjectDisposedException(this.GetType().Name); }
             if (_state != BsonWriterState.Name)
             {

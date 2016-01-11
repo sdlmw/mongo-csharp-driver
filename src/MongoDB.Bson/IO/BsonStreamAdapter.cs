@@ -431,7 +431,7 @@ namespace MongoDB.Bson.IO
             byte[] bytes;
             int length;
 
-            var encoding = Utf8Encodings.Strict;
+            var encoding = CStringUTF8Encoding.Instance; // Utf8Encodings.Strict;
             if (encoding.GetMaxByteCount(value.Length) <= _tempUtf8.Length)
             {
                 bytes = _tempUtf8;
@@ -443,10 +443,10 @@ namespace MongoDB.Bson.IO
                 length = bytes.Length;
             }
 
-            if (Array.IndexOf<byte>(bytes, 0, 0, length) != -1)
-            {
-                throw new ArgumentException("A CString cannot contain null bytes.", "value");
-            }
+            //if (Array.IndexOf<byte>(bytes, 0, 0, length) != -1)
+            //{
+            //    throw new ArgumentException("A CString cannot contain null bytes.", "value");
+            //}
 
             _stream.Write(bytes, 0, length);
             _stream.WriteByte(0);
@@ -459,10 +459,10 @@ namespace MongoDB.Bson.IO
             {
                 throw new ArgumentNullException("value");
             }
-            if (Array.IndexOf<byte>(value, 0) != -1)
-            {
-                throw new ArgumentException("A CString cannot contain null bytes.", "value");
-            }
+            //if (Array.IndexOf<byte>(value, 0) != -1)
+            //{
+            //    throw new ArgumentException("A CString cannot contain null bytes.", "value");
+            //}
             ThrowIfDisposed();
 
             this.WriteBytes(value, 0, value.Length);

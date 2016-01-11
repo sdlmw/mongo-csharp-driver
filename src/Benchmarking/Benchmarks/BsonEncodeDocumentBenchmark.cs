@@ -21,8 +21,9 @@ namespace Benchmarking.Benchmarks
         {
             for (int i = 0; i < _numInternalIterations; i++)
             {
-                using (var buffer = ByteBufferFactory.Create(new OutputBufferChunkSource(BsonChunkPool.Default), _documentBytes.Length))
-                using (var stream = new ByteBufferStream(buffer))
+                //using (var buffer = ByteBufferFactory.Create(new OutputBufferChunkSource(BsonChunkPool.Default), _documentBytes.Length))
+                //using (var stream = new ByteBufferStream(buffer))
+                using (var stream = new MemoryStream())
                 using (var writer = new BsonBinaryWriter(stream))
                 {
                     _serializer.Serialize(BsonSerializationContext.CreateRoot(writer), _resource.Document);

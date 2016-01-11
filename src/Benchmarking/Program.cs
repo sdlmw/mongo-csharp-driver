@@ -28,9 +28,9 @@ namespace Benchmarking
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 "datasets");
 
-            RunBenchmark(new BsonEncodeDocumentBenchmark<BsonDocument>("Flat", Path.Combine(datasetsPath, "flat_bson.json"), 10000));
-            RunBenchmark(new BsonEncodeDocumentBenchmark<BsonDocument>("Deep", Path.Combine(datasetsPath, "deep_bson.json"), 10000));
-            RunBenchmark(new BsonEncodeDocumentBenchmark<BsonDocument>("Full", Path.Combine(datasetsPath, "full_bson.json"), 10000));
+            RunBenchmark(new BsonEncodeDocumentBenchmark<BsonDocument>("Flat", Path.Combine(datasetsPath, @"EXTENDED_BSON\flat_bson.json"), 10000));
+            RunBenchmark(new BsonEncodeDocumentBenchmark<BsonDocument>("Deep", Path.Combine(datasetsPath, @"EXTENDED_BSON\deep_bson.json"), 10000));
+            RunBenchmark(new BsonEncodeDocumentBenchmark<BsonDocument>("Full", Path.Combine(datasetsPath, @"EXTENDED_BSON\full_bson.json"), 10000));
 
             //RunBenchmark(new BsonDecodeDocumentBenchmark<BsonDocument>("Flat", Path.Combine(datasetsPath, "flat_bson.json"), 10000));
             //RunBenchmark(new BsonDecodeDocumentBenchmark<BsonDocument>("Deep", Path.Combine(datasetsPath, "deep_bson.json"), 10000));

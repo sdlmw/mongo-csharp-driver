@@ -18,13 +18,16 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Threading;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson
 {
     /// <summary>
     /// Represents an ObjectId (see also BsonObjectId).
     /// </summary>
+#if NET45
     [Serializable]
+#endif
     public struct ObjectId : IComparable<ObjectId>, IEquatable<ObjectId>, IConvertible
     {
         // private static fields
@@ -618,7 +621,11 @@ namespace MongoDB.Bson
 
         object IConvertible.ToType(Type conversionType, IFormatProvider provider)
         {
+#if NET45
             switch (Type.GetTypeCode(conversionType))
+#else
+            switch (TypeHelper.GetTypeCode(conversionType))
+#endif
             {
                 case TypeCode.String:
                     return ((IConvertible)this).ToString(provider);

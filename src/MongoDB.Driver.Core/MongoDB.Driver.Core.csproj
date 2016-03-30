@@ -413,9 +413,9 @@
     <Compile Include="Core\Connections\IsMasterResult.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MongoDB.Bson\MongoDB.Bson.csproj">
+    <ProjectReference Include="..\MongoDB.Bson.Net45\MongoDB.Bson.Net45.csproj">
       <Project>{0e9a3a2a-49cd-4f6c-847c-dc79b4b65ce6}</Project>
-      <Name>MongoDB.Bson</Name>
+      <Name>MongoDB.Bson.Net45</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

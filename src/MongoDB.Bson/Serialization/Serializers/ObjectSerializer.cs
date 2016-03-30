@@ -1,4 +1,4 @@
-/* Copyright 2010-2015 MongoDB Inc.
+/* Copyright 2010-2016 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@
 */
 
 using System;
+using System.Reflection;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization.Serializers
 {
@@ -160,7 +162,11 @@ namespace MongoDB.Bson.Serialization.Serializers
                     // if we're not at the top level document, or if we're using the JsonWriter
                     if (bsonWriter.State == BsonWriterState.Value || bsonWriter is JsonWriter)
                     {
+#if NET45
                         switch (Type.GetTypeCode(actualType))
+#else
+                        switch (TypeHelper.GetTypeCode(actualType))
+#endif
                         {
                             case TypeCode.Boolean:
                                 bsonWriter.WriteBoolean((bool)value);

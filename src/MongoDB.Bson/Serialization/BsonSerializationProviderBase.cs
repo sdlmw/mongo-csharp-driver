@@ -15,6 +15,7 @@
 
 using System;
 using System.Reflection;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization
 {
@@ -79,13 +80,13 @@ namespace MongoDB.Bson.Serialization
         protected virtual IBsonSerializer CreateSerializer(Type serializerType, IBsonSerializerRegistry serializerRegistry)
         {
             var serializerTypeInfo = serializerType.GetTypeInfo();
-            var constructorInfo = serializerTypeInfo.GetConstructor(new[] { typeof(IBsonSerializerRegistry) });
+            var constructorInfo = TypeInfoHelper.GetMatchingConstructor(serializerTypeInfo, new[] { typeof(IBsonSerializerRegistry) });
             if (constructorInfo != null)
             {
                 return (IBsonSerializer)constructorInfo.Invoke(new object[] { serializerRegistry });
             }
 
-            constructorInfo = serializerTypeInfo.GetConstructor(new Type[0]);
+            constructorInfo = TypeInfoHelper.GetMatchingConstructor(serializerTypeInfo, new Type[0]);
             if (constructorInfo != null)
             {
                 return (IBsonSerializer)constructorInfo.Invoke(new object[0]);

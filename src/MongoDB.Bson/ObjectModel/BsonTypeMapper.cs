@@ -20,6 +20,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using MongoDB.Bson.IO;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson
 {
@@ -192,7 +193,11 @@ namespace MongoDB.Bson
             if (valueTypeInfo.IsEnum)
             {
                 valueType = Enum.GetUnderlyingType(valueType);
+#if NET45
                 switch (Type.GetTypeCode(valueType))
+#else
+                switch (TypeHelper.GetTypeCode(valueType))
+#endif
                 {
                     case TypeCode.Byte: value = (int)(byte)value; break;
                     case TypeCode.Int16: value = (int)(short)value; break;
@@ -445,7 +450,11 @@ namespace MongoDB.Bson
             if (valueTypeInfo.IsEnum)
             {
                 valueType = Enum.GetUnderlyingType(valueType);
+#if NET45
                 switch (Type.GetTypeCode(valueType))
+#else
+                switch (TypeHelper.GetTypeCode(valueType))
+#endif
                 {
                     case TypeCode.Byte: value = (int)(byte)value; break;
                     case TypeCode.Int16: value = (int)(short)value; break;

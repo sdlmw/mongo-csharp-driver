@@ -119,8 +119,8 @@ namespace MongoDB.Bson.Serialization.Serializers
             switch (_representation)
             {
                 case 0:
-                    var underlyingTypeCode = Type.GetTypeCode(Enum.GetUnderlyingType(typeof(TEnum)));
-                    if (underlyingTypeCode == TypeCode.Int64 || underlyingTypeCode == TypeCode.UInt64)
+                    var underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
+                    if (underlyingType == typeof(Int64) || underlyingType == typeof(UInt64))
                     {
                         goto case BsonType.Int64;
                     }

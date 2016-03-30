@@ -1,4 +1,4 @@
-﻿/* Copyright 2010-2014 MongoDB Inc.
+﻿/* Copyright 2010-2016 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ namespace MongoDB.Bson.Serialization.Conventions
             // public methods
             public void Apply(BsonClassMap classMap)
             {
-                foreach (IBsonClassMapAttribute attribute in classMap.ClassType.GetCustomAttributes(typeof(IBsonClassMapAttribute), false))
+                var classTypeInfo = classMap.ClassType.GetTypeInfo();
+                foreach (IBsonClassMapAttribute attribute in classTypeInfo.GetCustomAttributes(typeof(IBsonClassMapAttribute), false))
                 {
                     attribute.Apply(classMap);
                 }
@@ -102,7 +103,8 @@ namespace MongoDB.Bson.Serialization.Conventions
 
             public void PostProcess(BsonClassMap classMap)
             {
-                foreach (IBsonPostProcessingAttribute attribute in classMap.ClassType.GetCustomAttributes(typeof(IBsonPostProcessingAttribute), false))
+                var classTypeInfo = classMap.ClassType.GetTypeInfo();
+                foreach (IBsonPostProcessingAttribute attribute in classTypeInfo.GetCustomAttributes(typeof(IBsonPostProcessingAttribute), false))
                 {
                     attribute.PostProcess(classMap);
                 }
@@ -111,7 +113,8 @@ namespace MongoDB.Bson.Serialization.Conventions
             // private methods
             private bool AllowsDuplicate(Type type)
             {
-                var usageAttribute = type.GetCustomAttributes(typeof(BsonMemberMapAttributeUsageAttribute), true)
+                var typeInfo = type.GetTypeInfo();
+                var usageAttribute = typeInfo.GetCustomAttributes(typeof(BsonMemberMapAttributeUsageAttribute), true)
                     .OfType<BsonMemberMapAttributeUsageAttribute>()
                     .SingleOrDefault();
 

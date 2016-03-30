@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization.Conventions
 {
@@ -94,7 +95,7 @@ namespace MongoDB.Bson.Serialization.Conventions
             var classTypeInfo = classMap.ClassType.GetTypeInfo();
             foreach (var name in _names)
             {
-                var member = classTypeInfo.GetMember(name, _memberTypes, _bindingFlags).SingleOrDefault();
+                var member = TypeInfoHelper.GetMatchingMembers(classTypeInfo, name, _memberTypes, _bindingFlags).SingleOrDefault();
 
                 if (member != null)
                 {

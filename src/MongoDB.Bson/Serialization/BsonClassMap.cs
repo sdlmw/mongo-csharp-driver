@@ -23,6 +23,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization
 {
@@ -1254,10 +1255,9 @@ namespace MongoDB.Bson.Serialization
             if (_creator == null)
             {
                 Expression body;
-                var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
                 var classTypeInfo = _classType.GetTypeInfo();
-                var defaultConstructor = classTypeInfo.GetConstructors(bindingFlags)
-                    .Where(c => c.GetParameters().Length == 0)
+                var defaultConstructor = classTypeInfo.DeclaredConstructors
+                    .Where(c => !c.IsStatic && c.GetParameters().Length == 0)
                     .SingleOrDefault();
                 if (defaultConstructor != null)
                 {
@@ -1591,6 +1591,7 @@ namespace MongoDB.Bson.Serialization
         {
             var interfaceType = interfacePropertyInfo.DeclaringType;
 
+#if NET45
             // An interface map must be used because because there is no
             // other officially documented way to derive the explicitly
             // implemented property name.
@@ -1614,6 +1615,24 @@ namespace MongoDB.Bson.Serialization
                     var propertyAccessors = GetPropertyAccessors(propertyInfo);
                     return actualPropertyAccessors.All(x => propertyAccessors.Contains(x));
                 });
+#else
+            var actualTypeInfo = actualType.GetTypeInfo();
+            var actualTypePropertyInfos = TypeInfoHelper.GetAllMembers(actualTypeInfo).OfType<PropertyInfo>();
+
+            var explicitlyImplementedPropertyName = $"{interfacePropertyInfo.DeclaringType.FullName}.{interfacePropertyInfo.Name}";
+            var explicitlyImplementedPropertyInfo = actualTypePropertyInfos
+                .Where(p => p.Name == explicitlyImplementedPropertyName)
+                .SingleOrDefault();
+            if (explicitlyImplementedPropertyInfo != null)
+            {
+                return explicitlyImplementedPropertyInfo;
+            }
+
+            var implicitlyImplementedPropertyInfo = actualTypePropertyInfos
+                .Where(p => p.Name == interfacePropertyInfo.Name && p.PropertyType == interfacePropertyInfo.PropertyType)
+                .Single();
+            return implicitlyImplementedPropertyInfo;
+#endif
         }
     }
 }

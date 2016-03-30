@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization
 {
@@ -184,9 +185,12 @@ namespace MongoDB.Bson.Serialization
             var arguments = new List<MemberInfo>();
             foreach (var argumentName in argumentNames)
             {
-                var bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
-                var memberInfos = classTypeInfo.GetMembers(bindingFlags)
-                    .Where(m => m.Name == argumentName && (m is FieldInfo || m is PropertyInfo))
+                FieldInfo fi;
+                PropertyInfo pi;
+                var memberInfos = TypeInfoHelper.GetAllMembers(classTypeInfo)
+                    .Where(m => m.Name == argumentName && (
+                        (fi = m as FieldInfo) != null && !fi.IsStatic || 
+                        (pi = m as PropertyInfo) != null && !pi.GetMethod.IsStatic))
                     .ToArray();
                 if (memberInfos.Length == 0)
                 {
@@ -232,8 +236,29 @@ namespace MongoDB.Bson.Serialization
         // private methods
         private bool IsSameMember(MemberInfo a, MemberInfo b)
         {
+#if NET45
             // two MemberInfos refer to the same member if the Module and MetadataToken are equal
             return a.Module == b.Module && a.MetadataToken == b.MetadataToken;
+#else
+            // these limited checks are sufficient for the way this private method is used in this file
+            if (!a.GetType().Equals(b.GetType()))
+            {
+                return false;
+            }
+            if (!a.DeclaringType.Equals(b.DeclaringType))
+            {
+                return false;
+            }
+            if (!a.Name.Equals(b.Name))
+            {
+                return false;
+            }
+            if (!(a is FieldInfo) && !(a is PropertyInfo))
+            {
+                return false;
+            }
+            return true;
+#endif
         }
 
         private void ThrowFrozenException()

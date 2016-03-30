@@ -15,7 +15,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization.Conventions
 {
@@ -119,7 +121,7 @@ namespace MongoDB.Bson.Serialization.Conventions
         {
             var classTypeInfo = classType.GetTypeInfo();
             var bindingAttr = BindingFlags.IgnoreCase | BindingFlags.Instance;
-            var memberInfos = classTypeInfo.GetMember(parameter.Name, memberType, bindingAttr | visibility);
+            var memberInfos = TypeInfoHelper.GetMatchingMembers(classTypeInfo, parameter.Name, memberType, bindingAttr | visibility).ToArray();
             if (memberInfos.Length == 1 && GetMemberType(memberInfos[0]) == parameter.ParameterType)
             {
                 return memberInfos[0];

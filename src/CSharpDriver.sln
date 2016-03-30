@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Bson", "MongoDB.Bson\MongoDB.Bson.csproj", "{0E9A3A2A-49CD-4F6C-847C-DC79B4B65CE6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Bson.Net45", "MongoDB.Bson.Net45\MongoDB.Bson.Net45.csproj", "{0E9A3A2A-49CD-4F6C-847C-DC79B4B65CE6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Bson.Tests", "MongoDB.Bson.Tests\MongoDB.Bson.Tests.csproj", "{10A5FAC2-E26F-4726-B888-26D5B849F805}"
 EndProject
@@ -47,7 +47,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Driver.GridFS", "Mo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Driver.GridFS.Tests", "MongoDB.Driver.GridFS.Tests\MongoDB.Driver.GridFS.Tests.csproj", "{1537C58E-BECD-4ED2-A900-1AFBB601D2B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Bson.NetCore", "MongoDB.Bson.NetCore\MongoDB.Bson.NetCore.csproj", "{5BD5FCAF-8DE0-4F10-8970-741630456177}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MongoDB.Bson", "MongoDB.Bson\MongoDB.Bson.shproj", "{5E5E5E7D-35B6-4456-B9B6-0A549FEDB6C1}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		MongoDB.Bson\MongoDB.Bson.projitems*{0e9a3a2a-49cd-4f6c-847c-dc79b4b65ce6}*SharedItemsImports = 4
+		MongoDB.Bson\MongoDB.Bson.projitems*{5bd5fcaf-8de0-4f10-8970-741630456177}*SharedItemsImports = 4
+		MongoDB.Bson\MongoDB.Bson.projitems*{5e5e5e7d-35b6-4456-b9b6-0a549fedb6c1}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -121,6 +130,10 @@ Global
 		{1537C58E-BECD-4ED2-A900-1AFBB601D2B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1537C58E-BECD-4ED2-A900-1AFBB601D2B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1537C58E-BECD-4ED2-A900-1AFBB601D2B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BD5FCAF-8DE0-4F10-8970-741630456177}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BD5FCAF-8DE0-4F10-8970-741630456177}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BD5FCAF-8DE0-4F10-8970-741630456177}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BD5FCAF-8DE0-4F10-8970-741630456177}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -143,5 +156,7 @@ Global
 		{0B7600F4-A343-4007-8977-933DBEFC0CC7} = {391D831D-5AC7-43F8-8BCB-6AE81B027658}
 		{6B5D1EA6-1088-4122-B8C4-B341822C7915} = {11282844-4584-4F65-9857-D4329046E84D}
 		{1537C58E-BECD-4ED2-A900-1AFBB601D2B2} = {11282844-4584-4F65-9857-D4329046E84D}
+		{5BD5FCAF-8DE0-4F10-8970-741630456177} = {02386664-8BF7-4E57-A24E-B059B8F997F0}
+		{5E5E5E7D-35B6-4456-B9B6-0A549FEDB6C1} = {02386664-8BF7-4E57-A24E-B059B8F997F0}
 	EndGlobalSection
 EndGlobal

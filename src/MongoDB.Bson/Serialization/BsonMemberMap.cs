@@ -18,6 +18,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization
 {
@@ -536,10 +537,16 @@ namespace MongoDB.Bson.Serialization
                 return Enum.ToObject(type, 0);
             }
 
+#if NET45
             switch (Type.GetTypeCode(type))
+#else
+            switch (TypeHelper.GetTypeCode(type))
+#endif
             {
                 case TypeCode.Empty:
+#if NET45
                 case TypeCode.DBNull:
+#endif
                 case TypeCode.String:
                     break;
                 case TypeCode.Object:
@@ -578,6 +585,7 @@ namespace MongoDB.Bson.Serialization
                 throw new BsonSerializationException(message);
             }
 
+#if NET45
             var sourceType = fieldInfo.DeclaringType;
             var method = new DynamicMethod("Set" + fieldInfo.Name, null, new[] { typeof(object), typeof(object) }, true);
             var gen = method.GetILGenerator();
@@ -590,6 +598,20 @@ namespace MongoDB.Bson.Serialization
             gen.Emit(OpCodes.Ret);
 
             return (Action<object, object>)method.CreateDelegate(typeof(Action<object, object>));
+#else
+            // lambdaExpression = (obj, value) => ((TClass) obj).Field = (TField)value
+            var objParameter = Expression.Parameter(typeof(object), "obj");
+            var valueParameter = Expression.Parameter(typeof(object), "value");
+            var lambdaExpression = Expression.Lambda<Action<object, object>>(
+                Expression.Assign(
+                    Expression.Field(Expression.Convert(objParameter, _classMap.ClassType), fieldInfo),
+                    Expression.Convert(valueParameter, fieldInfo.FieldType)),
+                objParameter,
+                valueParameter
+            );
+
+            return lambdaExpression.Compile();
+#endif
         }
 
         private Func<object, object> GetGetter()

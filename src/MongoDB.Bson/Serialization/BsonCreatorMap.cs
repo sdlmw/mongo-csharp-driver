@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization
 {
@@ -185,12 +184,9 @@ namespace MongoDB.Bson.Serialization
             var arguments = new List<MemberInfo>();
             foreach (var argumentName in argumentNames)
             {
-                FieldInfo fi;
-                PropertyInfo pi;
-                var memberInfos = TypeInfoHelper.GetAllMembers(classTypeInfo)
-                    .Where(m => m.Name == argumentName && (
-                        (fi = m as FieldInfo) != null && !fi.IsStatic || 
-                        (pi = m as PropertyInfo) != null && !pi.GetMethod.IsStatic))
+                var bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+                var memberInfos = classTypeInfo.GetMembers(bindingFlags)
+                    .Where(m => m.Name == argumentName && (m is FieldInfo || m is PropertyInfo))
                     .ToArray();
                 if (memberInfos.Length == 0)
                 {

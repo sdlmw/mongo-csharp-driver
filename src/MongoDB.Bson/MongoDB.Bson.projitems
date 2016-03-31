@@ -320,7 +320,5 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Serializers\VersionSerializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\TypeMappingSerializationProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\TypeNameDiscriminator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\TypeHelper.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\TypeInfoHelper.cs" />
   </ItemGroup>
 </Project>

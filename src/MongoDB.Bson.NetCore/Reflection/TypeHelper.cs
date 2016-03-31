@@ -14,10 +14,8 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace MongoDB.Bson.Utils
+namespace System.Reflection
 {
     internal static class TypeHelper
     {

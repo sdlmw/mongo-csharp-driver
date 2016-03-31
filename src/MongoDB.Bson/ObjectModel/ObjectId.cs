@@ -15,10 +15,10 @@
 
 using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Threading;
-using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson
 {

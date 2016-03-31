@@ -88,7 +88,7 @@ namespace MongoDB.Bson.Serialization.Attributes
 
             if (serializerTypeInfo.ContainsGenericParameters)
             {
-                var genericArguments = type.GetGenericArguments();
+                var genericArguments = typeInfo.GenericTypeArguments;
                 var closedSerializerType = _serializerType.MakeGenericType(genericArguments);
                 return (IBsonSerializer)Activator.CreateInstance(closedSerializerType);
             }

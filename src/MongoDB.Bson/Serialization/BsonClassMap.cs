@@ -23,7 +23,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization.Conventions;
-using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization
 {
@@ -1617,7 +1616,7 @@ namespace MongoDB.Bson.Serialization
                 });
 #else
             var actualTypeInfo = actualType.GetTypeInfo();
-            var actualTypePropertyInfos = TypeInfoHelper.GetAllMembers(actualTypeInfo).OfType<PropertyInfo>();
+            var actualTypePropertyInfos = actualTypeInfo.GetMembers().OfType<PropertyInfo>();
 
             var explicitlyImplementedPropertyName = $"{interfacePropertyInfo.DeclaringType.FullName}.{interfacePropertyInfo.Name}";
             var explicitlyImplementedPropertyInfo = actualTypePropertyInfos

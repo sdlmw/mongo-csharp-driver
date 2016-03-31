@@ -45,7 +45,9 @@
     <Compile Include="..\MongoDB.Shared\Hasher.cs">
       <Link>Hasher.cs</Link>
     </Compile>
-    <Compile Include="MemberTypes.cs" />
+    <Compile Include="Reflection\MemberTypes.cs" />
+    <Compile Include="Reflection\TypeHelper.cs" />
+    <Compile Include="Reflection\TypeInfoExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

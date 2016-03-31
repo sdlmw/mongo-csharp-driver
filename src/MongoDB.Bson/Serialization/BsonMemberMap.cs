@@ -18,7 +18,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson.Serialization
 {

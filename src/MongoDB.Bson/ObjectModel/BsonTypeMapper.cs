@@ -20,7 +20,6 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using MongoDB.Bson.IO;
-using MongoDB.Bson.Utils;
 
 namespace MongoDB.Bson
 {

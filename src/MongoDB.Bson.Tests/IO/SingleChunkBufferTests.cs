@@ -21,7 +21,9 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using MongoDB.Bson.IO;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO
@@ -172,6 +174,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<InvalidOperationException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_should_initialize_subject(
             [Values(1, 2)]
@@ -189,6 +192,7 @@ namespace MongoDB.Bson.Tests.IO
             reflector._chunk.Should().BeSameAs(chunk);
             reflector._disposed.Should().BeFalse();
         }
+#endif
 
         [Test]
         public void constructor_should_throw_when_chunk_is_null()
@@ -198,6 +202,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("chunk");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_should_throw_when_length_is_invalid(
             [Values(-1, 3)]
@@ -209,6 +214,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("length");
         }
+#endif
 
         [Test]
         public void Dispose_can_be_called_multiple_times()
@@ -801,6 +807,7 @@ namespace MongoDB.Bson.Tests.IO
             return subject;
         }
 
+#if NSUBSTITUTE
         private IBsonChunk CreateFakeChunk(int size, int? length = null)
         {
             var bytes = new byte[size];
@@ -808,6 +815,7 @@ namespace MongoDB.Bson.Tests.IO
             chunk.Bytes.Returns(new ArraySegment<byte>(bytes, 0, length ?? size));
             return chunk;
         }
+#endif
 
         private SingleChunkBuffer CreateSubject(byte[] bytes, int? length = null, bool isReadOnly = false)
         {

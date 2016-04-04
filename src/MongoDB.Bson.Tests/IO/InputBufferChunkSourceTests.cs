@@ -17,7 +17,9 @@ using System;
 using System.Reflection;
 using FluentAssertions;
 using MongoDB.Bson.IO;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO
@@ -25,6 +27,7 @@ namespace MongoDB.Bson.Tests.IO
     [TestFixture]
     public class InputBufferChunkSourceTests
     {
+#if NSUBSTITUTE
         [Test]
         public void BaseSource_get_should_return_expected_result()
         {
@@ -35,7 +38,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().BeSameAs(baseSource);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void BaseSource_get_should_throw_when_subject_is_disposed()
         {
@@ -47,7 +52,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("InputBufferChunkSource");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_should_initialize_subject()
         {
@@ -65,6 +72,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.MinChunkSize.Should().Be(minChunkSize);
             reflector._disposed.Should().BeFalse();
         }
+#endif
 
         [Test]
         public void constructor_should_throw_when_maxChunkSize_is_less_than_minChunkSize()
@@ -126,6 +134,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ArgumentException>().And.ParamName.Should().Be("minChunkSize");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_should_use_default_value_for_maxChunkSize()
         {
@@ -135,7 +144,9 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.MaxChunkSize.Should().Be(1 * 1024 * 1024);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_should_use_default_value_for_maxUnpooledChunkSize()
         {
@@ -145,7 +156,9 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.MaxUnpooledChunkSize.Should().Be(4 * 1024);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_should_use_default_value_for_minChunkSize()
         {
@@ -155,7 +168,9 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.MinChunkSize.Should().Be(16 * 1024);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Dispose_can_be_called_more_than_once()
         {
@@ -165,7 +180,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Dispose();
             subject.Dispose();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Dispose_should_dispose_subject()
         {
@@ -177,7 +194,9 @@ namespace MongoDB.Bson.Tests.IO
             var reflector = new Reflector(subject);
             reflector._disposed.Should().BeTrue();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void GetChunk_should_return_unpooled_chunk_when_requestedSize_is_less_than_or_equal_to_maxUnpooledChunkSize(
             [Values(1, 2, 4 * 1024 - 1, 4 * 1024)]
@@ -192,7 +211,9 @@ namespace MongoDB.Bson.Tests.IO
             result.Bytes.Count.Should().Be(requestedSize);
             baseSource.DidNotReceive().GetChunk(Arg.Any<int>());
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(1, 4)]
         [TestCase(2, 4)]
         [TestCase(3, 4)]
@@ -219,7 +240,9 @@ namespace MongoDB.Bson.Tests.IO
 
             baseSource.Received(1).GetChunk(roundedSize);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void GetChunk_should_throw_when_requestedSize_is_less_than_or_equal_to_zero(
             [Values(-1, 0)]
@@ -232,7 +255,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("requestedSize");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void GetChunk_should_throw_when_subject_is_disposed()
         {
@@ -244,7 +269,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("InputBufferChunkSource");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void MaxChunkSize_get_should_return_expected_result()
         {
@@ -256,7 +283,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(maxChunkSize);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void MaxChunkUnpooledSize_get_should_return_expected_result()
         {
@@ -268,7 +297,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(maxUnpooledChunkSize);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void MinChunkSize_get_should_return_expected_result()
         {
@@ -280,6 +311,7 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(minChunkSize);
         }
+#endif
 
         // nested types
         private class Reflector

@@ -14,17 +14,18 @@
 */
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MongoDB.Bson.TestHelpers")]
-[assembly: AssemblyDescription("Helper classes applicable to test projects that reference MongoDB.Bson.")]
+[assembly: AssemblyTitle("MongoDB.Bson.Tests")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("MongoDB Inc.")]
-[assembly: AssemblyProduct("MongoDB.Bson.TestHelpers")]
-[assembly: AssemblyCopyright("Copyright © 2010-2014 MongoDB Inc.")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("MongoDB.Bson.Tests")]
+[assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -34,7 +35,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("034d2454-daf5-430c-b687-f09fba2b6439")]
+[assembly: Guid("5ac6caa2-602b-42b0-8d73-b8d7b3ebe2e1")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -46,5 +47,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.0.*")]
-[assembly: AssemblyFileVersion("0.0.0.0")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

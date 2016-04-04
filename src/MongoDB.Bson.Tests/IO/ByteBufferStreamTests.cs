@@ -21,7 +21,9 @@ using System.Reflection;
 using FluentAssertions;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.TestHelpers;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO
@@ -29,6 +31,7 @@ namespace MongoDB.Bson.Tests.IO
     [TestFixture]
     public class ByteBufferStreamTests
     {
+#if NSUBSTITUTE
         [Test]
         public void Buffer_get_should_return_expected_result()
         {
@@ -39,7 +42,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().BeSameAs(buffer);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Buffer_get_should_throw_when_subject_is_disposed()
         {
@@ -49,7 +54,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(false, true)]
         [TestCase(true, false)]
         public void CanRead_get_should_return_expected_result(bool disposed, bool expectedResult)
@@ -64,7 +71,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(expectedResult);
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(false, true)]
         [TestCase(true, false)]
         public void CanSeek_get_should_return_expected_result(bool disposed, bool expectedResult)
@@ -79,7 +88,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(expectedResult);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void CanTimeout_get_should_return_expected_result(
             [Values(false, true)]
@@ -95,7 +106,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().BeFalse();
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(false, false, true)]
         [TestCase(false, true, false)]
         [TestCase(true, false, false)]
@@ -113,7 +126,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(expectedResult);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_should_initialize_subject(
             [Values(false, true)]
@@ -132,6 +147,7 @@ namespace MongoDB.Bson.Tests.IO
             reflector._disposed.Should().BeFalse();
             reflector._ownsBuffer.Should().Be(ownsBuffer);
         }
+#endif
 
         [Test]
         public void constructor_should_throw_when_buffer_is_null()
@@ -141,6 +157,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("buffer");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void Dispose_can_be_called_more_than_once()
         {
@@ -149,7 +166,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Dispose();
             subject.Dispose();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Dispose_should_dispose_subject()
         {
@@ -160,7 +179,9 @@ namespace MongoDB.Bson.Tests.IO
             var reflector = new Reflector(subject);
             reflector._disposed.Should().BeTrue();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Dispose_should_dispose_buffer_if_it_owns_it(
             [Values(false, true)]
@@ -173,7 +194,9 @@ namespace MongoDB.Bson.Tests.IO
 
             buffer.Received(ownsBuffer ? 1 : 0).Dispose();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Flush_should_do_nothing()
         {
@@ -181,7 +204,9 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.Flush();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Flush_should_throw_when_subject_is_disposed()
         {
@@ -191,6 +216,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void Length_get_should_return_expected_result()
@@ -202,6 +228,7 @@ namespace MongoDB.Bson.Tests.IO
             result.Should().Be(1);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void Length_get_should_throw_when_subject_is_disposed()
         {
@@ -211,7 +238,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Position_get_should_return_expected_result()
         {
@@ -222,7 +251,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(1);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Position_get_should_throw_when_subject_is_disposed()
         {
@@ -232,7 +263,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Position_set_should_have_expected_effect()
         {
@@ -242,7 +275,9 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.Position.Should().Be(1);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Position_set_should_throw_when_value_is_invalid(
             [Values(-1L, (long)int.MaxValue + 1)]
@@ -254,7 +289,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("value");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Position_set_should_throw_when_subject_is_disposed()
         {
@@ -264,6 +301,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         [Requires64BitProcess]
@@ -281,6 +319,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [TestCase(1, 0)]
         [TestCase(2, 0)]
         [TestCase(2, 1)]
@@ -302,7 +341,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Position.Should().Be(position + available);
             subject.Buffer.Received(1).GetBytes((int)position, destination, 0, available);
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(1, 0, 1)]
         [TestCase(2, 0, 2)]
         [TestCase(2, 1, 1)]
@@ -323,7 +364,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Position.Should().Be(position + count);
             subject.Buffer.Received(1).GetBytes((int)position, destination, 0, count);
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, 0)]
         [TestCase(0, 1)]
         [TestCase(1, 2)]
@@ -341,7 +384,9 @@ namespace MongoDB.Bson.Tests.IO
             result.Should().Be(0);
             subject.Position.Should().Be(position);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Read_should_throw_when_buffer_is_null()
         {
@@ -351,7 +396,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("buffer");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(1, 0, -1)]
         [TestCase(1, 0, 2)]
         [TestCase(2, 0, -1)]
@@ -367,7 +414,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("count");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(1, -1)]
         [TestCase(1, 2)]
         [TestCase(2, -1)]
@@ -381,7 +430,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("offset");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Read_should_throw_when_subject_is_disposed()
         {
@@ -392,7 +443,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(1, 0, 1)]
         [TestCase(2, 0, 1)]
         [TestCase(2, 1, 2)]
@@ -412,7 +465,9 @@ namespace MongoDB.Bson.Tests.IO
             result.Should().Be(expectedResult);
             subject.Position.Should().Be(position + 1);
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, 0)]
         [TestCase(0, 1)]
         [TestCase(1, 1)]
@@ -430,7 +485,9 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().Be(-1);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void ReadByte_should_throw_when_subject_is_disposed()
         {
@@ -440,6 +497,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [TestCase(1, 1, new byte[] { 0 }, "")]
         [TestCase(1, 2, new byte[] { 0 }, "")]
@@ -460,6 +518,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.Position.Should().Be(expectedPosition);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadCString_should_throw_when_encoding_is_null()
         {
@@ -469,7 +528,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("encoding");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void ReadCString_should_throw_when_subject_is_disposed()
         {
@@ -479,6 +540,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [TestCase(1, 1, new byte[] { 0 }, new byte[] { })]
         [TestCase(2, 1, new byte[] { 97, 0 }, new byte[] { 97 })]
@@ -513,6 +575,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<EndOfStreamException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadCStringBytes_should_throw_when_subject_is_disposed()
         {
@@ -522,6 +585,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void ReadDouble_should_return_expected_result(
@@ -553,6 +617,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<EndOfStreamException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadDouble_should_throw_when_subject_is_disposed()
         {
@@ -562,6 +627,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void ReadInt32_should_be_little_endian()
@@ -604,6 +670,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<EndOfStreamException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadInt32_should_throw_when_subject_is_disposed()
         {
@@ -613,6 +680,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void ReadInt64_should_be_little_endian()
@@ -655,6 +723,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<EndOfStreamException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadInt64_should_throw_when_subject_is_disposed()
         {
@@ -664,6 +733,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void ReadObjectId_should_be_big_endian()
@@ -708,6 +778,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<EndOfStreamException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadObjectId_should_throw_when_subject_is_disposed()
         {
@@ -717,7 +788,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(4, new byte[] { 4, 0, 0, 0 })]
         [TestCase(5, new byte[] { 5, 0, 0, 0, 1 })]
         [TestCase(6, new byte[] { 6, 0, 0, 0, 1, 2 })]
@@ -736,6 +809,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.Position.Should().Be(expectedPosition);
             subject.Buffer.Received(1).GetSlice(0, bytes.Length);
         }
+#endif
 
         [TestCase(1, new byte[] { })]
         [TestCase(2, new byte[] { 6 })]
@@ -752,6 +826,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<EndOfStreamException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadSlice_should_throw_when_subject_is_disposed()
         {
@@ -761,6 +836,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [TestCase(5, 1, new byte[] { 1, 0, 0, 0, 0 }, "")]
         [TestCase(6, 1, new byte[] { 2, 0, 0, 0, 97, 0 }, "a")]
@@ -779,6 +855,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.Position.Should().Be(length);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadString_should_throw_when_encoding_is_null()
         {
@@ -788,6 +865,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("encoding");
         }
+#endif
 
         [TestCase(4, 1, new byte[] { 1, 0, 0, 0 })]
         [TestCase(5, 1, new byte[] { 2, 0, 0, 0, 97 })]
@@ -815,6 +893,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<FormatException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadString_should_throw_when_subject_is_disposed()
         {
@@ -824,6 +903,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [TestCase(5, 1, new byte[] { 1, 0, 0, 0, 1 })]
         [TestCase(6, 1, new byte[] { 2, 0, 0, 0, 97, 1 })]
@@ -841,6 +921,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<FormatException>();
         }
 
+#if NSUBSTITUTE
         [TestCase(SeekOrigin.Begin, 1, 0, 0)]
         [TestCase(SeekOrigin.Begin, 1, 1, 1)]
         [TestCase(SeekOrigin.Current, 1, -1, 0)]
@@ -860,7 +941,9 @@ namespace MongoDB.Bson.Tests.IO
             result.Should().Be(expectedPosition);
             subject.Position.Should().Be(expectedPosition);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Seek_should_throw_when_origin_is_invalid()
         {
@@ -870,7 +953,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentException>().And.ParamName.Should().Be("origin");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(SeekOrigin.Begin, -1)]
         [TestCase(SeekOrigin.Begin, (long)int.MaxValue + 1)]
         [TestCase(SeekOrigin.Current, -2)]
@@ -888,7 +973,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<IOException>();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Seek_should_throw_when_subject_is_disposed()
         {
@@ -898,7 +985,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void SetLength_should_throw_when_buffer_is_not_writable()
         {
@@ -909,7 +998,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<NotSupportedException>();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void SetLength_should_set_length(
             [Values(0, 1, 2, 3)]
@@ -922,7 +1013,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Length.Should().Be(length);
             subject.Buffer.Received(1).EnsureCapacity((int)length);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void SetLength_should_set_position_when_position_is_greater_than_new_length(
             [Values(0, 1, 2, 3)]
@@ -935,7 +1028,9 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.Position.Should().Be(length);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void SetLength_should_throw_when_length_is_out_of_range(
             [Values(-1, (long)int.MaxValue + 1)]
@@ -947,7 +1042,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("value");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void SetLength_should_throw_when_subject_is_disposed()
         {
@@ -957,6 +1054,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [TestCase(1, 1, new byte[] { 0 }, 1)]
         [TestCase(1, 2, new byte[] { 0 }, 1)]
@@ -990,6 +1088,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<EndOfStreamException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void SkipCString_should_throw_when_subject_is_disposed()
         {
@@ -999,6 +1098,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void ThrowIfEndOfStream_should_throw_when_position_plus_length_exceeds_2GB()
@@ -1016,6 +1116,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [Test]
         public void Write_should_clear_bytes_between_length_and_position()
         {
@@ -1026,7 +1127,9 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.Buffer.Received(1).Clear(0, 1);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Write_should_ensure_capacity()
         {
@@ -1041,7 +1144,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Buffer.Received(1).EnsureCapacity(3);
             subject.Buffer.Length.Should().Be(3);
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(1, 0, 1, 0, 1)]
         [TestCase(4, 1, 2, 1, 3)]
         public void Write_should_have_expected_effect(int sourceSize, int offset, int count, long initialPosition, long expectedPosition)
@@ -1056,7 +1161,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Length.Should().Be(expectedPosition);
             subject.Buffer.Received(1).SetBytes((int)initialPosition, source, offset, count);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Write_should_throw_when_buffer_is_null()
         {
@@ -1066,7 +1173,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("buffer");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, 0, -1)]
         [TestCase(0, 0, 1)]
         [TestCase(1, 0, -1)]
@@ -1088,7 +1197,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("count");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Write_should_throw_when_not_writable()
         {
@@ -1100,7 +1211,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<NotSupportedException>();
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Write_should_throw_when_offset_is_out_of_range(
             [Values(-1, 2)]
@@ -1113,7 +1226,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("offset");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void Write_should_throw_when_subject_is_disposed()
         {
@@ -1124,7 +1239,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, 1)]
         [TestCase(1, 2)]
         public void WriteByte_should_have_expected_effect(long initialPosition, long expectedPosition)
@@ -1138,7 +1255,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Length.Should().Be(expectedPosition);
             subject.Buffer.Received(1).SetByte((int)initialPosition, 4);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteByte_should_throw_when_subject_is_disposed()
         {
@@ -1148,6 +1267,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [TestCase(1, 1, "", new byte[] { 0 })]
         [TestCase(2, 1, "a", new byte[] { 97, 0 })]
@@ -1181,6 +1301,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.ReadBytes((int)subject.Length).Should().Equal(expectedBytes);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void WriteCString_should_throw_when_subject_is_disposed()
         {
@@ -1190,7 +1311,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteCString_should_throw_when_value_is_null()
         {
@@ -1200,6 +1323,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("value");
         }
+#endif
 
         [Test]
         public void WriteCString_should_throw_when_value_contains_nulls(
@@ -1229,6 +1353,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ArgumentException>().And.ParamName.Should().Be("value");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void WriteCStringBytes_should_have_expected_effect()
         {
@@ -1242,7 +1367,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Buffer.Received(1).SetBytes(0, value, 0, 3);
             subject.Buffer.Received(1).SetByte(3, 0);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteCStringBytes_should_throw_when_subject_is_disposed()
         {
@@ -1252,7 +1379,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteCStringBytes_should_throw_when_value_is_null()
         {
@@ -1262,7 +1391,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("value");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteDouble_should_have_expected_effect(
             [Values(-1.0, 0.0, 1.0, double.Epsilon, double.MaxValue, double.MinValue, double.NaN, double.NegativeInfinity, double.PositiveInfinity)]
@@ -1277,7 +1408,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Length.Should().Be(8);
             subject.Buffer.Received(1).SetBytes(0, Arg.Is<byte[]>(x => x.SequenceEqual(bytes)), 0, 8);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteDouble_should_throw_when_subject_is_disposed()
         {
@@ -1287,6 +1420,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void WriteInt32_should_have_expected_effect(
@@ -1306,6 +1440,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.ReadBytes(4).Should().Equal(expectedBytes);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void WriteInt32_should_throw_when_subject_is_disposed()
         {
@@ -1315,7 +1450,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteInt64_should_have_expected_effect(
             [Values(-1, 0, 1, long.MaxValue, long.MinValue)]
@@ -1330,7 +1467,9 @@ namespace MongoDB.Bson.Tests.IO
             subject.Length.Should().Be(8);
             subject.Buffer.Received(1).SetBytes(0, Arg.Is<byte[]>(x => x.SequenceEqual(expectedBytes)), 0, 8);
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteInt64_should_throw_when_subject_is_disposed()
         {
@@ -1340,6 +1479,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void WriteWriteObjectIdshould_have_expected_effect(
@@ -1358,6 +1498,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.ReadBytes(12).Should().Equal(bytes);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void WriteObjectId_should_throw_when_subject_is_disposed()
         {
@@ -1367,6 +1508,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         [Test]
         public void WriteString_should_have_expected_effect(
@@ -1391,6 +1533,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.ReadBytes(expectedLength).Should().Equal(expectedBytes);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void WriteString_should_throw_when_subject_is_disposed()
         {
@@ -1400,6 +1543,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferStream");
         }
+#endif
 
         // helper methods
         private IEnumerable<int> CalculateChunkSizes(int length, int numberOfChunks)
@@ -1442,18 +1586,22 @@ namespace MongoDB.Bson.Tests.IO
             return chunkSizes.Select(size => new ByteArrayChunk(size));
         }
 
+#if NSUBSTITUTE
         private ByteBufferStream CreateDisposedSubject()
         {
             var subject = CreateSubject();
             subject.Dispose();
             return subject;
         }
+#endif
 
+#if NSUBSTITUTE
         private ByteBufferStream CreateSubject()
         {
             var buffer = Substitute.For<IByteBuffer>();
             return new ByteBufferStream(buffer);
         }
+#endif
 
         private ByteBufferStream CreateSubject(byte[] bytes)
         {

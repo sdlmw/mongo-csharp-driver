@@ -23,7 +23,9 @@ using System.Threading.Tasks;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.Serialization.Serializers
@@ -59,6 +61,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item1Serializer, Is.SameAs(boolSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -69,6 +72,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
 
             Assert.That(subject.Item1Serializer, Is.SameAs(item1Serializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()
@@ -156,6 +160,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item2Serializer, Is.SameAs(intSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -169,6 +174,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item1Serializer, Is.SameAs(item1Serializer));
             Assert.That(subject.Item2Serializer, Is.SameAs(item2Serializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()
@@ -257,6 +263,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item3Serializer, Is.SameAs(boolSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -273,6 +280,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item2Serializer, Is.SameAs(item2Serializer));
             Assert.That(subject.Item3Serializer, Is.SameAs(item3Serializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()
@@ -362,6 +370,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item4Serializer, Is.SameAs(intSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -381,6 +390,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item3Serializer, Is.SameAs(item3Serializer));
             Assert.That(subject.Item4Serializer, Is.SameAs(item4Serializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()
@@ -471,6 +481,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item5Serializer, Is.SameAs(boolSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -493,6 +504,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item4Serializer, Is.SameAs(item4Serializer));
             Assert.That(subject.Item5Serializer, Is.SameAs(item5Serializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()
@@ -584,6 +596,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item6Serializer, Is.SameAs(intSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -609,6 +622,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item5Serializer, Is.SameAs(item5Serializer));
             Assert.That(subject.Item6Serializer, Is.SameAs(item6Serializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()
@@ -701,6 +715,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item7Serializer, Is.SameAs(boolSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -729,6 +744,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item6Serializer, Is.SameAs(item6Serializer));
             Assert.That(subject.Item7Serializer, Is.SameAs(item7Serializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()
@@ -823,6 +839,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.RestSerializer, Is.SameAs(restSerializer));
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_serializers_should_initialize_instance()
         {
@@ -854,6 +871,7 @@ namespace MongoDB.Bson.Tests.Serialization.Serializers
             Assert.That(subject.Item7Serializer, Is.SameAs(item7Serializer));
             Assert.That(subject.RestSerializer, Is.SameAs(restSerializer));
         }
+#endif
 
         [Test]
         public void Deserialize_should_deserialize_null()

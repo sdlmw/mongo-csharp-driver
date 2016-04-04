@@ -20,7 +20,9 @@ using System.Reflection;
 using FluentAssertions;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.TestHelpers;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO
@@ -47,6 +49,7 @@ namespace MongoDB.Bson.Tests.IO
             result.Count.Should().Be(expectedCount);
         }
 
+#if NSUBSTITUTE
         [Test]
         public void AccessBackingBytes_should_return_expected_result_when_there_are_zero_chunks()
         {
@@ -59,6 +62,7 @@ namespace MongoDB.Bson.Tests.IO
             result.Offset.Should().Be(0);
             result.Count.Should().Be(0);
         }
+#endif
 
         [Test]
         public void AccessBackingBytes_should_throw_when_position_is_invalid(
@@ -103,6 +107,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("MultiChunkBuffer");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ChunkSource_get_should_return_expected_result(
             [Values(false, true)]
@@ -119,6 +124,7 @@ namespace MongoDB.Bson.Tests.IO
 
             result.Should().BeSameAs(chunkSource);
         }
+#endif
 
         [TestCase(0, 0, new byte[] { 1, 2, 3, 4, 5, 6 })]
         [TestCase(0, 1, new byte[] { 0, 2, 3, 4, 5, 6 })]
@@ -293,6 +299,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("length");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void constructor_with_chunkSource_should_initialize_subject()
         {
@@ -309,6 +316,7 @@ namespace MongoDB.Bson.Tests.IO
             reflector._disposed.Should().BeFalse();
             reflector._positions.Should().Equal(new[] { 0 });
         }
+#endif
 
         [Test]
         public void constructor_with_chunkSource_should_throw_when_chunkSource_is_null()
@@ -329,6 +337,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.Dispose();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void Dispose_should_dispose_chunks(
             [Values(0, 1, 2, 3)]
@@ -344,6 +353,7 @@ namespace MongoDB.Bson.Tests.IO
                 chunk.Received(1).Dispose();
             }
         }
+#endif
 
         [Test]
         public void Dispose_should_dispose_subject()
@@ -356,6 +366,7 @@ namespace MongoDB.Bson.Tests.IO
             reflector._disposed.Should().BeTrue();
         }
 
+#if NSUBSTITUTE
         [TestCase(0, new int[] { })]
         [TestCase(1, new int[] { 1 })]
         [TestCase(2, new int[] { 1, 2 })]
@@ -377,6 +388,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.Capacity.Should().BeGreaterOrEqualTo(minimumCapacity);
             reflector._chunks.Select(c => c.Bytes.Count).Should().Equal(expectedChunkSizes);
         }
+#endif
 
         [Test]
         public void EnsureCapacity_should_throw_when_chunkSource_is_null()

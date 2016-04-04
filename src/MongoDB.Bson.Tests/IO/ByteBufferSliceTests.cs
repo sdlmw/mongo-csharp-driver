@@ -21,7 +21,9 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using MongoDB.Bson.IO;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO
@@ -56,6 +58,7 @@ namespace MongoDB.Bson.Tests.IO
             result.Count.Should().Be(1); // not 2 or 3
         }
 
+#if NSUBSTITUTE
         [Test]
         public void AccessBackingBytes_should_adjust_position()
         {
@@ -66,6 +69,7 @@ namespace MongoDB.Bson.Tests.IO
 
             subject.Buffer.Received(1).AccessBackingBytes(1);
         }
+#endif
 
         [Test]
         public void AccessBackingBytes_should_throw_when_position_is_out_of_range(
@@ -111,6 +115,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferSlice");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void Clear_should_adjust_position()
         {
@@ -121,6 +126,7 @@ namespace MongoDB.Bson.Tests.IO
 
             buffer.Received(1).Clear(1, 2);
         }
+#endif
 
         [TestCase(0, 3)]
         [TestCase(1, 2)]
@@ -225,6 +231,7 @@ namespace MongoDB.Bson.Tests.IO
             subject.Dispose();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void Dispose_should_dispose_buffer()
         {
@@ -235,6 +242,7 @@ namespace MongoDB.Bson.Tests.IO
 
             buffer.Received(1).Dispose();
         }
+#endif
 
         [Test]
         public void Dispose_should_dispose_subject()
@@ -257,6 +265,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<NotSupportedException>();
         }
 
+#if NSUBSTITUTE
         [Test]
         public void GetByte_should_adjust_position()
         {
@@ -267,6 +276,7 @@ namespace MongoDB.Bson.Tests.IO
 
             buffer.Received(1).GetByte(1);
         }
+#endif
 
         [Test]
         public void GetByte_should_throw_when_position_is_out_of_range(
@@ -291,6 +301,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferSlice");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void GetBytes_should_adjust_position()
         {
@@ -302,6 +313,7 @@ namespace MongoDB.Bson.Tests.IO
 
             buffer.Received(1).GetBytes(2, destination, 0, 1);
         }
+#endif
 
         [TestCase(0, 3)]
         [TestCase(1, 2)]
@@ -341,6 +353,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ObjectDisposedException>().And.ObjectName.Should().Be("ByteBufferSlice");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void GetSlice_should_adjust_position()
         {
@@ -351,6 +364,7 @@ namespace MongoDB.Bson.Tests.IO
 
             buffer.Received(1).GetSlice(2, 1);
         }
+#endif
 
         [TestCase(0, 3)]
         [TestCase(1, 2)]
@@ -469,6 +483,7 @@ namespace MongoDB.Bson.Tests.IO
             return new ByteBufferSlice(buffer, offset, length);
         }
 
+#if NSUBSTITUTE
         public ByteBufferSlice CreateSubjectWithFakeBuffer(int size = 3, int offset = 1, int length = 2)
         {
             var buffer = Substitute.For<IByteBuffer>();
@@ -476,6 +491,7 @@ namespace MongoDB.Bson.Tests.IO
             buffer.IsReadOnly.Returns(true);
             return new ByteBufferSlice(buffer, offset, length);
         }
+#endif
 
         // nested types
         private class Reflector

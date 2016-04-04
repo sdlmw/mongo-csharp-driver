@@ -20,7 +20,9 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using MongoDB.Bson.IO;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO
@@ -72,6 +74,7 @@ namespace MongoDB.Bson.Tests.IO
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("chunkSource");
         }
 
+#if NSUBSTITUTE
         [Test]
         public void Create_should_throw_when_minimumCapacity_is_invalid(
             [Values(-1, 0)]
@@ -83,5 +86,6 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("minimumCapacity");
         }
+#endif
     }
 }

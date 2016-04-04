@@ -29,6 +29,7 @@ namespace MongoDB.Bson.Tests.Jira.CSharp170
             public ObservableCollection<int> Observable;
         }
 
+#if NET45
         [Test]
         [Platform(Exclude = "Mono", Reason = "ObservableCollection in Mono 2.10.8 throws a NotImplementedException in the constructor.")]
         public void TestDeserializeDouble()
@@ -53,5 +54,6 @@ namespace MongoDB.Bson.Tests.Jira.CSharp170
             Assert.AreEqual(2, rehydrated.Observable[1]);
             Assert.AreEqual(3, rehydrated.Observable[2]);
         }
+#endif
     }
 }

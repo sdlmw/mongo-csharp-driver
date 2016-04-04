@@ -21,7 +21,6 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using MongoDB.Bson.IO;
-using NSubstitute;
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO

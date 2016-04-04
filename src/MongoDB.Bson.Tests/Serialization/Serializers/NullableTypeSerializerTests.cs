@@ -25,6 +25,7 @@ namespace MongoDB.Bson.Tests.Serialization
     [TestFixture]
     public class NullableTypeSerializerTests
     {
+        private enum SomeEnum { Red, Blue };
         private class C
         {
             public bool? Boolean { get; set; }
@@ -37,7 +38,7 @@ namespace MongoDB.Bson.Tests.Serialization
             public long? Int64 { get; set; }
             public ObjectId? ObjectId { get; set; }
             [BsonRepresentation(BsonType.String)]
-            public ConsoleColor? Enum { get; set; }
+            public SomeEnum? Enum { get; set; }
             // public Struct? Struct { get; set; }
         }
 
@@ -127,7 +128,7 @@ namespace MongoDB.Bson.Tests.Serialization
         [Test]
         public void TestEnum()
         {
-            var c = new C { Enum = ConsoleColor.Red };
+            var c = new C { Enum = SomeEnum.Red };
             var json = c.ToJson();
             var expected = _template.Replace("'Enum' : null", "'Enum' : 'Red'").Replace("'", "\"");
             Assert.AreEqual(expected, json);

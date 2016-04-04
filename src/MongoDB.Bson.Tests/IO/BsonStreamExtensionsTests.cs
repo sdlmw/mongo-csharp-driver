@@ -19,7 +19,9 @@ using System.Linq;
 using System.Reflection;
 using FluentAssertions;
 using MongoDB.Bson.IO;
+#if NSUBSTITUTE
 using NSubstitute;
+#endif
 using NUnit.Framework;
 
 namespace MongoDB.Bson.Tests.IO
@@ -50,6 +52,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [Test]
         public void BackpatchSize_should_throw_when_size_is_larger_than_2GB()
         {
@@ -64,7 +67,9 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<FormatException>();
             }
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void BackpatchSize_should_throw_when_startPosition_is_out_of_range(
             [Values(-1, 4)]
@@ -79,6 +84,7 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("startPosition");
             }
         }
+#endif
 
         [Test]
         public void BackpatchSize_should_throw_when_stream_is_null()
@@ -244,6 +250,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadBytes_with_buffer_should_handle_partial_reads()
         {
@@ -261,7 +268,9 @@ namespace MongoDB.Bson.Tests.IO
                 baseStream.Received(1).Read(buffer, 1, 2);
             }
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void ReadBytes_with_buffer_should_optimize_count_of_one()
         {
@@ -277,6 +286,7 @@ namespace MongoDB.Bson.Tests.IO
                 baseStream.Received(1).ReadByte();
             }
         }
+#endif
 
         [Test]
         public void ReadBytes_with_buffer_should_return_expected_result(
@@ -315,6 +325,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadBytes_with_buffer_should_throw_when_buffer_is_null()
         {
@@ -324,7 +335,9 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("buffer");
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, 0, 1)]
         [TestCase(1, 0, 2)]
         [TestCase(1, 1, 1)]
@@ -345,7 +358,9 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("count");
             }
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, 0, 1)]
         [TestCase(1, 0, 2)]
         [TestCase(1, 1, 1)]
@@ -363,7 +378,9 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("count");
             }
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, -1)]
         [TestCase(0, 1)]
         [TestCase(1, -1)]
@@ -381,6 +398,7 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("offset");
             }
         }
+#endif
 
         [Test]
         public void ReadBytes_with_buffer_should_throw_when_stream_is_null()
@@ -422,6 +440,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [Test]
         public void ReadBytes_with_count_should_throw_when_count_is_negative()
         {
@@ -432,6 +451,7 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("count");
             }
         }
+#endif
 
         [Test]
         public void ReadBytes_with_count_should_throw_when_stream_is_null()
@@ -587,6 +607,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [Test]
         public void WriteBytes_should_optimize_count_of_one()
         {
@@ -600,7 +621,9 @@ namespace MongoDB.Bson.Tests.IO
                 baseStream.Received(1).WriteByte(1);
             }
         }
+#endif
 
+#if NSUBSTITUTE
         [Test]
         public void WriteBytes_should_throw_when_buffer_is_null()
         {
@@ -615,7 +638,9 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("buffer");
             }
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, 0, 1)]
         [TestCase(1, 0, 2)]
         [TestCase(1, 1, 1)]
@@ -633,7 +658,9 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("count");
             }
         }
+#endif
 
+#if NSUBSTITUTE
         [TestCase(0, -1)]
         [TestCase(0, 1)]
         [TestCase(1, -1)]
@@ -652,6 +679,7 @@ namespace MongoDB.Bson.Tests.IO
                 action.ShouldThrow<ArgumentOutOfRangeException>().And.ParamName.Should().Be("offset");
             }
         }
+#endif
 
         [Test]
         public void WriteBytes_should_throw_when_stream_is_null()
@@ -699,6 +727,7 @@ namespace MongoDB.Bson.Tests.IO
             }
         }
 
+#if NSUBSTITUTE
         [Test]
         public void WriteSlice_should_throw_when_slice_is_null()
         {
@@ -709,6 +738,7 @@ namespace MongoDB.Bson.Tests.IO
 
             action.ShouldThrow<ArgumentNullException>().And.ParamName.Should().Be("slice");
         }
+#endif
 
         [Test]
         public void WriteSlice_should_throw_when_stream_is_null()

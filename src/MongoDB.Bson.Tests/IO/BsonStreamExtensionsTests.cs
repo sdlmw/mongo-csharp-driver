@@ -227,7 +227,7 @@ namespace MongoDB.Bson.Tests.IO
         }
 
         [TestCase(0x0c)]
-        [TestCase(0x13)]
+        [TestCase(0x14)]
         [TestCase(0xfe)]
         public void ReadBsonType_should_throw_when_value_is_invalid(int n)
         {

@@ -44,10 +44,7 @@ namespace MongoDB.Bson.IO
         /// Reads a BSON decimal from the stream.
         /// </summary>
         /// <returns>A <see cref="Decimal128"/>.</returns>
-        public virtual Decimal128 ReadDecimal()
-        {
-            throw new NotImplementedException();
-        }
+        public abstract Decimal128 ReadDecimal();
 
         /// <summary>
         /// Reads a BSON double from the stream.
@@ -107,10 +104,7 @@ namespace MongoDB.Bson.IO
         /// Writes the <paramref name="value"/> to the stream.
         /// </summary>
         /// <param name="value">The value.</param>
-        public virtual void WriteDecimal(Decimal128 value)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract void WriteDecimal(Decimal128 value);
 
         /// <summary>
         /// Writes a BSON double to the stream.

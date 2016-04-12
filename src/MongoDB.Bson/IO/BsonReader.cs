@@ -174,10 +174,7 @@ namespace MongoDB.Bson.IO
         public abstract long ReadDateTime();
 
         /// <inheritdoc />
-        public virtual Decimal128 ReadDecimal()
-        {
-            throw new NotImplementedException();
-        }
+        public abstract Decimal128 ReadDecimal();
 
         /// <summary>
         /// Reads a BSON Double from the reader.

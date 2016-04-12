@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -23,6 +24,7 @@ using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace MongoDB.Bson.Specifications.bson
 {
@@ -94,8 +96,9 @@ namespace MongoDB.Bson.Specifications.bson
         private void RunParseError(BsonDocument definition)
         {
             var subject = (string)definition["subject"];
+            var style = NumberStyles.Float & ~NumberStyles.AllowTrailingWhite;
             Decimal128 result;
-            if (Decimal128.TryParse(subject, out result))
+            if (Decimal128.TryParse(subject, style, NumberFormatInfo.CurrentInfo, out result))
             {
                 Assert.Fail($"{subject} should have resulted in a parse failure.");
             }
@@ -140,21 +143,21 @@ namespace MongoDB.Bson.Specifications.bson
 
                         if (definition.Contains("valid"))
                         {
-                            tests = tests.Concat(GetTestCases(
+                            tests = tests.Concat(GetTestCasesHelper(
                                 TestType.Valid,
                                 (string)definition["description"],
                                 definition["valid"].AsBsonArray.Cast<BsonDocument>()));
                         }
                         if (definition.Contains("parseErrors"))
                         {
-                            tests = tests.Concat(GetTestCases(
+                            tests = tests.Concat(GetTestCasesHelper(
                             TestType.ParseError,
                             (string)definition["description"],
                             definition["parseErrors"].AsBsonArray.Cast<BsonDocument>()));
                         }
                         if (definition.Contains("decodeErrors"))
                         {
-                            tests = tests.Concat(GetTestCases(
+                            tests = tests.Concat(GetTestCasesHelper(
                                 TestType.DecodeError,
                                 (string)definition["description"],
                                 definition["decodeErrors"].AsBsonArray.Cast<BsonDocument>()));
@@ -163,15 +166,15 @@ namespace MongoDB.Bson.Specifications.bson
                     });
             }
 
-            private static IEnumerable<TestCaseData> GetTestCases(TestType type, string description, IEnumerable<BsonDocument> documents)
+            private static IEnumerable<TestCaseData> GetTestCasesHelper(TestType type, string description, IEnumerable<BsonDocument> documents)
             {
                 var dataList = new List<ITestCaseData>();
                 var nameList = new Dictionary<string, int>();
                 foreach (BsonDocument document in documents)
                 {
                     var data = new TestCaseData(type, document);
-                    data.Categories.Add("Specifications");
-                    data.Categories.Add("bson");
+                    data.SetCategory("Specifications");
+                    data.SetCategory("bson");
 
                     var name = GetTestName(description, document);
                     int i = 0;

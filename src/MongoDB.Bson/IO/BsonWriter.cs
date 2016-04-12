@@ -171,10 +171,7 @@ namespace MongoDB.Bson.IO
         public abstract void WriteDateTime(long value);
 
         /// <inheritdoc />
-        public virtual void WriteDecimal(Decimal128 value)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract void WriteDecimal(Decimal128 value);
 
         /// <summary>
         /// Writes a BSON Double to the writer.

@@ -197,7 +197,7 @@ namespace MongoDB.Bson.IO
         public override Decimal128 ReadDecimal()
         {
             if (Disposed) { ThrowObjectDisposedException(); }
-            VerifyBsonType(nameof(ReadDecimal), BsonType.DateTime);
+            VerifyBsonType(nameof(ReadDecimal), BsonType.Decimal);
             State = GetNextState();
             return _currentValue.AsDecimal128;
         }

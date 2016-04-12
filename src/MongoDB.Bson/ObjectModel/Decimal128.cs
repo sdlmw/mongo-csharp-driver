@@ -1,4 +1,19 @@
-﻿using System;
+﻿/* Copyright 2016 MongoDB Inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -42,26 +57,19 @@ namespace MongoDB.Bson
 
         private readonly byte _flags;
         private readonly short _exponent;
+        private readonly ulong _significandHigh;
+        private readonly ulong _significandLow;
 
-        // below only represent the significand
-        private readonly uint _high;
-        private readonly uint _highMid;
-        private readonly uint _lowMid;
-        private readonly uint _low;
-
-        private Decimal128(byte flags, uint[] bits, short exponent)
+        private Decimal128(byte flags, short exponent, ulong significandHigh, ulong significandLow)
         {
-            _flags = flags;
-            _high = bits[3];
-            _highMid = bits[2];
-            _lowMid = bits[1];
-            _low = bits[0];
-
             if (exponent > __exponentMax || exponent < __exponentMin)
             {
                 throw new ArgumentException($"Exponent must be between {__exponentMin} and {__exponentMax}.", "exponent");
             }
+            _flags = flags;
             _exponent = exponent;
+            _significandHigh = significandHigh;
+            _significandLow = significandLow;
         }
 
         /// <summary>
@@ -80,10 +88,8 @@ namespace MongoDB.Bson
             _exponent = (short)((bits[3] >> 16) & 0x7F);
             _exponent *= -1;
 
-            _high = 0;
-            _highMid = unchecked((uint)bits[2]);
-            _lowMid = unchecked((uint)bits[1]);
-            _low = unchecked((uint)bits[0]);
+            _significandHigh = (ulong)(uint)bits[2];
+            _significandLow = ((ulong)(uint)bits[1] << 32) | (ulong)(uint)bits[0];
         }
 
         /// <summary>
@@ -103,10 +109,8 @@ namespace MongoDB.Bson
             }
 
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = 0;
-            _low = (uint)v;
+            _significandHigh = 0;
+            _significandLow = (ulong)v;
         }
 
         /// <summary>
@@ -117,10 +121,8 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = 0;
-            _low = value;
+            _significandHigh = 0;
+            _significandLow = (ulong)value;
         }
 
         /// <summary>
@@ -139,10 +141,8 @@ namespace MongoDB.Bson
             }
 
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = 0;
-            _low = (uint)v;
+            _significandHigh = 0;
+            _significandLow = (ulong)v;
         }
 
         /// <summary>
@@ -154,10 +154,8 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = 0;
-            _low = value;
+            _significandHigh = 0;
+            _significandLow = (ulong)value;
         }
 
         /// <summary>
@@ -167,18 +165,17 @@ namespace MongoDB.Bson
         public Decimal128(int value)
         {
             _flags = 0;
+            var v = (long)value;
             if (value < 0)
             {
                 // sign bit
                 _flags = 0x80;
-                value = -value;
+                v = -v;
             }
 
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = 0;
-            _low = (uint)value;
+            _significandHigh = 0;
+            _significandLow = (ulong)v;
         }
 
         /// <summary>
@@ -190,10 +187,8 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = 0;
-            _low = value;
+            _significandHigh = 0;
+            _significandLow = (ulong)value;
         }
 
         /// <summary>
@@ -211,10 +206,8 @@ namespace MongoDB.Bson
             }
 
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = (uint)(value >> 32);
-            _low = (uint)value;
+            _significandHigh = 0;
+            _significandLow = (ulong)value;
         }
 
         /// <summary>
@@ -226,10 +219,8 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _high = 0;
-            _highMid = 0;
-            _lowMid = (uint)(value >> 32);
-            _low = (uint)value;
+            _significandHigh = 0;
+            _significandLow = (ulong)value;
         }
 
         /// <summary>
@@ -238,40 +229,30 @@ namespace MongoDB.Bson
         /// <param name="bits">The binary representation in the form of four 32-bit unsigned integers.</param>
         [CLSCompliant(false)]
         public Decimal128(uint[] bits)
+            : this(((ulong)bits[3] << 32) | (ulong)bits[2], ((ulong)bits[1] << 32) | (ulong)bits[0])
         {
-            if (bits == null)
-            {
-                throw new ArgumentNullException("parts");
-            }
-            if (bits.Length != 4)
-            {
-                throw new ArgumentException("Must be of length 4.", "parts");
-            }
+        }
 
-            _flags = (byte)(bits[3] >> 24);
-
-            // combination will be the low 5 bits
-            var combination = (_flags >> 2) & 0x1F;
-            uint biasedExponent;
-            uint significandMsb;
-            // 2 high combination bits are set
-            if ((combination >> 3) == 0x3)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="highBits">The high order 64 bits of the binary representation.</param>
+        /// <param name="lowBits">The low order 64 bits of the binary representation.</param>
+        [CLSCompliant(false)]
+        public Decimal128(ulong highBits, ulong lowBits)
+        {
+            _flags = (byte)(highBits >> 56);
+            if ((_flags & 0x60) == 0x60)
             {
-                biasedExponent = (bits[3] >> 15) & 0x3FFF;
-                significandMsb = 0x8 + ((bits[3] >> 14) & 0x1);
+                _exponent = (short)(((int)(highBits >> 47) & 0x3fff) - __exponentBias);
+                _significandHigh = 0x0002000000000000 | (highBits & 0x00007fffffffffff);
             }
             else
             {
-                biasedExponent = (bits[3] >> 17) & 0x3FFF;
-                significandMsb = (bits[3] >> 14) & 0x7;
+                _exponent = (short)(((int)(highBits >> 49) & 0x3fff) - __exponentBias);
+                _significandHigh = highBits & 0x0001ffffffffffff;
             }
-
-            _exponent = (short)(biasedExponent - __exponentBias);
-
-            _high = (bits[3] & 0x3FFF) + ((significandMsb & 0xF) << 14);
-            _highMid = bits[2];
-            _lowMid = bits[1];
-            _low = bits[0];
+            _significandLow = lowBits;
         }
 
         /// <inheritdoc />
@@ -321,10 +302,8 @@ namespace MongoDB.Bson
             int hash = 17;
             hash = 37 * hash + _flags.GetHashCode();
             hash = 37 * hash + _exponent.GetHashCode();
-            hash = 37 * hash + _high.GetHashCode();
-            hash = 37 * hash + _highMid.GetHashCode();
-            hash = 37 * hash + _lowMid.GetHashCode();
-            hash = 37 * hash + _low.GetHashCode();
+            hash = 37 * hash + _significandHigh.GetHashCode();
+            hash = 37 * hash + _significandLow.GetHashCode();
             return hash;
         }
 
@@ -494,10 +473,11 @@ namespace MongoDB.Bson
 
             var significand = new byte[36];
             bool isZero = false;
-            var high = _high;
-            var highMid = _highMid;
-            var lowMid = _lowMid;
-            var low = _low;
+            var high = (uint)(_significandHigh >> 32);
+            var highMid = (uint)_significandHigh;
+            var lowMid = (uint)(_significandLow >> 32);
+            var low = (uint)_significandLow;
+
             if (high == 0 && highMid == 0 && lowMid == 0 && low == 0)
             {
                 isZero = true;
@@ -623,31 +603,44 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static uint[] GetBits(Decimal128 d)
         {
-            var parts = new uint[4];
-            var biasedExponent = (uint)(d._exponent + __exponentBias);
+            var bits = new uint[4];
+            var highBits = d.GetHighBits();
+            var lowBits = d.GetLowBits();
+            bits[3] = (uint)(highBits >> 32);
+            bits[2] = (uint)highBits;
+            bits[1] = (uint)(lowBits >> 32);
+            bits[0] = (uint)lowBits;
+            return bits;
+        }
 
-            parts[0] = d._low;
-            parts[1] = d._lowMid;
-            parts[2] = d._highMid;
-
-            if (((d._high >> 17) & 0x1) == 0x1)
+        /// <summary>
+        /// Gets the high order 64 bits of the binary representation of this instance.
+        /// </summary>
+        /// <returns>The high order 64 bits of the binary representation of this instance.</returns>
+        [CLSCompliant(false)]
+        public ulong GetHighBits()
+        {
+            var biasedExponent = _exponent + __exponentBias;
+            var highBits = _significandHigh;
+            if ((_flags & 0x60) == 0x60)
             {
-                parts[3] |= 0x3 << 29;
-                parts[3] |= (biasedExponent & 0x3FFF) << 15;
-                parts[3] |= d._high & 0x7FFF;
+                highBits = ((ulong)biasedExponent << 47) | (highBits & 0x00007fffffffffff);
             }
             else
             {
-                parts[3] |= (biasedExponent & 0x3FFF) << 17;
-                parts[3] |= d._high & 0x1FFFFFFF;
+                highBits = ((ulong)biasedExponent << 49) | highBits;
             }
+            return ((ulong)_flags << 56) | highBits;
+        }
 
-            if ((d._flags & 0x80) == 0x80)
-            {
-                parts[3] |= 0x80000000;
-            }
-
-            return parts;
+        /// <summary>
+        /// Gets the low order 64 bits of the binary representation of this instance.
+        /// </summary>
+        /// <returns>The low order 64 bits of the binary representation of this instance.</returns>
+        [CLSCompliant(false)]
+        public ulong GetLowBits()
+        {
+            return _significandLow;
         }
 
         /// <summary>
@@ -806,13 +799,16 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="decimal"/> equivalent to <paramref name="d" />.</returns>
         public static decimal ToDecimal(Decimal128 d)
         {
-            if (d._high == 0 && d._exponent >= -128 && d._exponent <= 127)
+            if ((d._significandHigh >> 32) == 0 && d._exponent >= -128 && d._exponent <= 127)
             {
                 if (d._flags == 0x80 || d._flags == 0)
                 {
                     var scale = (byte)-d._exponent;
                     bool isNegative = d._flags == 0x80; // only the negative bit is set
-                    return new decimal((int)d._low, (int)d._lowMid, (int)d._highMid, isNegative, scale);
+                    var highMid = (int)d._significandHigh;
+                    var lowMid = (int)(d._significandLow >> 32);
+                    var low = (int)d._significandLow;
+                    return new decimal(low, lowMid, highMid, isNegative, scale);
                 }
             }
 
@@ -876,9 +872,9 @@ namespace MongoDB.Bson
         /// <returns>A 32-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static int ToInt32(Decimal128 d)
         {
-            if (d._high == 0 && d._highMid == 0 && d._lowMid == 0)
+            if (d._significandHigh == 0 && (d._significandLow >> 32) == 0)
             {
-                int num = (int)d._low;
+                int num = (int)d._significandLow;
                 if (d._flags == 0x80) // only the negative bit is set...
                 {
                     num = -num;
@@ -906,9 +902,9 @@ namespace MongoDB.Bson
         /// <returns>A 64-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static long ToInt64(Decimal128 d)
         {
-            if (d._high == 0 && d._highMid == 0)
+            if (d._significandHigh == 0)
             {
-                long num = ((long)d._lowMid << 32) | d._low;
+                long num = (long)d._significandLow;
                 if (d._flags == 0x80) // only the negative bit is set...
                 {
                     num = -num;
@@ -989,9 +985,9 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static uint ToUInt32(Decimal128 d)
         {
-            if (d._high == 0 && d._highMid == 0 && d._lowMid == 0)
+            if (d._significandHigh == 0 && (d._significandLow >> 32) == 0)
             {
-                uint num = d._low;
+                uint num = (uint)d._significandLow;
                 if (d._flags == 0 || num == 0)
                 {
                     return num;
@@ -1009,9 +1005,9 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static ulong ToUInt64(Decimal128 d)
         {
-            if (d._high == 0 && d._highMid == 0)
+            if (d._significandHigh == 0)
             {
-                ulong num = ((ulong)d._lowMid << 32) | d._low;
+                ulong num = (ulong)d._significandLow;
                 if (d._flags == 0 || num == 0)
                 {
                     return num;
@@ -1598,12 +1594,6 @@ namespace MongoDB.Bson
                     newSigHigh++;
                 }
 
-                uint[] bits = new uint[4];
-                bits[3] = (uint)(newSigHigh >> 32);
-                bits[2] = (uint)newSigHigh;
-                bits[1] = (uint)(newSigLow >> 32);
-                bits[0] = (uint)newSigLow;
-
                 short exponent = (short)scale;
                 if (exponent > __exponentMax || exponent < __exponentMin)
                 {
@@ -1615,7 +1605,7 @@ namespace MongoDB.Bson
                     flags |= 0x80;
                 }
 
-                result = new Decimal128(flags, bits, exponent);
+                result = new Decimal128(flags, exponent, newSigHigh, newSigLow);
                 return true;
             }
 

@@ -17,13 +17,5 @@
         }
     ],
     "decodeErrors": [
-        {
-            "description": "Invalid boolean value of 2",
-            "subject": "090000000862000200"
-        },
-        {
-            "description": "Invalid boolean value of -1",
-            "subject": "09000000086200FF00"
-        }
     ]
 }

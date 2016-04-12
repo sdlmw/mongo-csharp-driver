@@ -442,11 +442,11 @@ namespace MongoDB.Bson
                 {
                     if (isNegative)
                     {
-                        result.Append("-Inf");
+                        result.Append("-Infinity");
                     }
                     else
                     {
-                        result.Append("Inf");
+                        result.Append("Infinity");
                     }
                     return result.ToString();
                 }

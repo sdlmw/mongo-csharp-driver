@@ -35,25 +35,25 @@ namespace MongoDB.Bson
         /// Represents negative infinity.
         /// </summary>
         public static Decimal128 NegativeInfinity =>
-            new Decimal128(new uint[] { 0, 0, 0, 0xF8000000 });
+            new Decimal128(0xF800000000000000, 0);
 
         /// <summary>
         /// Represents positive infinity.
         /// </summary>
         public static Decimal128 PositiveInfinity =>
-            new Decimal128(new uint[] { 0, 0, 0, 0x78000000 });
+            new Decimal128(0x7800000000000000, 0);
 
         /// <summary>
         /// Represents a value that is not a number.
         /// </summary>
         public static Decimal128 QNaN =>
-            new Decimal128(new uint[] { 0, 0, 0, 0x7C000000 });
+            new Decimal128(0x7C00000000000000, 0);
 
         /// <summary>
         /// Represents a value that is not a number and raises errors when used in calculations.
         /// </summary>
         public static Decimal128 SNaN =>
-            new Decimal128(new uint[] { 0, 0, 0, 0x7E000000 });
+            new Decimal128(0x7E00000000000000, 0);
 
         private readonly byte _flags;
         private readonly short _exponent;
@@ -226,16 +226,6 @@ namespace MongoDB.Bson
         /// <summary>
         /// Initializes a new instance of the <see cref="Decimal128"/> struct.
         /// </summary>
-        /// <param name="bits">The binary representation in the form of four 32-bit unsigned integers.</param>
-        [CLSCompliant(false)]
-        public Decimal128(uint[] bits)
-            : this(((ulong)bits[3] << 32) | (ulong)bits[2], ((ulong)bits[1] << 32) | (ulong)bits[0])
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
         /// <param name="highBits">The high order 64 bits of the binary representation.</param>
         /// <param name="lowBits">The low order 64 bits of the binary representation.</param>
         [CLSCompliant(false)]
@@ -275,12 +265,9 @@ namespace MongoDB.Bson
             // aren't stored the same way. We need to normalize both
             // prior to an equality comparison.
             // For now, we'll simply compare the bits...
-            var bits = GetBits(this);
-            var otherBits = GetBits(other);
-            return bits[0] == otherBits[0] &&
-                bits[1] == otherBits[1] &&
-                bits[2] == otherBits[2] &&
-                bits[3] == otherBits[3];
+            return
+                GetHighBits() == other.GetHighBits() &&
+                GetLowBits() == other.GetLowBits();
         }
 
         /// <inheritdoc />
@@ -594,23 +581,6 @@ namespace MongoDB.Bson
             }
 
             return result.ToString();
-        }
-
-        /// <summary>
-        /// Converts the value of the specified number to its equivalent binary representation.
-        /// </summary>
-        /// <returns>A 32-bit unsigned integer array with four elements that contain the binary representation of <paramref name="d"/>.</returns>
-        [CLSCompliant(false)]
-        public static uint[] GetBits(Decimal128 d)
-        {
-            var bits = new uint[4];
-            var highBits = d.GetHighBits();
-            var lowBits = d.GetLowBits();
-            bits[3] = (uint)(highBits >> 32);
-            bits[2] = (uint)highBits;
-            bits[1] = (uint)(lowBits >> 32);
-            bits[0] = (uint)lowBits;
-            return bits;
         }
 
         /// <summary>

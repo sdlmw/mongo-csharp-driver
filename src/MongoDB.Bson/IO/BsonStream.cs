@@ -44,7 +44,7 @@ namespace MongoDB.Bson.IO
         /// Reads a BSON decimal from the stream.
         /// </summary>
         /// <returns>A <see cref="Decimal128"/>.</returns>
-        public abstract Decimal128 ReadDecimal();
+        public abstract Decimal128 ReadDecimal128();
 
         /// <summary>
         /// Reads a BSON double from the stream.
@@ -104,7 +104,7 @@ namespace MongoDB.Bson.IO
         /// Writes the <paramref name="value"/> to the stream.
         /// </summary>
         /// <param name="value">The value.</param>
-        public abstract void WriteDecimal(Decimal128 value);
+        public abstract void WriteDecimal128(Decimal128 value);
 
         /// <summary>
         /// Writes a BSON double to the stream.

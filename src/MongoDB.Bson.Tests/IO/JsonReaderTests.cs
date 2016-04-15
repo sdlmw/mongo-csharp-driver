@@ -367,7 +367,7 @@ namespace MongoDB.Bson.Tests.IO
         {
             using (var reader = new JsonReader(json))
             {
-                var result = reader.ReadDecimal();
+                var result = reader.ReadDecimal128();
                 var expectedResult = Decimal128.Parse(expectedResultString);
 
                 result.Should().Be(expectedResult);

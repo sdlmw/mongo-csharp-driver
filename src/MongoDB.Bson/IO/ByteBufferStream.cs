@@ -386,7 +386,7 @@ namespace MongoDB.Bson.IO
         }
 
         /// <inheritdoc/>
-        public override Decimal128 ReadDecimal()
+        public override Decimal128 ReadDecimal128()
         {
             ThrowIfDisposed();
             ThrowIfEndOfStream(16);
@@ -598,7 +598,7 @@ namespace MongoDB.Bson.IO
         }
 
         /// <inheritdoc/>
-        public override void WriteDecimal(Decimal128 value)
+        public override void WriteDecimal128(Decimal128 value)
         {
             ThrowIfDisposed();
             WriteInt64((int)value.GetLowBits());

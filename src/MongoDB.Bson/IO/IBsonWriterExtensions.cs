@@ -69,15 +69,15 @@ namespace MongoDB.Bson.IO
         }
 
         /// <summary>
-        /// Writes a BSON Decimal element to the writer.
+        /// Writes a BSON Decimal128 element to the writer.
         /// </summary>
         /// <param name="writer">The writer.</param>
         /// <param name="name">The name of the element.</param>
         /// <param name="value">The <see cref="Decimal128"/> value.</param>
-        public static void WriteDecimal(this IBsonWriter writer, string name, Decimal128 value)
+        public static void WriteDecimal128(this IBsonWriter writer, string name, Decimal128 value)
         {
             writer.WriteName(name);
-            writer.WriteDecimal(value);
+            writer.WriteDecimal128(value);
         }
 
         /// <summary>

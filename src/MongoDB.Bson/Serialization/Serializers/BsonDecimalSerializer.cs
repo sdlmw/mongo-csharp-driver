@@ -13,7 +13,6 @@
 * limitations under the License.
 */
 
-
 namespace MongoDB.Bson.Serialization.Serializers
 {
     /// <summary>
@@ -52,7 +51,7 @@ namespace MongoDB.Bson.Serialization.Serializers
         protected override BsonDecimal DeserializeValue(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             var bsonReader = context.Reader;
-            return (BsonDecimal)bsonReader.ReadDecimal();
+            return (BsonDecimal)bsonReader.ReadDecimal128();
         }
 
         /// <summary>
@@ -64,7 +63,7 @@ namespace MongoDB.Bson.Serialization.Serializers
         protected override void SerializeValue(BsonSerializationContext context, BsonSerializationArgs args, BsonDecimal value)
         {
             var bsonWriter = context.Writer;
-            bsonWriter.WriteDecimal(value.Value);
+            bsonWriter.WriteDecimal128(value.Value);
         }
     }
 }

@@ -305,12 +305,12 @@ namespace MongoDB.Bson.IO
         }
 
         /// <inheritdoc />
-        public override Decimal128 ReadDecimal()
+        public override Decimal128 ReadDecimal128()
         {
             if (Disposed) { ThrowObjectDisposedException(); }
-            VerifyBsonType(nameof(ReadDecimal), BsonType.Decimal);
+            VerifyBsonType(nameof(ReadDecimal128), BsonType.Decimal);
             State = GetNextState();
-            return _bsonStream.ReadDecimal();
+            return _bsonStream.ReadDecimal128();
         }
 
         /// <summary>

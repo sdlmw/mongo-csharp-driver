@@ -80,7 +80,7 @@ namespace MongoDB.Bson.TestHelpers.IO
             throw new NotSupportedException();
         }
 
-        public override Decimal128 ReadDecimal()
+        public override Decimal128 ReadDecimal128()
         {
             throw new NotSupportedException();
         }
@@ -158,7 +158,7 @@ namespace MongoDB.Bson.TestHelpers.IO
             Position += value.Length + 1;
         }
 
-        public override void WriteDecimal(Decimal128 value)
+        public override void WriteDecimal128(Decimal128 value)
         {
             Position += 16;
         }

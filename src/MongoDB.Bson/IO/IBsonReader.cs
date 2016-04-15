@@ -90,10 +90,10 @@ namespace MongoDB.Bson.IO
         long ReadDateTime();
 
         /// <summary>
-        /// Reads a BSON Decimal from the reader.
+        /// Reads a BSON Decimal128 from the reader.
         /// </summary>
         /// <returns>A <see cref="Decimal128" />.</returns>
-        Decimal128 ReadDecimal();
+        Decimal128 ReadDecimal128();
 
         /// <summary>
         /// Reads a BSON Double from the reader.

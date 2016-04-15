@@ -147,12 +147,12 @@ namespace MongoDB.Bson.IO
         }
 
         /// <inheritdoc />
-        public override void WriteDecimal(Decimal128 value)
+        public override void WriteDecimal128(Decimal128 value)
         {
             if (Disposed) { throw new ObjectDisposedException("BsonDocumentWriter"); }
             if (State != BsonWriterState.Value)
             {
-                ThrowInvalidState(nameof(WriteDecimal), BsonWriterState.Value);
+                ThrowInvalidState(nameof(WriteDecimal128), BsonWriterState.Value);
             }
 
             WriteValue(new BsonDecimal(value));

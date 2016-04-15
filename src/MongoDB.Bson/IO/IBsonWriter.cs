@@ -87,10 +87,10 @@ namespace MongoDB.Bson.IO
         void WriteDateTime(long value);
 
         /// <summary>
-        /// Writes a BSON Decimal to the writer.
+        /// Writes a BSON Decimal128 to the writer.
         /// </summary>
         /// <param name="value">The <see cref="Decimal128"/> value.</param>
-        void WriteDecimal(Decimal128 value);
+        void WriteDecimal128(Decimal128 value);
 
         /// <summary>
         /// Writes a BSON Double to the writer.

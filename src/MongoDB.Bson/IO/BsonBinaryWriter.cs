@@ -269,17 +269,17 @@ namespace MongoDB.Bson.IO
         }
 
         /// <inheritdoc />
-        public override void WriteDecimal(Decimal128 value)
+        public override void WriteDecimal128(Decimal128 value)
         {
             if (Disposed) { throw new ObjectDisposedException("BsonBinaryWriter"); }
             if (State != BsonWriterState.Value)
             {
-                ThrowInvalidState(nameof(WriteDecimal), BsonWriterState.Value);
+                ThrowInvalidState(nameof(WriteDecimal128), BsonWriterState.Value);
             }
 
             _bsonStream.WriteBsonType(BsonType.Decimal);
             WriteNameHelper();
-            _bsonStream.WriteDecimal(value);
+            _bsonStream.WriteDecimal128(value);
 
             State = GetNextState();
         }

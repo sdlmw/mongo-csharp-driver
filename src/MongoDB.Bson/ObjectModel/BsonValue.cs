@@ -606,7 +606,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A bool?.</returns>
-        public static explicit operator bool? (BsonValue value)
+        public static explicit operator bool?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableBoolean;
         }
@@ -836,7 +836,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A byte[].</returns>
-        public static explicit operator byte[] (BsonValue value)
+        public static explicit operator byte[](BsonValue value)
         {
             return (value == null) ? null : value.AsByteArray;
         }
@@ -864,7 +864,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A DateTime?.</returns>
-        public static explicit operator DateTime? (BsonValue value)
+        public static explicit operator DateTime?(BsonValue value)
         {
             if (value != null && !((value is BsonDateTime) || (value is BsonNull)))
             {
@@ -892,7 +892,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A decimal?.</returns>
-        public static explicit operator decimal? (BsonValue value)
+        public static explicit operator decimal?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableDecimal;
         }
@@ -916,7 +916,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A nullable <see cref="Decimal128"/>.</returns>
-        public static explicit operator Decimal128? (BsonValue value)
+        public static explicit operator Decimal128?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableDecimal128;
         }
@@ -940,7 +940,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A double?.</returns>
-        public static explicit operator double? (BsonValue value)
+        public static explicit operator double?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableDouble;
         }
@@ -964,7 +964,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A Guid?.</returns>
-        public static explicit operator Guid? (BsonValue value)
+        public static explicit operator Guid?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableGuid;
         }
@@ -988,7 +988,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>An int?.</returns>
-        public static explicit operator int? (BsonValue value)
+        public static explicit operator int?(BsonValue value)
         {
             return value == null ? null : value.AsNullableInt32;
         }
@@ -1012,7 +1012,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>A long?.</returns>
-        public static explicit operator long? (BsonValue value)
+        public static explicit operator long?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableInt64;
         }
@@ -1036,7 +1036,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="value">The BsonValue.</param>
         /// <returns>An ObjectId?.</returns>
-        public static explicit operator ObjectId? (BsonValue value)
+        public static explicit operator ObjectId?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableObjectId;
         }

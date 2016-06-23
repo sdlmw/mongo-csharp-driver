@@ -13,7 +13,7 @@
       "imports": "dnxcore50",
       "buildOptions": {
         "compile": {
-          "include": [ "**/*.cs", "../MongoDB.Shared/Hasher.cs" ]
+          "include": [ "../MongoDB.Bson/**/*.cs", "../MongoDB.Shared/Hasher.cs" ]
         },
         "define": [ "DEBUG", "TRACE", "NETCORE" ]
       }

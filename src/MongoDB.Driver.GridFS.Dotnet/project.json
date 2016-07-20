@@ -1,4 +1,5 @@
 ﻿{
+  "name" : "MongoDB.Driver.GridFS",
   "version": "1.0.0-*",
 
   "dependencies": {

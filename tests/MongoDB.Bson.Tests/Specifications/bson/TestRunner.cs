@@ -14,6 +14,7 @@
 */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -23,15 +24,14 @@ using FluentAssertions;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
-using NUnit.Framework;
-using NUnit.Framework.Interfaces;
+using Xunit;
 
 namespace MongoDB.Bson.Specifications.bson
 {
-    [TestFixture]
     public class TestRunner
     {
-        [TestCaseSource(typeof(TestCaseFactory), "GetTestCases")]
+        [Theory]
+        [ClassData(typeof(TestCaseFactory))]
         public void RunTestDefinition(TestType testType, BsonDocument definition)
         {
             switch (testType)
@@ -100,7 +100,7 @@ namespace MongoDB.Bson.Specifications.bson
             Decimal128 result;
             if (Decimal128.TryParse(subject, style, NumberFormatInfo.CurrentInfo, out result))
             {
-                Assert.Fail($"{subject} should have resulted in a parse failure.");
+                Assert.True(false, $"{subject} should have resulted in a parse failure.");
             }
         }
 
@@ -125,13 +125,13 @@ namespace MongoDB.Bson.Specifications.bson
             DecodeError
         }
 
-        private static class TestCaseFactory
+        private class TestCaseFactory : IEnumerable<object[]>
         {
-            public static IEnumerable<ITestCaseData> GetTestCases()
+            public  IEnumerator<object[]> GetEnumerator()
             {
                 const string prefix = "MongoDB.Bson.Tests.Specifications.bson.tests.";
-                return Assembly
-                    .GetExecutingAssembly()
+                var executingAssembly = typeof(TestCaseFactory).GetTypeInfo().Assembly;
+                var enumerable = executingAssembly
                     .GetManifestResourceNames()
                     .Where(path => path.StartsWith(prefix) && path.EndsWith(".json"))
                     .SelectMany(path =>
@@ -139,69 +139,79 @@ namespace MongoDB.Bson.Specifications.bson
                         var definition = ReadDefinition(path);
                         var fullName = path.Remove(0, prefix.Length);
 
-                        IEnumerable<ITestCaseData> tests = Enumerable.Empty<ITestCaseData>();
+                        var tests = new List<object[]>();
 
                         if (definition.Contains("valid"))
                         {
-                            tests = tests.Concat(GetTestCasesHelper(
+                            tests.AddRange(GetTestCasesHelper(
                                 TestType.Valid,
                                 (string)definition["description"],
                                 definition["valid"].AsBsonArray.Cast<BsonDocument>()));
                         }
                         if (definition.Contains("parseErrors"))
                         {
-                            tests = tests.Concat(GetTestCasesHelper(
+                            tests.AddRange(GetTestCasesHelper(
                             TestType.ParseError,
                             (string)definition["description"],
                             definition["parseErrors"].AsBsonArray.Cast<BsonDocument>()));
                         }
                         if (definition.Contains("decodeErrors"))
                         {
-                            tests = tests.Concat(GetTestCasesHelper(
+                            tests.AddRange(GetTestCasesHelper(
                                 TestType.DecodeError,
                                 (string)definition["description"],
+                            
                                 definition["decodeErrors"].AsBsonArray.Cast<BsonDocument>()));
                         }
+
                         return tests;
                     });
+                return enumerable.GetEnumerator();
             }
 
-            private static IEnumerable<TestCaseData> GetTestCasesHelper(TestType type, string description, IEnumerable<BsonDocument> documents)
+            IEnumerator IEnumerable.GetEnumerator()
             {
-                var dataList = new List<ITestCaseData>();
+                return GetEnumerator();
+            }
+
+            private static IEnumerable<object[]> GetTestCasesHelper(TestType type, string description, IEnumerable<BsonDocument> documents)
+            {
                 var nameList = new Dictionary<string, int>();
                 foreach (BsonDocument document in documents)
                 {
-                    var data = new TestCaseData(type, document);
-                    data.SetCategory("Specifications");
-                    data.SetCategory("bson");
+                    //var data = new TestCaseData(type, document);
+                    //data.SetCategory("Specifications");
+                    //data.SetCategory("bson");
 
-                    var name = GetTestName(description, document);
-                    int i = 0;
-                    if (nameList.TryGetValue(name, out i))
-                    {
-                        nameList[name] = i + 1;
-                        name += " #" + i;
-                    }
-                    else
-                    {
-                        nameList[name] = 1;
-                    }
+                    //var name = GetTestName(description, document);
+                    //int i = 0;
+                    //if (nameList.TryGetValue(name, out i))
+                    //{
+                    //    nameList[name] = i + 1;
+                    //    name += " #" + i;
+                    //}
+                    //else
+                    //{
+                    //    nameList[name] = 1;
+                    //}
 
-                    yield return data.SetName(name);
+                    //yield return data.SetName(name);
+
+                    var data = new object[] { type, document };
+                    yield return data;
                 }
             }
 
-            private static string GetTestName(string description, BsonDocument definition)
-            {
-                var name = description;
-                if (definition.Contains("description"))
-                {
-                    name += " - " + (string)definition["description"];
-                }
+            //private static string GetTestName(string description, BsonDocument definition)
+            //{
+            //    var name = description;
+            //    if (definition.Contains("description"))
+            //    {
+            //        name += " - " + (string)definition["description"];
+            //    }
 
-                return name;
-            }
+            //    return name;
+            //}
 
             private static BsonDocument ReadDefinition(string path)
             {

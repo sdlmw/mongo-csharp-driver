@@ -19,15 +19,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MongoDB.Bson;
-using NUnit.Framework;
 using FluentAssertions;
 using System.Globalization;
+using Xunit;
 
 namespace MongoDB.Bson.Tests
 {
     public class Decimal128Tests
     {
-        [Test]
+        [Fact]
         public void Default_value()
         {
             var subject = default(Decimal128);
@@ -36,14 +36,14 @@ namespace MongoDB.Bson.Tests
             AssertSpecialProperties(subject);
         }
 
-        [Test]
-        [TestCase("-1.01", "-1.01")]
-        [TestCase("-1", "-1")]
-        [TestCase("0", "0")]
-        [TestCase("1", "1")]
-        [TestCase("1.01", "1.01")]
-        [TestCase("79228162514264337593543950335", "79228162514264337593543950335")]
-        [TestCase("-79228162514264337593543950335", "-79228162514264337593543950335")]
+        [Theory]
+        [InlineData("-1.01", "-1.01")]
+        [InlineData("-1", "-1")]
+        [InlineData("0", "0")]
+        [InlineData("1", "1")]
+        [InlineData("1.01", "1.01")]
+        [InlineData("79228162514264337593543950335", "79228162514264337593543950335")]
+        [InlineData("-79228162514264337593543950335", "-79228162514264337593543950335")]
         public void Decimal(string valueString, string s)
         {
             var value = decimal.Parse(valueString);
@@ -59,10 +59,10 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase((byte)0, "0")]
-        [TestCase((byte)1, "1")]
-        [TestCase(byte.MaxValue, "255")]
+        [Theory]
+        [InlineData((byte)0, "0")]
+        [InlineData((byte)1, "1")]
+        [InlineData(byte.MaxValue, "255")]
         public void Byte(byte value, string s)
         {
             var subject = new Decimal128(value);
@@ -77,11 +77,11 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(int.MaxValue)]
-        [TestCase(int.MinValue)]
-        [TestCase(byte.MaxValue + 1)]
-        [TestCase(byte.MinValue - 1)]
+        [Theory]
+        [InlineData(int.MaxValue)]
+        [InlineData(int.MinValue)]
+        [InlineData(byte.MaxValue + 1)]
+        [InlineData(byte.MinValue - 1)]
         public void Byte_overflow(int value)
         {
             var subject = new Decimal128(value);
@@ -90,12 +90,12 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
-        [TestCase((short)-1, "-1")]
-        [TestCase((short)0, "0")]
-        [TestCase((short)1, "1")]
-        [TestCase(short.MaxValue, "32767")]
-        [TestCase(short.MinValue, "-32768")]
+        [Theory]
+        [InlineData((short)-1, "-1")]
+        [InlineData((short)0, "0")]
+        [InlineData((short)1, "1")]
+        [InlineData(short.MaxValue, "32767")]
+        [InlineData(short.MinValue, "-32768")]
         public void Int16(short value, string s)
         {
             var subject = new Decimal128(value);
@@ -110,11 +110,11 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(int.MaxValue)]
-        [TestCase(int.MinValue)]
-        [TestCase(short.MaxValue + 1)]
-        [TestCase(short.MinValue - 1)]
+        [Theory]
+        [InlineData(int.MaxValue)]
+        [InlineData(int.MinValue)]
+        [InlineData(short.MaxValue + 1)]
+        [InlineData(short.MinValue - 1)]
         public void Int16_overflow(int value)
         {
             var subject = new Decimal128(value);
@@ -123,12 +123,12 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
-        [TestCase(-1, "-1")]
-        [TestCase(0, "0")]
-        [TestCase(1, "1")]
-        [TestCase(int.MaxValue, "2147483647")]
-        [TestCase(int.MinValue, "-2147483648")]
+        [Theory]
+        [InlineData(-1, "-1")]
+        [InlineData(0, "0")]
+        [InlineData(1, "1")]
+        [InlineData(int.MaxValue, "2147483647")]
+        [InlineData(int.MinValue, "-2147483648")]
         public void Int32(int value, string s)
         {
             var subject = new Decimal128(value);
@@ -143,11 +143,11 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(long.MaxValue)]
-        [TestCase(long.MinValue)]
-        [TestCase((long)int.MaxValue + 1)]
-        [TestCase((long)int.MinValue - 1)]
+        [Theory]
+        [InlineData(long.MaxValue)]
+        [InlineData(long.MinValue)]
+        [InlineData((long)int.MaxValue + 1)]
+        [InlineData((long)int.MinValue - 1)]
         public void Int32_overflow(long value)
         {
             var subject = new Decimal128(value);
@@ -156,12 +156,12 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
-        [TestCase(-1, "-1")]
-        [TestCase(0, "0")]
-        [TestCase(1, "1")]
-        [TestCase(long.MaxValue, "9223372036854775807")]
-        [TestCase(long.MinValue, "-9223372036854775808")]
+        [Theory]
+        [InlineData(-1, "-1")]
+        [InlineData(0, "0")]
+        [InlineData(1, "1")]
+        [InlineData(long.MaxValue, "9223372036854775807")]
+        [InlineData(long.MinValue, "-9223372036854775808")]
         public void Int64(long value, string s)
         {
             var subject = new Decimal128(value);
@@ -176,9 +176,9 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(long.MaxValue + 1ul)]
-        [TestCase(ulong.MaxValue)]
+        [Theory]
+        [InlineData(long.MaxValue + 1ul)]
+        [InlineData(ulong.MaxValue)]
         public void Int64_overflow(ulong value)
         {
             var subject = new Decimal128(value);
@@ -187,10 +187,10 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
-        [TestCase((sbyte)0, "0")]
-        [TestCase((sbyte)1, "1")]
-        [TestCase(sbyte.MaxValue, "127")]
+        [Theory]
+        [InlineData((sbyte)0, "0")]
+        [InlineData((sbyte)1, "1")]
+        [InlineData(sbyte.MaxValue, "127")]
         public void SByte(sbyte value, string s)
         {
             var subject = new Decimal128(value);
@@ -205,11 +205,11 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(int.MaxValue)]
-        [TestCase(int.MinValue)]
-        [TestCase(sbyte.MaxValue + 1)]
-        [TestCase(sbyte.MinValue - 1)]
+        [Theory]
+        [InlineData(int.MaxValue)]
+        [InlineData(int.MinValue)]
+        [InlineData(sbyte.MaxValue + 1)]
+        [InlineData(sbyte.MinValue - 1)]
         public void SByte_overflow(int value)
         {
             var subject = new Decimal128(value);
@@ -218,10 +218,10 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
-        [TestCase((ushort)0, "0")]
-        [TestCase((ushort)1, "1")]
-        [TestCase(ushort.MaxValue, "65535")]
+        [Theory]
+        [InlineData((ushort)0, "0")]
+        [InlineData((ushort)1, "1")]
+        [InlineData(ushort.MaxValue, "65535")]
         public void UInt16(ushort value, string s)
         {
             var subject = new Decimal128(value);
@@ -236,9 +236,9 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(ushort.MaxValue + 1L)]
-        [TestCase(-1L)]
+        [Theory]
+        [InlineData(ushort.MaxValue + 1L)]
+        [InlineData(-1L)]
         public void UInt16_overflow(long value)
         {
             var subject = new Decimal128(value);
@@ -247,10 +247,10 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
-        [TestCase(0u, "0")]
-        [TestCase(1u, "1")]
-        [TestCase(uint.MaxValue, "4294967295")]
+        [Theory]
+        [InlineData(0u, "0")]
+        [InlineData(1u, "1")]
+        [InlineData(uint.MaxValue, "4294967295")]
         public void UInt32(uint value, string s)
         {
             var subject = new Decimal128(value);
@@ -265,8 +265,8 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(-1L)]
+        [Theory]
+        [InlineData(-1L)]
         public void UInt32_overflow(long value)
         {
             var subject = new Decimal128(value);
@@ -275,10 +275,10 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
-        [TestCase(0ul, "0")]
-        [TestCase(1ul, "1")]
-        [TestCase(ulong.MaxValue, "18446744073709551615")]
+        [Theory]
+        [InlineData(0ul, "0")]
+        [InlineData(1ul, "1")]
+        [InlineData(ulong.MaxValue, "18446744073709551615")]
         public void UInt64(ulong value, string s)
         {
             var subject = new Decimal128(value);
@@ -293,8 +293,8 @@ namespace MongoDB.Bson.Tests
             result.Should().Be(value);
         }
 
-        [Test]
-        [TestCase(-1L)]
+        [Theory]
+        [InlineData(-1L)]
         public void UInt64_overflow(long value)
         {
             var subject = new Decimal128(value);
@@ -303,7 +303,7 @@ namespace MongoDB.Bson.Tests
             act.ShouldThrow<OverflowException>();
         }
 
-        [Test]
+        [Fact]
         public void NegativeInfinity()
         {
             var subject = Decimal128.NegativeInfinity;
@@ -312,7 +312,7 @@ namespace MongoDB.Bson.Tests
             AssertSpecialProperties(subject, negInfinity: true);
         }
 
-        [Test]
+        [Fact]
         public void PositiveInfinity()
         {
             var subject = Decimal128.PositiveInfinity;
@@ -321,7 +321,7 @@ namespace MongoDB.Bson.Tests
             AssertSpecialProperties(subject, posInfinity: true);
         }
 
-        [Test]
+        [Fact]
         public void QNaN()
         {
             var subject = Decimal128.QNaN;
@@ -330,7 +330,7 @@ namespace MongoDB.Bson.Tests
             AssertSpecialProperties(subject, qNaN: true);
         }
 
-        [Test]
+        [Fact]
         public void SNaN()
         {
             var subject = Decimal128.SNaN;

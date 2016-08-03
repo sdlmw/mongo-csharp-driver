@@ -47,42 +47,61 @@ namespace MongoDB.Bson.Specifications.bson
 
         private void RunValid(BsonDocument definition)
         {
-            var lossy = definition.GetValue("lossy", false).ToBoolean();
+            // see the pseudo code in the specification
+
             var B = BsonUtils.ParseHexString(((string)definition["bson"]).ToLowerInvariant());
             var E = ((string)definition["extjson"]).Replace(" ", "");
 
-            var cB = B;
+            byte[] cB;
             if (definition.Contains("canonical_bson"))
             {
                 cB = BsonUtils.ParseHexString(((string)definition["canonical_bson"]).ToLowerInvariant());
             }
+            else
+            {
+                cB = B;
+            }
 
-            var cE = E;
+            string cE;
             if (definition.Contains("canonical_extjson"))
             {
                 cE = ((string)definition["canonical_extjson"]).Replace(" ", "");
             }
-
-            EncodeBson(DecodeBson(B)).Should().Equal(cB, "B -> B");
-            EncodeExtjson(DecodeBson(B)).Should().Be(cE, "B -> E");
-            EncodeExtjson(DecodeExtjson(E)).Should().Be(cE, "E -> E");
-            if (!lossy)
+            else
             {
-                EncodeBson(DecodeExtjson(E)).Should().Equal(cB, "E -> B");
+                cE = E;
             }
+
+            EncodeBson(DecodeBson(B)).Should().Equal(cB, "B -> cB");
 
             if (B != cB)
             {
-                EncodeBson(DecodeBson(cB)).Should().Equal(cB, "(2) B -> B");
-                EncodeExtjson(DecodeBson(cB)).Should().Be(cE, "(2) B -> E");
+                EncodeBson(DecodeBson(cB)).Should().Equal(cB, "cB -> cB");
             }
 
-            if (E != cE)
+            if (definition.Contains("extjson"))
             {
-                EncodeExtjson(DecodeExtjson(cE)).Should().Be(cE, "(2) E -> E");
-                if (!lossy)
+                EncodeExtjson(DecodeBson(B)).Should().Be(cE, "B -> cE");
+                EncodeExtjson(DecodeExtjson(E)).Should().Be(cE, "E -> cE");
+
+                if (B != cB)
                 {
-                    EncodeBson(DecodeExtjson(cE)).Should().Equal(cB, "(2) E -> B");
+                    EncodeExtjson(DecodeBson(cB)).Should().Be(cE, "cB -> cE");
+                }
+
+                if (E != cE)
+                {
+                    EncodeExtjson(DecodeExtjson(cE)).Should().Be(cE, "cE -> cE");
+                }
+
+                if (!definition.GetValue("lossy", false).ToBoolean())
+                {
+                    EncodeBson(DecodeExtjson(E)).Should().Equal(cB, "E -> cB");
+
+                    if (E != cE)
+                    {
+                        EncodeBson(DecodeExtjson(cE)).Should().Equal(cB, "cE -> cB");
+                    }
                 }
             }
         }
@@ -132,8 +151,7 @@ namespace MongoDB.Bson.Specifications.bson
         public enum TestType
         {
             Valid,
-            ParseError,
-            DecodeError
+            ParseError
         }
 
         private class TestCaseFactory : IEnumerable<object[]>
@@ -169,14 +187,6 @@ namespace MongoDB.Bson.Specifications.bson
                             TestType.ParseError,
                             (string)definition["description"],
                             definition["parseErrors"].AsBsonArray.Cast<BsonDocument>()));
-                        }
-                        if (definition.Contains("decodeErrors"))
-                        {
-                            tests = tests.Concat(GetTestCasesHelper(
-                                TestType.DecodeError,
-                                (string)definition["description"],
-                            
-                                definition["decodeErrors"].AsBsonArray.Cast<BsonDocument>()));
                         }
 
                         return tests;

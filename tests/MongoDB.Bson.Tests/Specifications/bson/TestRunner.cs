@@ -129,7 +129,11 @@ namespace MongoDB.Bson.Specifications.bson
         {
             public  IEnumerator<object[]> GetEnumerator()
             {
+#if NETSTANDARD1_6
+                const string prefix = "MongoDB.Bson.Tests.Dotnet.Specifications.bson.tests.";
+#else
                 const string prefix = "MongoDB.Bson.Tests.Specifications.bson.tests.";
+#endif
                 var executingAssembly = typeof(TestCaseFactory).GetTypeInfo().Assembly;
                 var enumerable = executingAssembly
                     .GetManifestResourceNames()
@@ -215,7 +219,8 @@ namespace MongoDB.Bson.Specifications.bson
 
             private static BsonDocument ReadDefinition(string path)
             {
-                using (var definitionStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path))
+                var executingAssembly = typeof(TestCaseFactory).GetTypeInfo().Assembly;
+                using (var definitionStream = executingAssembly.GetManifestResourceStream(path))
                 using (var definitionStringReader = new StreamReader(definitionStream))
                 {
                     var definitionString = definitionStringReader.ReadToEnd();

@@ -27,7 +27,10 @@
         "compile": {
           "include": [ "../MongoDB.Bson.Tests/**/*.cs" ]
         },
-        "define": [ "DEBUG", "TRACE", "NETSTANDARD1_6" ]
+        "define": [ "DEBUG", "TRACE", "NETSTANDARD1_6" ],
+        "embed": {
+          "include": [ "./Specifications/**/*.json" ]
+        }
       }
     }
   }

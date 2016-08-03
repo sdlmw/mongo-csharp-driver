@@ -23,7 +23,9 @@ namespace MongoDB.Bson
     /// <summary>
     /// Represents a Decimal128 value.
     /// </summary>
+#if NET45
     [Serializable]
+#endif
     public struct Decimal128 : IConvertible, IComparable<Decimal128>, IEquatable<Decimal128>
     {
         private const short __maxSignificandDigits = 34;

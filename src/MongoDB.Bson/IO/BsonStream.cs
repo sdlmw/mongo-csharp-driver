@@ -1,4 +1,4 @@
-/* Copyright 2010-2015 MongoDB Inc.
+/* Copyright 2010-2016 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ namespace MongoDB.Bson.IO
         public abstract ArraySegment<byte> ReadCStringBytes();
 
         /// <summary>
-        /// Reads a BSON decimal from the stream.
+        /// Reads a BSON Decimal128 from the stream.
         /// </summary>
         /// <returns>A <see cref="Decimal128"/>.</returns>
         public abstract Decimal128 ReadDecimal128();
@@ -101,7 +101,7 @@ namespace MongoDB.Bson.IO
         public abstract void WriteCStringBytes(byte[] value);
 
         /// <summary>
-        /// Writes the <paramref name="value"/> to the stream.
+        /// Writes a BSON Decimal128 to the stream.
         /// </summary>
         /// <param name="value">The value.</param>
         public abstract void WriteDecimal128(Decimal128 value);

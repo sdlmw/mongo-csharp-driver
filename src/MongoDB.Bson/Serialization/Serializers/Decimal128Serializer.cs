@@ -14,17 +14,19 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentAssertions;
 using System.Globalization;
+using System.IO;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Options;
 
-namespace MongoDB.Bson.Tests.ObjectModel
+namespace MongoDB.Bson.Serialization.Serializers
 {
-    public class BsonDecimalTests
-    {
-
+    /// <summary>
+    /// Represents a serializer for Decimal128s.
+    /// </summary>
+    public class Decimal128Serializer : SerializerBase<Decimal128>
+    { 
+        // TODO: implemenet Decimal128Serializer
     }
 }

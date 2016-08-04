@@ -322,7 +322,7 @@ namespace MongoDB.Bson.IO
                             _currentValue = BsonMinKey.Value;
                             break;
                         case "NumberDecimal":
-                            CurrentBsonType = BsonType.Decimal;
+                            CurrentBsonType = BsonType.Decimal128;
                             _currentValue = ParseNumberDecimalConstructor();
                             break;
                         case "Number":
@@ -440,7 +440,7 @@ namespace MongoDB.Bson.IO
         public override Decimal128 ReadDecimal128()
         {
             if (Disposed) { ThrowObjectDisposedException(); }
-            VerifyBsonType(nameof(ReadDecimal128), BsonType.Decimal);
+            VerifyBsonType(nameof(ReadDecimal128), BsonType.Decimal128);
             State = GetNextState();
             return _currentValue.AsDecimal128;
         }
@@ -1217,7 +1217,7 @@ namespace MongoDB.Bson.IO
                     case "$date": _currentValue = ParseDateTimeExtendedJson(); return BsonType.DateTime;
                     case "$maxkey": case "$maxKey": _currentValue = ParseMaxKeyExtendedJson(); return BsonType.MaxKey;
                     case "$minkey": case "$minKey": _currentValue = ParseMinKeyExtendedJson(); return BsonType.MinKey;
-                    case "$numberDecimal": _currentValue = ParseNumberDecimalExtendedJson(); return BsonType.Decimal;
+                    case "$numberDecimal": _currentValue = ParseNumberDecimalExtendedJson(); return BsonType.Decimal128;
                     case "$numberLong": _currentValue = ParseNumberLongExtendedJson(); return BsonType.Int64;
                     case "$oid": _currentValue = ParseObjectIdExtendedJson(); return BsonType.ObjectId;
                     case "$regex": _currentValue = ParseRegularExpressionExtendedJson(); return BsonType.RegularExpression;
@@ -1426,7 +1426,7 @@ namespace MongoDB.Bson.IO
                     return BsonType.DateTime;
                 case "NumberDecimal":
                     value = ParseNumberDecimalConstructor();
-                    return BsonType.Decimal;
+                    return BsonType.Decimal128;
                 case "NumberInt":
                     value = ParseNumberConstructor();
                     return BsonType.Int32;
@@ -1499,7 +1499,7 @@ namespace MongoDB.Bson.IO
                 throw new FormatException(message);
             }
             VerifyToken(")");
-            return (BsonDecimal)value;
+            return (BsonDecimal128)value;
         }
 
         private BsonValue ParseNumberLongConstructor()
@@ -1545,7 +1545,7 @@ namespace MongoDB.Bson.IO
             }
 
             VerifyToken("}");
-            return (BsonDecimal)value;
+            return (BsonDecimal128)value;
         }
 
         private BsonValue ParseNumberLongExtendedJson()

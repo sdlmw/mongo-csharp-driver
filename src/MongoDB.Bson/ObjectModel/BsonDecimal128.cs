@@ -18,24 +18,24 @@ using System;
 namespace MongoDB.Bson
 {
     /// <summary>
-    /// Represents a BSON Decimal value.
+    /// Represents a BSON Decimal128 value.
     /// </summary>
     /// <seealso cref="MongoDB.Bson.BsonValue" />
-    public class BsonDecimal : BsonValue, IComparable<BsonDecimal>, IEquatable<BsonDecimal>
+    public class BsonDecimal128 : BsonValue, IComparable<BsonDecimal128>, IEquatable<BsonDecimal128>
     {
         private readonly Decimal128 _value;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BsonDecimal" /> class.
+        /// Initializes a new instance of the <see cref="BsonDecimal128" /> class.
         /// </summary>
         /// <param name="value">The value.</param>
-        public BsonDecimal(Decimal128 value)
+        public BsonDecimal128(Decimal128 value)
         {
             _value = value;
         }
 
         /// <inheritdoc />
-        public override BsonType BsonType => BsonType.Decimal;
+        public override BsonType BsonType => BsonType.Decimal128;
 
         /// <summary>
         /// Gets the value.
@@ -46,7 +46,7 @@ namespace MongoDB.Bson
         }
 
         /// <inheritdoc />
-        public int CompareTo(BsonDecimal other)
+        public int CompareTo(BsonDecimal128 other)
         {
             if (other == null) { return 1; }
             return _value.CompareTo(other._value);
@@ -56,16 +56,16 @@ namespace MongoDB.Bson
         public override int CompareTo(BsonValue other)
         {
             if (other == null) { return 1; }
-            var otherDecimal = other as BsonDecimal;
-            if (otherDecimal != null)
+            var otherDecimal128 = other as BsonDecimal128;
+            if (otherDecimal128 != null)
             {
-                return CompareTo(otherDecimal);
+                return CompareTo(otherDecimal128);
             }
             return CompareTypeTo(other);
         }
 
         /// <inheritdoc />
-        public bool Equals(BsonDecimal other)
+        public bool Equals(BsonDecimal128 other)
         {
             if (other == null)
             {
@@ -78,7 +78,7 @@ namespace MongoDB.Bson
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            return Equals(obj as BsonDecimal);
+            return Equals(obj as BsonDecimal128);
         }
 
         /// <inheritdoc />
@@ -88,249 +88,249 @@ namespace MongoDB.Bson
         public override string ToString() => _value.ToString();
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Byte"/> to <see cref="BsonDecimal"/>.
+        /// Performs an implicit conversion from <see cref="System.Byte"/> to <see cref="BsonDecimal128"/>.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static implicit operator BsonDecimal(byte value)
+        public static implicit operator BsonDecimal128(byte value)
         {
-            return new BsonDecimal(value);
+            return new BsonDecimal128(value);
         }
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="System.SByte"/> to <see cref="BsonDecimal"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator BsonDecimal(sbyte value)
-        {
-            return new BsonDecimal(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int16"/> to <see cref="BsonDecimal"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal(short value)
-        {
-            return new BsonDecimal(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt16"/> to <see cref="BsonDecimal"/>.
+        /// Performs an implicit conversion from <see cref="System.SByte"/> to <see cref="BsonDecimal128"/>.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
         [CLSCompliant(false)]
-        public static implicit operator BsonDecimal(ushort value)
+        public static implicit operator BsonDecimal128(sbyte value)
         {
-            return new BsonDecimal(value);
+            return new BsonDecimal128(value);
         }
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="BsonDecimal"/>.
+        /// Performs an implicit conversion from <see cref="System.Int16"/> to <see cref="BsonDecimal128"/>.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static implicit operator BsonDecimal(int value)
+        public static implicit operator BsonDecimal128(short value)
         {
-            return new BsonDecimal(value);
+            return new BsonDecimal128(value);
         }
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt32"/> to <see cref="BsonDecimal"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator BsonDecimal(uint value)
-        {
-            return new BsonDecimal(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int64"/> to <see cref="BsonDecimal"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal(long value)
-        {
-            return new BsonDecimal(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt64"/> to <see cref="BsonDecimal"/>.
+        /// Performs an implicit conversion from <see cref="System.UInt16"/> to <see cref="BsonDecimal128"/>.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
         [CLSCompliant(false)]
-        public static implicit operator BsonDecimal(ulong value)
+        public static implicit operator BsonDecimal128(ushort value)
         {
-            return new BsonDecimal(value);
+            return new BsonDecimal128(value);
         }
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Decimal"/> to <see cref="BsonDecimal"/>.
+        /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="BsonDecimal128"/>.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static implicit operator BsonDecimal(decimal value)
+        public static implicit operator BsonDecimal128(int value)
         {
-            return new BsonDecimal(value);
+            return new BsonDecimal128(value);
         }
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="Decimal128"/> to <see cref="BsonDecimal"/>.
+        /// Performs an implicit conversion from <see cref="System.UInt32"/> to <see cref="BsonDecimal128"/>.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static implicit operator BsonDecimal(Decimal128 value)
+        [CLSCompliant(false)]
+        public static implicit operator BsonDecimal128(uint value)
         {
-            return new BsonDecimal(value);
+            return new BsonDecimal128(value);
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.Byte"/>.
+        /// Performs an implicit conversion from <see cref="System.Int64"/> to <see cref="BsonDecimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator BsonDecimal128(long value)
+        {
+            return new BsonDecimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.UInt64"/> to <see cref="BsonDecimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static implicit operator BsonDecimal128(ulong value)
+        {
+            return new BsonDecimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.Decimal"/> to <see cref="BsonDecimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator BsonDecimal128(decimal value)
+        {
+            return new BsonDecimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="Decimal128"/> to <see cref="BsonDecimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator BsonDecimal128(Decimal128 value)
+        {
+            return new BsonDecimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Byte"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static explicit operator byte(BsonDecimal value)
+        public static explicit operator byte(BsonDecimal128 value)
         {
             return (byte)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.SByte"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.SByte"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
         [CLSCompliant(false)]
-        public static explicit operator sbyte(BsonDecimal value)
+        public static explicit operator sbyte(BsonDecimal128 value)
         {
             return (sbyte)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.Int16"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Int16"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static explicit operator short(BsonDecimal value)
+        public static explicit operator short(BsonDecimal128 value)
         {
             return (short)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.UInt16"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.UInt16"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
         [CLSCompliant(false)]
-        public static explicit operator ushort(BsonDecimal value)
+        public static explicit operator ushort(BsonDecimal128 value)
         {
             return (ushort)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.Int32"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Int32"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static explicit operator int(BsonDecimal value)
+        public static explicit operator int(BsonDecimal128 value)
         {
             return (int)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.UInt32"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.UInt32"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
         [CLSCompliant(false)]
-        public static explicit operator uint(BsonDecimal value)
+        public static explicit operator uint(BsonDecimal128 value)
         {
             return (uint)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.Int64"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Int64"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static explicit operator long(BsonDecimal value)
+        public static explicit operator long(BsonDecimal128 value)
         {
             return (long)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.UInt64"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.UInt64"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
         [CLSCompliant(false)]
-        public static explicit operator ulong(BsonDecimal value)
+        public static explicit operator ulong(BsonDecimal128 value)
         {
             return (ulong)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="System.Decimal"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Decimal"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static explicit operator decimal(BsonDecimal value)
+        public static explicit operator decimal(BsonDecimal128 value)
         {
             return (decimal)value._value;
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal"/> to <see cref="Decimal128"/>.
+        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="Decimal128"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
         /// <returns>
         /// The result of the conversion.
         /// </returns>
-        public static explicit operator Decimal128(BsonDecimal value)
+        public static explicit operator Decimal128(BsonDecimal128 value)
         {
             return value._value;
         }

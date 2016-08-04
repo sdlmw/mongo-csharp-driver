@@ -277,7 +277,7 @@ namespace MongoDB.Bson.IO
                 ThrowInvalidState(nameof(WriteDecimal128), BsonWriterState.Value);
             }
 
-            _bsonStream.WriteBsonType(BsonType.Decimal);
+            _bsonStream.WriteBsonType(BsonType.Decimal128);
             WriteNameHelper();
             _bsonStream.WriteDecimal128(value);
 

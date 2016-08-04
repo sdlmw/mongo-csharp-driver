@@ -36,7 +36,7 @@ namespace MongoDB.Bson
             { BsonType.Double, 4 },
             { BsonType.Int32, 4 },
             { BsonType.Int64, 4 },
-            { BsonType.Decimal, 4 },
+            { BsonType.Decimal128, 4 },
             { BsonType.String, 5 },
             { BsonType.Symbol, 5 },
             { BsonType.Document, 6 },
@@ -86,11 +86,11 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
-        /// Casts the BsonValue to a BsonDecimal (throws an InvalidCastException if the cast is not valid).
+        /// Casts the BsonValue to a BsonDecimal128 (throws an InvalidCastException if the cast is not valid).
         /// </summary>
-        public BsonDecimal AsBsonDecimal
+        public BsonDecimal128 AsBsonDecimal128
         {
-            get { return (BsonDecimal)this; }
+            get { return (BsonDecimal128)this; }
         }
 
         /// <summary>
@@ -203,7 +203,7 @@ namespace MongoDB.Bson
         /// </summary>
         public decimal AsDecimal
         {
-            get { return (decimal)((BsonDecimal)this).Value; }
+            get { return (decimal)((BsonDecimal128)this).Value; }
         }
 
         /// <summary>
@@ -211,7 +211,7 @@ namespace MongoDB.Bson
         /// </summary>
         public Decimal128 AsDecimal128
         {
-            get { return ((BsonDecimal)this).Value; }
+            get { return ((BsonDecimal128)this).Value; }
         }
 
         /// <summary>
@@ -488,11 +488,11 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
-        /// Tests whether this BsonValue is a Decimal.
+        /// Tests whether this BsonValue is a Decimal128.
         /// </summary>
-        public bool IsDecimal
+        public bool IsDecimal128
         {
-            get { return BsonType == BsonType.Decimal; }
+            get { return BsonType == BsonType.Decimal128; }
         }
 
         /// <summary>
@@ -668,7 +668,7 @@ namespace MongoDB.Bson
         /// <returns>A BsonValue.</returns>
         public static implicit operator BsonValue(decimal value)
         {
-            return (BsonDecimal)value;
+            return (BsonDecimal128)value;
         }
 
         /// <summary>
@@ -678,27 +678,27 @@ namespace MongoDB.Bson
         /// <returns>A BsonValue.</returns>
         public static implicit operator BsonValue(decimal? value)
         {
-            return value.HasValue ? (BsonValue)(BsonDecimal)value.Value : BsonNull.Value;
+            return value.HasValue ? (BsonValue)(BsonDecimal128)value.Value : BsonNull.Value;
         }
 
         /// <summary>
         /// Converts a <see cref="Decimal128"/> to a BsonValue.
         /// </summary>
-        /// <param name="value">A decimal.</param>
+        /// <param name="value">A Decimal128.</param>
         /// <returns>A BsonValue.</returns>
         public static implicit operator BsonValue(Decimal128 value)
         {
-            return (BsonDecimal)value;
+            return (BsonDecimal128)value;
         }
 
         /// <summary>
         /// Converts a nullable <see cref="Decimal128"/> to a BsonValue.
         /// </summary>
-        /// <param name="value">A decimal?.</param>
+        /// <param name="value">A Decimal128?.</param>
         /// <returns>A BsonValue.</returns>
         public static implicit operator BsonValue(Decimal128? value)
         {
-            return value.HasValue ? (BsonValue)(BsonDecimal)value.Value : BsonNull.Value;
+            return value.HasValue ? (BsonValue)(BsonDecimal128)value.Value : BsonNull.Value;
         }
 
         /// <summary>

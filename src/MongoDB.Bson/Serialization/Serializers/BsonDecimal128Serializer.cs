@@ -16,19 +16,19 @@
 namespace MongoDB.Bson.Serialization.Serializers
 {
     /// <summary>
-    /// Represents a serializer for BsonDecimals.
+    /// Represents a serializer for BsonDecimal128s.
     /// </summary>
-    public class BsonDecimalSerializer : BsonValueSerializerBase<BsonDecimal>
+    public class BsonDecimal128Serializer : BsonValueSerializerBase<BsonDecimal128>
     {
         // private static fields
-        private static BsonDecimalSerializer __instance = new BsonDecimalSerializer();
+        private static BsonDecimal128Serializer __instance = new BsonDecimal128Serializer();
 
         // constructors
         /// <summary>
         /// Initializes a new instance of the BsonBooleanSerializer class.
         /// </summary>
-        public BsonDecimalSerializer()
-            : base(BsonType.Decimal)
+        public BsonDecimal128Serializer()
+            : base(BsonType.Decimal128)
         {
         }
 
@@ -36,7 +36,7 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <summary>
         /// Gets an instance of the BsonBooleanSerializer class.
         /// </summary>
-        public static BsonDecimalSerializer Instance
+        public static BsonDecimal128Serializer Instance
         {
             get { return __instance; }
         }
@@ -48,10 +48,10 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <param name="context">The deserialization context.</param>
         /// <param name="args">The deserialization args.</param>
         /// <returns>A deserialized value.</returns>
-        protected override BsonDecimal DeserializeValue(BsonDeserializationContext context, BsonDeserializationArgs args)
+        protected override BsonDecimal128 DeserializeValue(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             var bsonReader = context.Reader;
-            return (BsonDecimal)bsonReader.ReadDecimal128();
+            return (BsonDecimal128)bsonReader.ReadDecimal128();
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <param name="context">The serialization context.</param>
         /// <param name="args">The serialization args.</param>
         /// <param name="value">The object.</param>
-        protected override void SerializeValue(BsonSerializationContext context, BsonSerializationArgs args, BsonDecimal value)
+        protected override void SerializeValue(BsonSerializationContext context, BsonSerializationArgs args, BsonDecimal128 value)
         {
             var bsonWriter = context.Writer;
             bsonWriter.WriteDecimal128(value.Value);

@@ -100,7 +100,7 @@ namespace MongoDB.Bson
         /// <summary>
         /// A BSON 128-bit decimal.
         /// </summary>
-        Decimal = 0x13,
+        Decimal128 = 0x13,
         /// <summary>
         /// A BSON MinKey value.
         /// </summary>

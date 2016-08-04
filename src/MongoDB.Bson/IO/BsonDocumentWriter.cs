@@ -155,7 +155,7 @@ namespace MongoDB.Bson.IO
                 ThrowInvalidState(nameof(WriteDecimal128), BsonWriterState.Value);
             }
 
-            WriteValue(new BsonDecimal(value));
+            WriteValue(new BsonDecimal128(value));
             State = GetNextState();
         }
 

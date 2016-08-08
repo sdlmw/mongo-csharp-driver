@@ -77,7 +77,7 @@ namespace MongoDB.Bson.IO
         /// <returns>A <see cref="Decimal128"/>.</returns>
         public static Decimal128 ToDecimal128(string value)
         {
-            return Decimal128.Parse(value, NumberFormatInfo.InvariantInfo);
+            return Decimal128.Parse(value);
         }
 
         /// <summary>

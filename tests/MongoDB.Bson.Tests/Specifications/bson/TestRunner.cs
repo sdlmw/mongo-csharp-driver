@@ -140,9 +140,8 @@ namespace MongoDB.Bson.Specifications.bson
         private void RunParseError(BsonDocument definition)
         {
             var subject = (string)definition["string"];
-            var style = NumberStyles.Float & ~NumberStyles.AllowTrailingWhite;
             Decimal128 result;
-            if (Decimal128.TryParse(subject, style, NumberFormatInfo.CurrentInfo, out result))
+            if (Decimal128.TryParse(subject, out result))
             {
                 Assert.True(false, $"{subject} should have resulted in a parse failure.");
             }

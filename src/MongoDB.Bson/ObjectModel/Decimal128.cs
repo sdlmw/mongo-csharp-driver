@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MongoDB.Bson
 {
@@ -59,19 +60,17 @@ namespace MongoDB.Bson
 
         private readonly byte _flags;
         private readonly short _exponent;
-        private readonly ulong _significandHigh;
-        private readonly ulong _significandLow;
+        private readonly UInt128 _significand;
 
-        private Decimal128(byte flags, short exponent, ulong significandHigh, ulong significandLow)
+        private Decimal128(byte flags, short exponent, UInt128 significand)
         {
             if (exponent > __exponentMax || exponent < __exponentMin)
             {
-                throw new ArgumentException($"Exponent must be between {__exponentMin} and {__exponentMax}.", "exponent");
+                throw new ArgumentException($"Exponent must be between {__exponentMin} and {__exponentMax}.", nameof(exponent));
             }
             _flags = flags;
             _exponent = exponent;
-            _significandHigh = significandHigh;
-            _significandLow = significandLow;
+            _significand = significand;
         }
 
         /// <summary>
@@ -90,8 +89,9 @@ namespace MongoDB.Bson
             _exponent = (short)((bits[3] >> 16) & 0x7F);
             _exponent *= -1;
 
-            _significandHigh = (ulong)(uint)bits[2];
-            _significandLow = ((ulong)(uint)bits[1] << 32) | (ulong)(uint)bits[0];
+            var significandHigh = (ulong)(uint)bits[2];
+            var significandLow = ((ulong)(uint)bits[1] << 32) | (ulong)(uint)bits[0];
+            _significand = new UInt128(significandHigh, significandLow);
         }
 
         /// <summary>
@@ -111,8 +111,7 @@ namespace MongoDB.Bson
             }
 
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)v;
+            _significand = new UInt128(0, (ulong)v);
         }
 
         /// <summary>
@@ -123,8 +122,7 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)value;
+            _significand = new UInt128(0, (ulong)value);
         }
 
         /// <summary>
@@ -143,8 +141,7 @@ namespace MongoDB.Bson
             }
 
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)v;
+            _significand = new UInt128(0, (ulong)v);
         }
 
         /// <summary>
@@ -156,8 +153,7 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)value;
+            _significand = new UInt128(0, (ulong)value);
         }
 
         /// <summary>
@@ -176,8 +172,7 @@ namespace MongoDB.Bson
             }
 
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)v;
+            _significand = new UInt128(0, (ulong)v);
         }
 
         /// <summary>
@@ -189,8 +184,7 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)value;
+            _significand = new UInt128(0, (ulong)value);
         }
 
         /// <summary>
@@ -208,8 +202,7 @@ namespace MongoDB.Bson
             }
 
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)value;
+            _significand = new UInt128(0, (ulong)value);
         }
 
         /// <summary>
@@ -221,8 +214,7 @@ namespace MongoDB.Bson
         {
             _flags = 0;
             _exponent = 0;
-            _significandHigh = 0;
-            _significandLow = (ulong)value;
+            _significand = new UInt128(0, (ulong)value);
         }
 
         /// <summary>
@@ -234,17 +226,26 @@ namespace MongoDB.Bson
         public Decimal128(ulong highBits, ulong lowBits)
         {
             _flags = (byte)(highBits >> 56);
-            if ((_flags & 0x60) == 0x60)
+            ulong significandHigh;
+            if ((_flags & 0x78) == 0x78)
             {
+                // it's either Infinity or NaN
+                _exponent = 0;
+                significandHigh = highBits & 0x00ffffffffffffff;
+            }
+            else if ((_flags & 0x60) == 0x60)
+            {
+                // the significand starts with an implied 100 and the last bit of the combination field
                 _exponent = (short)(((int)(highBits >> 47) & 0x3fff) - __exponentBias);
-                _significandHigh = 0x0002000000000000 | (highBits & 0x00007fffffffffff);
+                significandHigh = 0x0002000000000000 | (highBits & 0x00007fffffffffff);
             }
             else
             {
+                // the significand starts with an implied 0 and the last three bits of the combination field
                 _exponent = (short)(((int)(highBits >> 49) & 0x3fff) - __exponentBias);
-                _significandHigh = highBits & 0x0001ffffffffffff;
+                significandHigh = highBits & 0x0001ffffffffffff;
             }
-            _significandLow = lowBits;
+            _significand = new UInt128(significandHigh, lowBits);
         }
 
         /// <inheritdoc />
@@ -275,13 +276,13 @@ namespace MongoDB.Bson
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            if (obj is Decimal128)
+            if (obj == null || obj.GetType() != typeof(Decimal128))
             {
-                return Equals((Decimal128)obj);
+                return false;
             }
             else
             {
-                return false;
+                return Equals((Decimal128)obj);
             }
         }
 
@@ -291,21 +292,102 @@ namespace MongoDB.Bson
             int hash = 17;
             hash = 37 * hash + _flags.GetHashCode();
             hash = 37 * hash + _exponent.GetHashCode();
-            hash = 37 * hash + _significandHigh.GetHashCode();
-            hash = 37 * hash + _significandLow.GetHashCode();
+            hash = 37 * hash + _significand.GetHashCode();
             return hash;
         }
 
         /// <inheritdoc />
         public override string ToString()
         {
-            return ToString(NumberFormatInfo.CurrentInfo);
+            if ((_flags & 0x60) == 0x60)
+            {
+                if (Decimal128.IsPositiveInfinity(this))
+                {
+                    return "Infinity";
+                }
+                if (Decimal128.IsNegativeInfinity(this))
+                {
+                    return "-Infinity";
+                }
+                if (Decimal128.IsNaN(this))
+                {
+                    return "NaN";
+                }
+
+                // invalid representation treated as zero
+                if (_exponent == 0)
+                {
+                    return (_flags & 0x80) == 0x80 ? "-0" : "0";
+                }
+                else
+                {
+                    var exponentString = _exponent.ToString(NumberFormatInfo.InvariantInfo);
+                    if (_exponent > 0)
+                    {
+                        exponentString = "+" + exponentString;
+                    }
+                    return ((_flags & 0x80) == 0x80 ? "-0E" : "0E") + exponentString;
+                }
+            }
+
+            var coefficientString = _significand.ToString();
+            var adjustedExponent = _exponent + coefficientString.Length - 1;
+
+            string result;
+            if (_exponent > 0 || adjustedExponent < -6)
+            {
+                result = ToStringWithExponentialNotation(coefficientString, adjustedExponent);
+            }
+            else
+            {
+                result = ToStringWithoutExponentialNotation(coefficientString, _exponent);
+            }
+
+            if ((_flags & 0x80) == 0x80)
+            {
+                result = "-" + result;
+            }
+
+            return result;
+        }
+
+        private string ToStringWithExponentialNotation(string coefficientString, int adjustedExponent)
+        {
+            if (coefficientString.Length > 1)
+            {
+                coefficientString = coefficientString.Substring(0, 1) + "." + coefficientString.Substring(1);
+            }
+            var exponentString = adjustedExponent.ToString(NumberFormatInfo.InvariantInfo);
+            if (adjustedExponent >= 0)
+            {
+                exponentString = "+" + exponentString;
+            }
+            return coefficientString + "E" + exponentString;
+        }
+
+        private string ToStringWithoutExponentialNotation(string coefficientString, int exponent)
+        {
+            if (exponent == 0)
+            {
+                return coefficientString;
+            }
+            else
+            {
+                var exponentAbsoluteValue = Math.Abs(exponent);
+                var minimumCoefficientStringLength = exponentAbsoluteValue + 1;
+                if (coefficientString.Length < minimumCoefficientStringLength)
+                {
+                    coefficientString = coefficientString.PadLeft(minimumCoefficientStringLength, '0');
+                }
+                var decimalPointIndex = coefficientString.Length - exponentAbsoluteValue;
+                return coefficientString.Substring(0, decimalPointIndex) + "." + coefficientString.Substring(decimalPointIndex);
+            }
         }
 
         /// <inheritdoc />
         public string ToString(IFormatProvider provider)
         {
-            return ToString(NumberFormatInfo.GetInstance(provider));
+            return ToString();
         }
 
         TypeCode IConvertible.GetTypeCode()
@@ -393,198 +475,6 @@ namespace MongoDB.Bson
             throw new NotImplementedException();
         }
 
-        private string ToString(NumberFormatInfo formatInfo)
-        {
-            var result = new StringBuilder();
-
-            // high bit is 1
-            bool isNegative = (_flags & 0x80) != 0;
-
-            // combination will be the low 5 bits
-            var combination = (_flags >> 2) & 0x1F;
-
-            // 2 high combination bits are set
-            if ((combination >> 3) == 0x3)
-            {
-                if (combination == 0x1E)
-                {
-                    if (isNegative)
-                    {
-                        result.Append("-Infinity");
-                    }
-                    else
-                    {
-                        result.Append("Infinity");
-                    }
-                    return result.ToString();
-                }
-                else if (combination == 0x1F)
-                {
-                    result.Append("NaN");
-                    return result.ToString();
-                }
-                else if (combination == 0x1B)
-                {
-                    if (isNegative)
-                    {
-                        result.Append("-");
-                    }
-
-                    result.Append("0");
-                    if (_exponent != 0)
-                    {
-                        result.Append("E");
-                        if (_exponent > 0)
-                        {
-                            result.Append("+");
-                        }
-                        result.Append(_exponent);
-                    }
-                    return result.ToString();
-                }
-            }
-
-            if (isNegative && formatInfo.NumberNegativePattern <= 2)
-            {
-                if (formatInfo.NumberNegativePattern == 0)
-                {
-                    result.Append('(');
-                }
-                else
-                {
-                    result.Append(formatInfo.NegativeSign);
-                    if (formatInfo.NumberNegativePattern == 2)
-                    {
-                        result.Append(' ');
-                    }
-                }
-            }
-
-            var significand = new byte[36];
-            bool isZero = false;
-            var high = (uint)(_significandHigh >> 32);
-            var highMid = (uint)_significandHigh;
-            var lowMid = (uint)(_significandLow >> 32);
-            var low = (uint)_significandLow;
-
-            if (high == 0 && highMid == 0 && lowMid == 0 && low == 0)
-            {
-                isZero = true;
-            }
-            else
-            {
-                for (int k = 3; k >= 0; k--)
-                {
-                    uint remainder;
-                    DivideByOneBillion(ref high, ref highMid, ref lowMid, ref low, out remainder);
-
-                    if (remainder != 0)
-                    {
-                        for (int j = 8; j >= 0; j--)
-                        {
-                            significand[k * 9 + j] = (byte)(remainder % 10);
-                            remainder /= 10;
-                        }
-                    }
-                }
-            }
-
-            int significandDigits = 0;
-            int significandRead = 0;
-            if (isZero)
-            {
-                significandDigits = 1;
-                significandRead = 0;
-            }
-            else
-            {
-                significandDigits = 36;
-                while (significand[significandRead] == 0)
-                {
-                    significandDigits--;
-                    significandRead++;
-                }
-            }
-
-            var scientificExponent = significandDigits - 1 + _exponent;
-
-            if (_exponent > 0 || scientificExponent < -6)
-            {
-                result.Append(significand[significandRead++]);
-                significandDigits--;
-
-                if (significandDigits != 0)
-                {
-                    result.Append(formatInfo.NumberDecimalSeparator);
-                }
-
-                for (int i = 0; i < significandDigits; i++)
-                {
-                    result.Append(significand[significandRead++]);
-                }
-
-                result.Append('E');
-                if (scientificExponent > 0)
-                {
-                    result.Append(formatInfo.PositiveSign);
-                }
-                result.Append(scientificExponent.ToString());
-            }
-            else
-            {
-                if (_exponent >= 0)
-                {
-                    for (int i = 0; i < significandDigits; i++)
-                    {
-                        result.Append(significand[significandRead++]);
-                    }
-                }
-                else
-                {
-                    int radixPosition = significandDigits + _exponent;
-
-                    if (radixPosition > 0) // non-zero digits before radix
-                    {
-                        for (int i = 0; i < radixPosition; i++)
-                        {
-                            result.Append(significand[significandRead++]);
-                        }
-                    }
-                    else
-                    {
-                        result.Append('0');
-                    }
-
-                    result.Append(formatInfo.NumberDecimalSeparator);
-
-                    while (radixPosition++ < 0)
-                    {
-                        result.Append('0');
-                    }
-
-                    for (int i = 0; i < significandDigits - (int)Math.Max(radixPosition - 1, 0); i++)
-                    {
-                        result.Append(significand[significandRead++]);
-                    }
-                }
-            }
-
-            if (isNegative && formatInfo.NumberNegativePattern == 0)
-            {
-                result.Append(')');
-            }
-            else if (isNegative && formatInfo.NumberNegativePattern >= 3)
-            {
-                if (formatInfo.NumberNegativePattern == 4)
-                {
-                    result.Append(' ');
-                }
-                result.Append(formatInfo.NegativeSign);
-            }
-
-            return result.ToString();
-        }
-
         /// <summary>
         /// Gets the high order 64 bits of the binary representation of this instance.
         /// </summary>
@@ -593,14 +483,19 @@ namespace MongoDB.Bson
         public ulong GetHighBits()
         {
             var biasedExponent = _exponent + __exponentBias;
-            var highBits = _significandHigh;
-            if ((_flags & 0x60) == 0x60)
+            ulong highBits;
+            if ((_flags & 0x70) == 0x70)
             {
-                highBits = ((ulong)biasedExponent << 47) | (highBits & 0x00007fffffffffff);
+                // it's either Infinity or NaN
+                highBits = _significand.High;
+            }
+            else if ((_flags & 0x60) == 0x60)
+            {
+                highBits = ((ulong)biasedExponent << 47) | (_significand.High & 0x00007fffffffffff);
             }
             else
             {
-                highBits = ((ulong)biasedExponent << 49) | highBits;
+                highBits = ((ulong)biasedExponent << 49) | _significand.High;
             }
             return ((ulong)_flags << 56) | highBits;
         }
@@ -612,7 +507,7 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public ulong GetLowBits()
         {
-            return _significandLow;
+            return _significand.Low;
         }
 
         /// <summary>
@@ -634,14 +529,14 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> evaluates to negative infinity; otherwise, false.</returns>
-        public static bool IsNegativeInfinity(Decimal128 d) => (d._flags & 0xF8) == 0xF8;
+        public static bool IsNegativeInfinity(Decimal128 d) => (d._flags & 0xFC) == 0xF8;
 
         /// <summary>
         /// Returns a value indicating whether the specified number evaluates to positive infinity.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> evaluates to positive infinity; otherwise, false.</returns>
-        public static bool IsPositiveInfinity(Decimal128 d) => (d._flags & 0x78) == 0x78 && (d._flags & 0x80) == 0 && (d._flags & 0x7C) != 0x7C;
+        public static bool IsPositiveInfinity(Decimal128 d) => (d._flags & 0xFC) == 0x78;
 
         /// <summary>
         /// Returns a value indicating whether the specified number is not a number.
@@ -655,7 +550,7 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is a quiet not a number; otherwise, false.</returns>
-        public static bool IsQNaN(Decimal128 d) => (d._flags & 0x7C) == 0x7C && (d._flags & 0x7E) != 0x7E;
+        public static bool IsQNaN(Decimal128 d) => (d._flags & 0x7E) == 0x7C;
 
         /// <summary>
         /// Returns a value indicating whether the specified number is a signaled not a number.
@@ -673,53 +568,13 @@ namespace MongoDB.Bson
         /// </returns>
         public static Decimal128 Parse(string s)
         {
-            return Parse(s, NumberStyles.Float, NumberFormatInfo.CurrentInfo);
-        }
-
-        /// <summary>
-        /// Converts the string representation of a number in a specified style to its <see cref="Decimal128" /> equivalent.
-        /// </summary>
-        /// <param name="s">The string representation of the number to convert.</param>
-        /// <param name="style">A bitwise combination of <see cref="T:System.Globalization.NumberStyles" /> values that indicates the style elements that can be present in <paramref name="s" />. A typical value to specify is <see cref="F:System.Globalization.NumberStyles.Number" />.</param>
-        /// <returns>
-        /// The <see cref="Decimal128" /> number equivalent to the number contained in <paramref name="s" /> as specified by <paramref name="style" />.
-        /// </returns>
-        public static Decimal128 Parse(string s, NumberStyles style)
-        {
-            return Parse(s, style, NumberFormatInfo.CurrentInfo);
-        }
-
-        /// <summary>
-        /// Converts the string representation of a number to its <see cref="Decimal128" /> equivalent using the specified culture-specific format information.
-        /// </summary>
-        /// <param name="s">The string representation of the number to convert.</param>
-        /// <param name="provider">An <see cref="T:System.IFormatProvider" /> that supplies culture-specific parsing information about <paramref name="s" />.</param>
-        /// <returns>
-        /// The <see cref="Decimal128" /> number equivalent to the number contained in <paramref name="s" /> as specified by <paramref name="provider" />.
-        /// </returns>
-        public static Decimal128 Parse(string s, IFormatProvider provider)
-        {
-            return Parse(s, NumberStyles.Float, provider);
-        }
-
-        /// <summary>
-        /// Converts the string representation of a number to its <see cref="Decimal128" /> equivalent using the specified style and culture-specific format.
-        /// </summary>
-        /// <param name="s">The string representation of the number to convert.</param>
-        /// <param name="style">A bitwise combination of <see cref="T:System.Globalization.NumberStyles" /> values that indicates the style elements that can be present in <paramref name="s" />. A typical value to specify is <see cref="F:System.Globalization.NumberStyles.Number" />.</param>
-        /// <param name="provider">An <see cref="T:System.IFormatProvider" /> object that supplies culture-specific information about the format of <paramref name="s" />.</param>
-        /// <returns>
-        /// The <see cref="Decimal128" /> number equivalent to the number contained in <paramref name="s" /> as specified by <paramref name="style" /> and <paramref name="provider" />.
-        /// </returns>
-        public static Decimal128 Parse(string s, NumberStyles style, IFormatProvider provider)
-        {
-            Decimal128 result;
-            if (!TryParse(s, style, provider, out result))
+            Decimal128 value;
+            if (!TryParse(s, out value))
             {
-                throw new ArgumentException($"{s} is not a valid Decimal128.", "s");
+                throw new FormatException($"{s} is not a valid Decimal128.");
             }
 
-            return result;
+            return value;
         }
 
         /// <summary>
@@ -746,22 +601,87 @@ namespace MongoDB.Bson
         /// </returns>
         public static bool TryParse(string s, out Decimal128 result)
         {
-            return TryParse(s, NumberStyles.Float, NumberFormatInfo.CurrentInfo, out result);
-        }
+            if (s == null || s.Length == 0)
+            {
+                result = default(Decimal128);
+                return false;
+            }
 
-        /// <summary>
-        /// Converts the string representation of a number to its <see cref="Decimal128" /> equivalent. A return value indicates whether the conversion succeeded or failed.
-        /// </summary>
-        /// <param name="s">The string representation of the number to convert.</param>
-        /// <param name="style">A bitwise combination of enumeration values that indicates the permitted format of <paramref name="s" />. A typical value to specify is <see cref="F:System.Globalization.NumberStyles.Number" />.</param>
-        /// <param name="provider">An object that supplies culture-specific parsing information about <paramref name="s" />. </param>
-        /// <param name="result">When this method returns, contains the <see cref="Decimal128" /> number that is equivalent to the numeric value contained in <paramref name="s" />, if the conversion succeeded, or is zero if the conversion failed. The conversion fails if the <paramref name="s" /> parameter is null, is not a number in a valid format, or represents a number less than the min value or greater than the max value. This parameter is passed uninitialized.</param>
-        /// <returns>
-        /// true if <paramref name="s" /> was converted successfully; otherwise, false.
-        /// </returns>
-        public static bool TryParse(string s, NumberStyles style, IFormatProvider provider, out Decimal128 result)
-        {
-            return new Decimal128Parser(s, style, NumberFormatInfo.GetInstance(provider)).TryParse(out result);
+            const string pattern =
+                @"^(?<sign>[+-])?" +
+                @"(?<significand>\d+([.]\d*)?|[.]\d+)" +
+                @"(?<exponent>[eE](?<exponentSign>[+-])?(?<exponentDigits>\d+))?$";
+
+            var match = Regex.Match(s, pattern);
+            if (!match.Success)
+            {
+                if (s.Equals("Inf", StringComparison.OrdinalIgnoreCase) || s.Equals("Infinity", StringComparison.OrdinalIgnoreCase) ||
+                    s.Equals("+Inf", StringComparison.OrdinalIgnoreCase) || s.Equals("+Infinity", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = Decimal128.PositiveInfinity;
+                    return true;
+                }
+
+                if (s.Equals("-Inf", StringComparison.OrdinalIgnoreCase) || s.Equals("-Infinity", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = Decimal128.NegativeInfinity;
+                    return true;
+                }
+
+                if (s.Equals("NaN", StringComparison.OrdinalIgnoreCase) || s.Equals("-NaN", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = Decimal128.QNaN;
+                    return true;
+                }
+
+                result = default(Decimal128);
+                return false;
+            }
+
+            var sign = match.Groups["sign"].Value == "-" ? -1 : 0;
+
+            var exponent = 0;
+            if (match.Groups["exponent"].Length != 0)
+            {
+                if (!int.TryParse(match.Groups["exponentDigits"].Value, out exponent))
+                {
+                    result = default(Decimal128);
+                    return false;
+                }
+                if (match.Groups["exponentSign"].Value == "-")
+                {
+                    exponent = -exponent;
+                }
+            }
+
+            var significandString = match.Groups["significand"].Value;
+
+            int decimalPointIndex;
+            if ((decimalPointIndex = significandString.IndexOf('.')) != -1)
+            {
+                exponent -= significandString.Length - (decimalPointIndex + 1);
+                significandString = significandString.Substring(0, decimalPointIndex) + significandString.Substring(decimalPointIndex + 1);
+            }
+
+            significandString = RemoveLeadingZeroes(significandString);
+            significandString = ClampOrRound(ref exponent, significandString);
+
+            if (exponent > __exponentMax || exponent < __exponentMin)
+            {
+                result = default(Decimal128);
+                return false;
+            }
+            if (significandString.Length > 34)
+            {
+                result = default(Decimal128);
+                return false;
+            }
+
+            var flags = sign == -1 ? (byte)0x80 : (byte)0x0;
+            var significand = UInt128.Parse(significandString);
+
+            result = new Decimal128(flags, (short)exponent, significand);
+            return true;
         }
 
         /// <summary>
@@ -771,15 +691,15 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="decimal"/> equivalent to <paramref name="d" />.</returns>
         public static decimal ToDecimal(Decimal128 d)
         {
-            if ((d._significandHigh >> 32) == 0 && d._exponent >= -128 && d._exponent <= 127)
+            if ((d._significand.High >> 32) == 0 && d._exponent >= -128 && d._exponent <= 127)
             {
                 if (d._flags == 0x80 || d._flags == 0)
                 {
                     var scale = (byte)-d._exponent;
                     bool isNegative = d._flags == 0x80; // only the negative bit is set
-                    var highMid = (int)d._significandHigh;
-                    var lowMid = (int)(d._significandLow >> 32);
-                    var low = (int)d._significandLow;
+                    var highMid = (int)d._significand.High;
+                    var lowMid = (int)(d._significand.Low >> 32);
+                    var low = (int)d._significand.Low;
                     return new decimal(low, lowMid, highMid, isNegative, scale);
                 }
             }
@@ -844,9 +764,9 @@ namespace MongoDB.Bson
         /// <returns>A 32-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static int ToInt32(Decimal128 d)
         {
-            if (d._significandHigh == 0 && (d._significandLow >> 32) == 0)
+            if (d._significand.High == 0 && (d._significand.Low >> 32) == 0)
             {
-                int num = (int)d._significandLow;
+                int num = (int)d._significand.Low;
                 if (d._flags == 0x80) // only the negative bit is set...
                 {
                     num = -num;
@@ -874,9 +794,9 @@ namespace MongoDB.Bson
         /// <returns>A 64-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static long ToInt64(Decimal128 d)
         {
-            if (d._significandHigh == 0)
+            if (d._significand.High == 0)
             {
-                long num = (long)d._significandLow;
+                long num = (long)d._significand.Low;
                 if (d._flags == 0x80) // only the negative bit is set...
                 {
                     num = -num;
@@ -957,9 +877,9 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static uint ToUInt32(Decimal128 d)
         {
-            if (d._significandHigh == 0 && (d._significandLow >> 32) == 0)
+            if (d._significand.High == 0 && (d._significand.Low >> 32) == 0)
             {
-                uint num = (uint)d._significandLow;
+                uint num = (uint)d._significand.Low;
                 if (d._flags == 0 || num == 0)
                 {
                     return num;
@@ -977,9 +897,9 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static ulong ToUInt64(Decimal128 d)
         {
-            if (d._significandHigh == 0)
+            if (d._significand.High == 0)
             {
-                ulong num = (ulong)d._significandLow;
+                ulong num = (ulong)d._significand.Low;
                 if (d._flags == 0 || num == 0)
                 {
                     return num;
@@ -1238,398 +1158,79 @@ namespace MongoDB.Bson
             return ToDecimal(value);
         }
 
-        private static void DivideByOneBillion(ref uint high, ref uint highMid, ref uint lowMid, ref uint low, out uint remainder)
+        // private methods
+        private static string ClampOrRound(ref int exponent, string significandString)
         {
-            const uint divisor = 1000 * 1000 * 1000;
-
-            ulong tempRemainder = 0;
-
-            if (high == 0 && highMid == 0 && lowMid == 0 && low == 0)
+            if (exponent > __exponentMax)
             {
-                remainder = 0;
-                return;
+                if (significandString == "0")
+                {
+                    // since significand is zero simply use the largest possible exponent
+                    exponent = __exponentMax;
+                }
+                else
+                {
+                    // use clamping to bring the exponent into range
+                    var numberOfTrailingZeroesToAdd = exponent - __exponentMax;
+                    var digitsAvailable = 34 - significandString.Length;
+                    if (numberOfTrailingZeroesToAdd <= digitsAvailable)
+                    {
+                        exponent = __exponentMax;
+                        significandString = significandString + new string('0', numberOfTrailingZeroesToAdd);
+                    }
+                }
+            }
+            else if (exponent < __exponentMin)
+            {
+                if (significandString == "0")
+                {
+                    // since significand is zero simply use the smallest possible exponent
+                    exponent = __exponentMin;
+                }
+                else
+                {
+                    // use exact rounding to bring the exponent into range
+                    var numberOfTrailingZeroesToRemove = __exponentMin - exponent;
+                    if (numberOfTrailingZeroesToRemove < significandString.Length)
+                    {
+                        var trailingDigits = significandString.Substring(significandString.Length - numberOfTrailingZeroesToRemove);
+                        if (Regex.IsMatch(trailingDigits, "^0+$"))
+                        {
+                            exponent = __exponentMin;
+                            significandString = significandString.Substring(0, significandString.Length - numberOfTrailingZeroesToRemove);
+                        }
+                    }
+                }
+            }
+            else if (significandString.Length > 34)
+            {
+                // use exact rounding to reduce significand to 34 digits
+                var numberOfTrailingZeroesToRemove = significandString.Length - 34;
+                if (exponent + numberOfTrailingZeroesToRemove <= __exponentMax)
+                {
+                    var trailingDigits = significandString.Substring(significandString.Length - numberOfTrailingZeroesToRemove);
+                    if (Regex.IsMatch(trailingDigits, "^0+$"))
+                    {
+                        exponent += numberOfTrailingZeroesToRemove;
+                        significandString = significandString.Substring(0, significandString.Length - numberOfTrailingZeroesToRemove);
+                    }
+                }
             }
 
-            tempRemainder <<= 32;
-            tempRemainder += high;
-            high = (uint)(tempRemainder / divisor);
-            tempRemainder %= divisor;
-
-            tempRemainder <<= 32;
-            tempRemainder += highMid;
-            highMid = (uint)(tempRemainder / divisor);
-            tempRemainder %= divisor;
-
-            tempRemainder <<= 32;
-            tempRemainder += lowMid;
-            lowMid = (uint)(tempRemainder / divisor);
-            tempRemainder %= divisor;
-
-            tempRemainder <<= 32;
-            tempRemainder += low;
-            low = (uint)(tempRemainder / divisor);
-            tempRemainder %= divisor;
-
-            remainder = (uint)tempRemainder;
+            return significandString;
         }
 
-        private class Decimal128Parser
+        private static string RemoveLeadingZeroes(string significandString)
         {
-            private readonly string _s;
-            private readonly NumberStyles _style;
-            private readonly NumberFormatInfo _formatInfo;
-
-            public Decimal128Parser(string s, NumberStyles style, NumberFormatInfo formatInfo)
+            if (significandString[0] == '0' && significandString.Length > 1)
             {
-                if (s == null)
-                {
-                    throw new ArgumentNullException("s");
-                }
-                if ((style & ~(NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowTrailingSign | NumberStyles.AllowParentheses | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent | NumberStyles.AllowCurrencySymbol | NumberStyles.AllowHexSpecifier)) != NumberStyles.None)
-                {
-                    throw new ArgumentException("An undefined NumberStyles value is being used.", "style");
-                }
-                if ((style & NumberStyles.AllowHexSpecifier) != NumberStyles.None)
-                {
-                    throw new ArgumentException("The number style AllowHexSpecifier is not supported on floating point data types.", "style");
-                }
-                if (formatInfo == null)
-                {
-                    throw new ArgumentNullException("formatInfo");
-                }
-
-                _s = s;
-                _style = style;
-                _formatInfo = formatInfo;
+                significandString = Regex.Replace(significandString, "^0+", "");
+                return significandString.Length == 0 ? "0" : significandString;
             }
-
-            [Flags]
-            private enum ParseState
+            else
             {
-                None = 0,
-                Sign = 1,
-                Parenthesis = 2,
-                Digits = 4,
-                SeenNonZero = 8,
-                Decimal = 16,
-                Infinity = 32,
-                NaN = 64
-            }
-
-            public bool TryParse(out Decimal128 result)
-            {
-                result = default(Decimal128);
-                bool negative = false;
-                bool exponentNegative = false;
-                var digits = new List<byte>();
-                var scale = 0;
-                ParseState state = ParseState.None;
-                int i = 0;
-                int i2;
-
-                // read leading whitespace, specials, and sign
-                while (i < _s.Length)
-                {
-                    var allowLeadingSign = (_style & NumberStyles.AllowLeadingSign) != 0 && (state & ParseState.Sign) == 0;
-                    var allowSpecial = (state & ParseState.Infinity) == 0 && (state & ParseState.NaN) == 0;
-                    // Read whitespace
-                    if (!char.IsWhiteSpace(_s, i) ||
-                        (_style & NumberStyles.AllowLeadingWhite) == 0 ||
-                        (((state & ParseState.Sign) != 0 || _formatInfo.NumberNegativePattern != 2) &&
-                            (state & ParseState.Infinity) == 0 && (state & ParseState.NaN) == 0))
-                    {
-                        if (state == 0 && (i2 = MatchChars(_s, i, _formatInfo.NegativeInfinitySymbol)) != i)
-                        {
-                            state |= ParseState.Infinity | ParseState.Sign;
-                            negative = true;
-                            i = i2 - 1;
-                        }
-                        else if (state == 0 && (i2 = MatchChars(_s, i, _formatInfo.PositiveInfinitySymbol)) != i)
-                        {
-                            state |= ParseState.Infinity | ParseState.Sign;
-                            i = i2 - 1;
-                        }
-                        else if (allowSpecial && (
-                            (i2 = MatchChars(_s, i, _formatInfo.PositiveInfinitySymbol)) != i ||
-                            (i2 = MatchChars(_s, i, "Inf")) != i ||
-                            (i2 = MatchChars(_s, i, "Infinity")) != i))
-                        {
-                            state |= ParseState.Infinity;
-                            i = i2 - 1;
-                        }
-                        else if (allowSpecial && (
-                            (i2 = MatchChars(_s, i, _formatInfo.NaNSymbol)) != i ||
-                            (i2 = MatchChars(_s, i, "NaN")) != i))
-                        {
-                            state |= ParseState.NaN;
-                            i = i2 - 1;
-                        }
-                        else if (allowLeadingSign && ((i2 = MatchChars(_s, i, _formatInfo.PositiveSign)) != i))
-                        {
-                            state |= ParseState.Sign;
-                            i = i2 - 1;
-                        }
-                        else if (allowLeadingSign && ((i2 = MatchChars(_s, i, _formatInfo.NegativeSign)) != i))
-                        {
-                            state |= ParseState.Sign;
-                            negative = true;
-                            i = i2 - 1;
-                        }
-                        else if (_s[i] == '(' && (_style & NumberStyles.AllowParentheses) != 0 && (state & ParseState.Sign) == 0)
-                        {
-                            state |= ParseState.Parenthesis | ParseState.Sign;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    i++;
-                }
-
-                // read digits, decimal point, and scale
-                while (i < _s.Length)
-                {
-                    if (char.IsDigit(_s, i))
-                    {
-                        state |= ParseState.Digits;
-
-                        if (_s[i] != '0' || (state & ParseState.SeenNonZero) != 0)
-                        {
-                            if (digits.Count >= __maxSignificandDigits)
-                            {
-                                // too many digits
-                                return false;
-                            }
-                            digits.Add((byte)(_s[i] - '0'));
-                            state |= ParseState.SeenNonZero;
-                        }
-
-                        if ((state & ParseState.Decimal) != 0)
-                        {
-                            scale--;
-                        }
-                    }
-                    else if ((_style & NumberStyles.AllowDecimalPoint) != 0 && (state & ParseState.Decimal) == 0 && (i2 = MatchChars(_s, i, _formatInfo.NumberDecimalSeparator)) != i)
-                    {
-                        i = i2 - 1;
-                        state |= ParseState.Decimal;
-                    }
-                    else
-                    {
-                        if ((_style & NumberStyles.AllowThousands) == 0 || (state & ParseState.Decimal) != 0 && (state & ParseState.Digits) == 0 || (i2 = MatchChars(_s, i, _formatInfo.NumberGroupSeparator)) == i)
-                        {
-                            break;
-                        }
-
-                        i = i2 - 1;
-                    }
-                    i++;
-                }
-
-                // parse exponent and scale
-                if ((state & ParseState.Digits) != 0 && i < _s.Length)
-                {
-                    if ((_s[i] == 'E' || _s[i] == 'e') && (_style & NumberStyles.AllowExponent) != 0)
-                    {
-                        i++;
-
-                        if ((i2 = MatchChars(_s, i, _formatInfo.PositiveSign)) != i)
-                        {
-                            i = i2;
-                        }
-                        else if ((i2 = MatchChars(_s, i, _formatInfo.NegativeSign)) != i)
-                        {
-                            exponentNegative = true;
-                            i = i2;
-                        }
-                        if (i < _s.Length && char.IsDigit(_s, i))
-                        {
-                            int tempScale = 0;
-                            do
-                            {
-                                tempScale = tempScale * 10 + (_s[i] - '0');
-                                i++;
-                            }
-                            while (i < _s.Length && char.IsDigit(_s, i));
-
-                            if (exponentNegative)
-                            {
-                                tempScale = -tempScale;
-                            }
-                            if (tempScale <= scale && (scale - tempScale) > (1 << 14))
-                            {
-                                scale = __exponentMin;
-                            }
-                            else
-                            {
-                                scale += tempScale;
-                            }
-                        }
-                        else
-                        {
-                            // after an exponent, we must have some digits
-                            return false;
-                        }
-                    }
-                }
-
-                // Parse trailing whitespace, sign, etc...
-                while (i < _s.Length)
-                {
-                    if (!char.IsWhiteSpace(_s, i) || (_style & NumberStyles.AllowTrailingWhite) == 0)
-                    {
-                        var allowTrailingSign = (_style & NumberStyles.AllowTrailingSign) != 0 && (state & ParseState.Sign) == 0;
-                        if (allowTrailingSign && (i2 = MatchChars(_s, i, _formatInfo.PositiveSign)) != i)
-                        {
-                            state |= ParseState.Sign;
-                            i = i2 - 1;
-                        }
-                        else if (allowTrailingSign && (i2 = MatchChars(_s, i, _formatInfo.NegativeSign)) != i)
-                        {
-                            state |= ParseState.Sign;
-                            negative = true;
-                            i = i2 - 1;
-                        }
-                        else if (_s[i] == ')' && (state & ParseState.Parenthesis) != 0)
-                        {
-                            state ^= ParseState.Parenthesis;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-
-                    i++;
-                }
-
-                if (i != _s.Length || (state & ParseState.Parenthesis) != 0)
-                {
-                    return false;
-                }
-
-                if ((state & ParseState.Infinity) != 0)
-                {
-                    result = negative ? NegativeInfinity : PositiveInfinity;
-                    return true;
-                }
-                if ((state & ParseState.NaN) != 0)
-                {
-                    result = QNaN;
-                    return true;
-                }
-
-                ulong sigHigh = 0;
-                ulong sigLow = 0;
-                if (digits.Count != 0 && digits.Count < 17)
-                {
-                    var digitIndex = 0;
-                    sigLow = digits[digitIndex++];
-                    for (; digitIndex < digits.Count; digitIndex++)
-                    {
-                        sigLow *= 10;
-                        sigLow += digits[digitIndex];
-                    }
-                }
-                else if (digits.Count != 0)
-                {
-                    var digitIndex = 0;
-                    sigHigh = digits[digitIndex++];
-                    for (; digitIndex < digits.Count - 17; digitIndex++)
-                    {
-                        sigHigh *= 10;
-                        sigHigh += digits[digitIndex];
-                    }
-
-                    sigLow = digits[digitIndex++];
-                    for (; digitIndex < digits.Count; digitIndex++)
-                    {
-                        sigLow *= 10;
-                        sigLow += digits[digitIndex];
-                    }
-                }
-                else if (digits.Count == 0 && (state & ParseState.Digits) == ParseState.None)
-                {
-                    // we read no digits at all
-                    return false;
-                }
-
-                ulong newSigHigh;
-                ulong newSigLow;
-                Multiply(sigHigh, 100000000000000000ul, out newSigHigh, out newSigLow);
-
-                newSigLow += sigLow;
-
-                if (newSigLow < sigLow)
-                {
-                    newSigHigh++;
-                }
-
-                short exponent = (short)scale;
-                if (exponent > __exponentMax || exponent < __exponentMin)
-                {
-                    return false;
-                }
-                byte flags = 0;
-                if (negative)
-                {
-                    flags |= 0x80;
-                }
-
-                result = new Decimal128(flags, exponent, newSigHigh, newSigLow);
-                return true;
-            }
-
-            private static int MatchChars(string s, int i, string match)
-            {
-                int sIndex = i;
-                int matchIndex = 0;
-                while (matchIndex < match.Length)
-                {
-                    if (sIndex >= s.Length || (char.ToLowerInvariant(s[sIndex]) != char.ToLowerInvariant(match[matchIndex]) && (match[matchIndex] != '\u00a0' || s[sIndex] != ' ')))
-                    {
-                        return i;
-                    }
-
-                    sIndex++;
-                    matchIndex++;
-                }
-
-                return sIndex;
-            }
-
-            private static void Multiply(ulong left, ulong right, out ulong high, out ulong low)
-            {
-                if (left == 0 && right == 0)
-                {
-                    high = 0;
-                    low = 0;
-                    return;
-                }
-
-                ulong leftHigh = left >> 32;
-                ulong leftLow = (uint)left;
-                ulong rightHigh = right >> 32;
-                ulong rightLow = (uint)right;
-
-                ulong productHigh = leftHigh * rightHigh;
-                ulong productHighMid = leftHigh * rightLow;
-                ulong productLowMid = leftLow * rightHigh;
-                ulong productLow = leftLow * rightLow;
-
-                productHigh += productHighMid >> 32;
-                productHighMid = (uint)productHighMid + productLowMid + (productLow >> 32);
-
-                productHigh += productHighMid >> 32;
-                productLow = (productHighMid << 32) + (uint)productLow;
-
-                high = productHigh;
-                low = productLow;
+                return significandString;
             }
         }
     }
-
-
 }
-

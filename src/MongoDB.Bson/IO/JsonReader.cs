@@ -1532,7 +1532,7 @@ namespace MongoDB.Bson.IO
             var valueToken = PopToken();
             if (valueToken.Type == JsonTokenType.String)
             {
-                value = Decimal128.Parse(valueToken.StringValue, CultureInfo.InvariantCulture);
+                value = Decimal128.Parse(valueToken.StringValue);
             }
             else if (valueToken.Type == JsonTokenType.Int32 || valueToken.Type == JsonTokenType.Int64)
             {

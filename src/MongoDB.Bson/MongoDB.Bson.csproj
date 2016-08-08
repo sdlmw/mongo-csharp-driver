@@ -125,6 +125,7 @@
     <Compile Include="ObjectModel\MaterializedOnDemandBsonDocument.cs" />
     <Compile Include="ObjectModel\RawBsonArray.cs" />
     <Compile Include="ObjectModel\RawBsonDocument.cs" />
+    <Compile Include="ObjectModel\UInt128.cs" />
     <Compile Include="PowerOf2.cs" />
     <Compile Include="Serialization\AttributedSerializationProvider.cs" />
     <Compile Include="Serialization\Attributes\BsonConstructorAttribute.cs" />

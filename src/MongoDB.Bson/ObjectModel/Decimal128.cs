@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace MongoDB.Bson
@@ -33,6 +32,22 @@ namespace MongoDB.Bson
         private const short __exponentMax = 6111;
         private const short __exponentMin = -6176;
         private const short __exponentBias = 6176;
+
+        private static readonly UInt128 __maxSignificand = UInt128.Parse("9999999999999999999999999999999999");
+        private static readonly Decimal128 __maxValue = Decimal128.Parse("9999999999999999999999999999999999E+6111");
+        private static readonly Decimal128 __minValue = Decimal128.Parse("-9999999999999999999999999999999999E+6111");
+
+        /// <summary>
+        /// Gets the maximum value.
+        /// </summary>
+        public static Decimal128 MaxValue =>
+            __maxValue;
+
+        /// <summary>
+        /// Gets the minimum value.
+        /// </summary>
+        public static Decimal128 MinValue =>
+            __minValue;
 
         /// <summary>
         /// Represents negative infinity.
@@ -57,6 +72,12 @@ namespace MongoDB.Bson
         /// </summary>
         public static Decimal128 SNaN =>
             new Decimal128(0x7E00000000000000, 0);
+
+        /// <summary>
+        /// Represents zero.
+        /// </summary>
+        public static Decimal128 Zero =>
+            new Decimal128(0, 0);
 
         private readonly byte _flags;
         private readonly short _exponent;
@@ -98,62 +119,18 @@ namespace MongoDB.Bson
         /// Initializes a new instance of the <see cref="Decimal128"/> struct.
         /// </summary>
         /// <param name="value">The value.</param>
-        [CLSCompliant(false)]
-        public Decimal128(sbyte value)
+        public Decimal128(double value)
         {
-            _flags = 0;
-            int v = value;
-            if (value < 0)
-            {
-                // sign bit
-                _flags = 0x80;
-                v = -v;
-            }
-
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)v);
+            throw new NotImplementedException();
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Decimal128"/> struct.
         /// </summary>
         /// <param name="value">The value.</param>
-        public Decimal128(byte value)
+        public Decimal128(float value)
         {
-            _flags = 0;
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        public Decimal128(short value)
-        {
-            _flags = 0;
-            int v = value;
-            if (value < 0)
-            {
-                // sign bit
-                _flags = 0x80;
-                v = -v;
-            }
-
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)v);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        [CLSCompliant(false)]
-        public Decimal128(ushort value)
-        {
-            _flags = 0;
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -248,29 +225,28 @@ namespace MongoDB.Bson
             _significand = new UInt128(significandHigh, lowBits);
         }
 
+        /// <summary>
+        /// Compares two specified Decimal128 values and returns an integer that indicates whether the first value
+        /// is greater than, less than, or equal to the second value.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>Less than zero if x &lt; y, zero if x == y, and greater than zero if x &gt; y.</returns>
+        public static int Compare(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128Comparer.Instance.Compare(x, y);
+        }
+
         /// <inheritdoc />
         public int CompareTo(Decimal128 other)
         {
-            if (Equals(other))
-            {
-                return 0;
-            }
-
-            // TODO: obviously, this needs to get fixed
-            return -1;
+            return Decimal128.Compare(this, other);
         }
 
         /// <inheritdoc />
         public bool Equals(Decimal128 other)
         {
-            // TODO: problem is that this representation
-            // doesn't normalize... Hence 120 * 10^3 and 12.0 * 10 ^ 4
-            // aren't stored the same way. We need to normalize both
-            // prior to an equality comparison.
-            // For now, we'll simply compare the bits...
-            return
-                GetHighBits() == other.GetHighBits() &&
-                GetLowBits() == other.GetLowBits();
+            return Decimal128.Equals(this, other);
         }
 
         /// <inheritdoc />
@@ -286,6 +262,17 @@ namespace MongoDB.Bson
             }
         }
 
+        /// <summary>
+        /// Determines whether the specified Decimal128 instances are considered equal.
+        /// </summary>
+        /// <param name="x">The first Decimal128 object to compare.</param>
+        /// <param name="y">The second Decimal128 object to compare.</param>
+        /// <returns>True if the objects are considered equal; otherwise false. If both x and y are null, the method returns true.</returns>
+        public static bool Equals(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) == 0;
+        }
+
         /// <inheritdoc />
         public override int GetHashCode()
         {
@@ -294,6 +281,16 @@ namespace MongoDB.Bson
             hash = 37 * hash + _exponent.GetHashCode();
             hash = 37 * hash + _significand.GetHashCode();
             return hash;
+        }
+
+        /// <summary>
+        /// Negates the specified x.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns>The result of multiplying the value by negative one.</returns>
+        public static Decimal128 Negate(Decimal128 x)
+        {
+            return new Decimal128((byte)(x._flags ^ 0x80), x._exponent, x._significand);
         }
 
         /// <inheritdoc />
@@ -397,7 +394,7 @@ namespace MongoDB.Bson
 
         bool IConvertible.ToBoolean(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return !Decimal128.Equals(this, Decimal128.Zero);
         }
 
         char IConvertible.ToChar(IFormatProvider provider)
@@ -407,62 +404,57 @@ namespace MongoDB.Bson
 
         sbyte IConvertible.ToSByte(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToSByte(this);
         }
 
         byte IConvertible.ToByte(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToByte(this);
         }
 
         short IConvertible.ToInt16(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToInt16(this);
         }
 
         ushort IConvertible.ToUInt16(IFormatProvider provider)
         {
-            if (IsNegative(this))
-            {
-                throw new OverflowException("Value was either too large or too small for a UInt16.");
-            }
-
-            throw new NotImplementedException();
+            return Decimal128.ToUInt16(this);
         }
 
         int IConvertible.ToInt32(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToInt32(this);
         }
 
         uint IConvertible.ToUInt32(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToUInt32(this);
         }
 
         long IConvertible.ToInt64(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToInt64(this);
         }
 
         ulong IConvertible.ToUInt64(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToUInt64(this);
         }
 
         float IConvertible.ToSingle(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToSingle(this);
         }
 
         double IConvertible.ToDouble(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToDouble(this);
         }
 
         decimal IConvertible.ToDecimal(IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            return Decimal128.ToDecimal(this);
         }
 
         DateTime IConvertible.ToDateTime(IFormatProvider provider)
@@ -472,7 +464,26 @@ namespace MongoDB.Bson
 
         object IConvertible.ToType(Type conversionType, IFormatProvider provider)
         {
-            throw new NotImplementedException();
+            var convertible = (IConvertible)this;
+            switch (Type.GetTypeCode(conversionType))
+            {
+                case TypeCode.Boolean: return convertible.ToBoolean(provider);
+                case TypeCode.Byte: return convertible.ToByte(provider);
+                case TypeCode.Char: return convertible.ToChar(provider);
+                case TypeCode.DateTime: return convertible.ToDateTime(provider);
+                case TypeCode.Decimal: return convertible.ToDecimal(provider);
+                case TypeCode.Double: return convertible.ToDouble(provider);
+                case TypeCode.Int16: return convertible.ToInt16(provider);
+                case TypeCode.Int32: return convertible.ToInt32(provider);
+                case TypeCode.Int64: return convertible.ToInt64(provider);
+                case TypeCode.SByte: return convertible.ToSByte(provider);
+                case TypeCode.Single: return convertible.ToSingle(provider);
+                case TypeCode.String: return convertible.ToString(provider);
+                case TypeCode.UInt16: return convertible.ToUInt16(provider);
+                case TypeCode.UInt32: return convertible.ToUInt32(provider);
+                case TypeCode.UInt64: return convertible.ToUInt64(provider);
+                default: throw new InvalidCastException();
+            }
         }
 
         /// <summary>
@@ -560,6 +571,28 @@ namespace MongoDB.Bson
         public static bool IsSNaN(Decimal128 d) => (d._flags & 0x7E) == 0x7E;
 
         /// <summary>
+        /// Gets a value indicating whether this instance is zero.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is zero; otherwise, <c>false</c>.
+        /// </value>
+        public static bool IsZero(Decimal128 d)
+        {
+            if (d._significand.Equals(UInt128.Zero))
+            {
+                return true;
+            }
+
+            if ((d._flags & 0x60) == 0x60 && (d._flags & 0x78) != 0x78)
+            {
+                // invalid representations are interpreted as zero
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Converts the string representation of a number to its <see cref="Decimal128" /> equivalent.
         /// </summary>
         /// <param name="s">The string representation of the number to convert.</param>
@@ -575,20 +608,6 @@ namespace MongoDB.Bson
             }
 
             return value;
-        }
-
-        /// <summary>
-        /// Rounds a <see cref="Decimal128" /> value to a specified number of decimal places.
-        /// </summary>
-        /// <param name="d">A decimal number to round.</param>
-        /// <param name="decimals">A value from 0 to 34 that specifies the number of decimal places to round to.</param>
-        /// <returns>
-        /// The decimal number equivalent to <paramref name="d" /> rounded to <paramref name="decimals" /> number of decimal places.
-        /// </returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public static decimal Round(Decimal128 d, int decimals)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -705,6 +724,26 @@ namespace MongoDB.Bson
             }
 
             throw new OverflowException("Value was either too large or too small for a Decimal.");
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="double"/>.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A <see cref="double"/> equivalent to <paramref name="d" />.</returns>
+        public static double ToDouble(Decimal128 d)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="float"/>.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A <see cref="float"/> equivalent to <paramref name="d" />.</returns>
+        public static float ToSingle(Decimal128 d)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -919,7 +958,14 @@ namespace MongoDB.Bson
         /// </returns>
         public static bool operator ==(Decimal128 lhs, Decimal128 rhs)
         {
-            return lhs.Equals(rhs);
+            if (Decimal128.IsNaN(lhs) || Decimal128.IsNaN(rhs))
+            {
+                return false;
+            }
+            else
+            {
+                return lhs.Equals(rhs);
+            }
         }
 
         /// <summary>
@@ -933,6 +979,58 @@ namespace MongoDB.Bson
         public static bool operator !=(Decimal128 lhs, Decimal128 rhs)
         {
             return !(lhs == rhs);
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is greater than another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &gt; y; otherwise, false.
+        /// </returns>
+        public static bool operator >(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) > 0;
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is greater than or equal to another another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &gt;= y; otherwise, false.
+        /// </returns>
+        public static bool operator >=(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) >= 0;
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is less than another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &lt; y; otherwise, false.
+        /// </returns>
+        public static bool operator <(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) < 0;
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is less than or equal to another another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &lt;= y; otherwise, false.
+        /// </returns>
+        public static bool operator <=(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) <= 0;
         }
 
         /// <summary>
@@ -1048,6 +1146,30 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
+        /// Performs an explicit conversion from <see cref="double"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator Decimal128(double value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="float"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator Decimal128(float value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
         /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Byte"/>.
         /// </summary>
         /// <param name="value">The value to convert.</param>
@@ -1057,6 +1179,18 @@ namespace MongoDB.Bson
         public static explicit operator byte(Decimal128 value)
         {
             return ToByte(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="char"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator char(Decimal128 value)
+        {
+            return (char)ToUInt16(value);
         }
 
         /// <summary>
@@ -1146,6 +1280,7 @@ namespace MongoDB.Bson
         {
             return ToUInt64(value);
         }
+
         /// <summary>
         /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Decimal"/>.
         /// </summary>
@@ -1156,6 +1291,30 @@ namespace MongoDB.Bson
         public static explicit operator decimal(Decimal128 value)
         {
             return ToDecimal(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="double"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator double(Decimal128 value)
+        {
+            return Decimal128.ToDouble(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="float"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator float(Decimal128 value)
+        {
+            return Decimal128.ToSingle(value);
         }
 
         // private methods
@@ -1231,6 +1390,172 @@ namespace MongoDB.Bson
             {
                 return significandString;
             }
+        }
+
+        // nested types
+        private class Decimal128Comparer : IComparer<Decimal128>
+        {
+            #region static
+            // private static fields
+            private static readonly Decimal128Comparer __instance = new Decimal128Comparer();
+
+            // public static properties
+            public static Decimal128Comparer Instance
+            {
+                get { return __instance; }
+            }
+            #endregion
+
+            // public methods
+            public int Compare(Decimal128 x, Decimal128 y)
+            {
+                var xType = GetDecimal128Type(x);
+                var yType = GetDecimal128Type(y);
+                var result = xType.CompareTo(yType);
+                if (result == 0 && xType == Decimal128Type.Number)
+                {
+                    return CompareNumbers(x, y);
+                }
+                else
+                {
+                    return result;
+                }
+            }
+
+            // private methods
+            private Decimal128Type GetDecimal128Type(Decimal128 x)
+            {
+                if (Decimal128.IsNaN(x)) { return Decimal128Type.NaN; }
+                else if (Decimal128.IsNegativeInfinity(x)) { return Decimal128Type.NegativeInfinity; }
+                else if (Decimal128.IsPositiveInfinity(x)) { return Decimal128Type.PositiveInfity; }
+                else { return Decimal128Type.Number; }
+            }
+
+            private int CompareNumbers(Decimal128 x, Decimal128 y)
+            {
+                var xClass = GetNumberClass(x);
+                var yClass = GetNumberClass(y);
+                var result = xClass.CompareTo(yClass);
+                if (result == 0)
+                {
+                    if (xClass == NumberClass.Negative)
+                    {
+                        return CompareNegativeNumbers(x, y);
+                    }
+                    else if (xClass == NumberClass.Positive)
+                    {
+                        return ComparePositiveNumbers(x, y);
+                    }
+                    else
+                    {
+                        return 0; // else all Zeroes compare equal
+                    }
+                }
+                else
+                {
+                    return result;
+                }
+            }
+
+            private NumberClass GetNumberClass(Decimal128 x)
+            {
+                if (Decimal128.IsZero(x)) { return NumberClass.Zero; } // must test for Zero first
+                else if (Decimal128.IsNegative(x)) { return NumberClass.Negative; }
+                else { return NumberClass.Positive; }
+            }
+
+            private int CompareNegativeNumbers(Decimal128 x, Decimal128 y)
+            {
+                return -ComparePositiveNumbers(Decimal128.Negate(x), Decimal128.Negate(y));
+            }
+
+            private int ComparePositiveNumbers(Decimal128 x, Decimal128 y)
+            {
+                var exponentDifference = Math.Abs(x._exponent - y._exponent);
+                if (exponentDifference <= 66)
+                {
+                    // we may or may not be able to make the exponents equal but we won't know until we try
+                    // but we do know we can't eliminate an exponent difference larger than 66
+                    if (x._exponent < y._exponent)
+                    {
+                        x = IncreaseExponent(x, y._exponent);
+                        y = DecreaseExponent(y, x._exponent);
+                    }
+                    else if (x._exponent > y._exponent)
+                    {
+                        x = DecreaseExponent(x, y._exponent);
+                        y = IncreaseExponent(y, x._exponent);
+                    }
+                }
+
+                if (x._exponent == y._exponent)
+                {
+                    return x._significand.CompareTo(y._significand);
+                }
+                else
+                {
+                    return x._exponent.CompareTo(y._exponent);
+                }
+            }
+
+            private Decimal128 DecreaseExponent(Decimal128 x, short goal)
+            {
+                if (Decimal128.IsZero(x))
+                {
+                    // return a zero with the desired exponent
+                    return CreatePositiveDecimal128(goal, UInt128.Zero);
+                }
+
+                var exponent = x._exponent;
+                var significand = x._significand;
+                while (exponent > goal)
+                {
+                    var significandTimes10 = UInt128.Multiply(significand, (uint)10);
+                    if (significandTimes10.CompareTo(Decimal128.__maxSignificand) <= 0)
+                    {
+                        break;
+                    }
+                    exponent -= 1;
+                    significand = significandTimes10;
+                }
+
+                return CreatePositiveDecimal128(exponent, significand);
+            }
+
+            private Decimal128 IncreaseExponent(Decimal128 x, short goal)
+            {
+                if (Decimal128.IsZero(x))
+                {
+                    // return a zero with the desired exponent
+                    return CreatePositiveDecimal128(goal, UInt128.Zero);
+                }
+
+                var exponent = x._exponent;
+                var significand = x._significand;
+                while (exponent < goal)
+                {
+                    uint remainder;
+                    var significandDividedBy10 = UInt128.Divide(significand, (uint)10, out remainder);
+                    if (remainder != 0)
+                    {
+                        break;
+                    }
+                    exponent += 1;
+                    significand = significandDividedBy10;
+                }
+
+                return CreatePositiveDecimal128(exponent, significand);
+            }
+
+            private Decimal128 CreatePositiveDecimal128(short exponent, UInt128 significand)
+            {
+                var exponentTwoHighOrderBits = (exponent >> 12) & 0x03;
+                var flags = (byte)(exponentTwoHighOrderBits << 5);
+                return new Decimal128(flags, exponent, significand);
+            }
+
+            private enum Decimal128Type { NaN, NegativeInfinity, Number, PositiveInfity }; // the order matters
+            private enum NumberClass { Negative, Zero, Positive }; // the order matters
         }
     }
 }

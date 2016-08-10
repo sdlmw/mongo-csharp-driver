@@ -28,71 +28,19 @@ namespace MongoDB.Bson
 #endif
     public struct Decimal128 : IConvertible, IComparable<Decimal128>, IEquatable<Decimal128>
     {
-        private const short __maxSignificandDigits = 34;
+        #region static
+        // private constants
         private const short __exponentMax = 6111;
         private const short __exponentMin = -6176;
         private const short __exponentBias = 6176;
+        private const short __maxSignificandDigits = 34;
 
-        // Flags constants
-        private static class Flags
-        {
-            public const byte SignBit = 0x80;
-
-            public static bool IsFirstForm(byte flags)
-            {
-                return (flags & 0x60) != 0x60;
-            }
-
-            public static bool IsInfinity(byte flags)
-            {
-                return (flags & 0x7C) == 0x78;
-            }
-
-            public static bool IsInfinityOrNaN(byte flags)
-            {
-                return (flags & 0x78) == 0x78;
-            }
-
-            public static bool IsNaN(byte flags)
-            {
-                return (flags & 0x7C) == 0x7C;
-            }
-
-            public static bool IsNegative(byte flags)
-            {
-                return (flags & 0x80) == 0x80;
-            }
-
-            public static bool IsNegativeInfinity(byte flags)
-            {
-                return (flags & 0xFC) == 0xF8;
-            }
-
-            public static bool IsPositiveInfinity(byte flags)
-            {
-                return (flags & 0xFC) == 0x78;
-            }
-
-            public static bool IsQNaN(byte flags)
-            {
-                return (flags & 0x7E) == 0x7C;
-            }
-
-            public static bool IsSecondForm(byte flags)
-            {
-                return (flags & 0x60) == 0x60 && (flags & 0x78) != 0x78;
-            }
-
-            public static bool IsSNaN(byte flags)
-            {
-                return (flags & 0x7E) == 0x7E;
-            }
-        }
-
+        // private static fields
         private static readonly UInt128 __maxSignificand = UInt128.Parse("9999999999999999999999999999999999");
         private static readonly Decimal128 __maxValue = Decimal128.Parse("9999999999999999999999999999999999E+6111");
         private static readonly Decimal128 __minValue = Decimal128.Parse("-9999999999999999999999999999999999E+6111");
 
+        // public static properties
         /// <summary>
         /// Gets the maximum value.
         /// </summary>
@@ -135,156 +83,377 @@ namespace MongoDB.Bson
         public static Decimal128 Zero =>
             new Decimal128(0, 0);
 
-        private readonly byte _flags;
-        private readonly short _exponent;
-        private readonly UInt128 _significand;
-
-        private Decimal128(byte flags, short exponent, UInt128 significand)
-        {
-            _flags = flags;
-            _exponent = exponent;
-            _significand = significand;
-        }
-
-        private Decimal128(bool isNegative, short exponent, UInt128 significand)
-        {
-            var exponentSevenHighOrderBits = (exponent + __exponentBias) >> 7;
-            _flags = (byte)((isNegative ? Flags.SignBit : 0) | exponentSevenHighOrderBits);
-            _exponent = exponent;
-            _significand = significand;
-        }
-
+        // public static operators
         /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// Implements the operator ==.
         /// </summary>
-        /// <param name="value">The value.</param>
-        public Decimal128(decimal value)
+        /// <param name="lhs">The LHS.</param>
+        /// <param name="rhs">The RHS.</param>
+        /// <returns>
+        /// The result of the operator.
+        /// </returns>
+        public static bool operator ==(Decimal128 lhs, Decimal128 rhs)
         {
-            var bits = decimal.GetBits(value);
-
-            _flags = 0;
-            if ((bits[3] & 0x80000000) != 0)
+            if (Decimal128.IsNaN(lhs) || Decimal128.IsNaN(rhs))
             {
-                _flags = Flags.SignBit;
-            }
-            _exponent = (short)((bits[3] >> 16) & 0x7F);
-            _exponent *= -1;
-
-            var significandHigh = (ulong)(uint)bits[2];
-            var significandLow = ((ulong)(uint)bits[1] << 32) | (ulong)(uint)bits[0];
-            _significand = new UInt128(significandHigh, significandLow);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        public Decimal128(double value)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        public Decimal128(float value)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        public Decimal128(int value)
-        {
-            _flags = 0;
-            var v = (long)value;
-            if (value < 0)
-            {
-                _flags = Flags.SignBit;
-                v = -v;
-            }
-
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)v);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        [CLSCompliant(false)]
-        public Decimal128(uint value)
-        {
-            _flags = 0;
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        public Decimal128(long value)
-        {
-            _flags = 0;
-            if (value < 0)
-            {
-                _flags = Flags.SignBit;
-                value = -value;
-            }
-
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        [CLSCompliant(false)]
-        public Decimal128(ulong value)
-        {
-            _flags = 0;
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="highBits">The high order 64 bits of the binary representation.</param>
-        /// <param name="lowBits">The low order 64 bits of the binary representation.</param>
-        [CLSCompliant(false)]
-        public Decimal128(ulong highBits, ulong lowBits)
-        {
-            _flags = (byte)(highBits >> 56);
-
-            ulong significandHigh;
-            if (Flags.IsFirstForm(_flags))
-            {
-                // the significand starts with an implied 0 and the last three bits of the combination field
-                _exponent = (short)(((int)(highBits >> 49) & 0x3fff) - __exponentBias);
-                significandHigh = highBits & 0x0001ffffffffffff;
-            }
-            else if (Flags.IsSecondForm(_flags))
-            {
-                // the significand starts with an implied 100 and the last bit of the combination field
-                _exponent = (short)(((int)(highBits >> 47) & 0x3fff) - __exponentBias);
-                significandHigh = 0x0002000000000000 | (highBits & 0x00007fffffffffff);
+                return false;
             }
             else
             {
-                // it's either Infinity or NaN
-                _exponent = 0;
-                significandHigh = highBits & 0x00ffffffffffffff;
+                return lhs.Equals(rhs);
             }
-
-            _significand = new UInt128(significandHigh, lowBits);
         }
 
+        /// <summary>
+        /// Implements the operator !=.
+        /// </summary>
+        /// <param name="lhs">The LHS.</param>
+        /// <param name="rhs">The RHS.</param>
+        /// <returns>
+        /// The result of the operator.
+        /// </returns>
+        public static bool operator !=(Decimal128 lhs, Decimal128 rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is greater than another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &gt; y; otherwise, false.
+        /// </returns>
+        public static bool operator >(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) > 0;
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is greater than or equal to another another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &gt;= y; otherwise, false.
+        /// </returns>
+        public static bool operator >=(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) >= 0;
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is less than another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &lt; y; otherwise, false.
+        /// </returns>
+        public static bool operator <(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) < 0;
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether a specified Decimal128 is less than or equal to another another specified Decimal128.
+        /// </summary>
+        /// <param name="x">The first value.</param>
+        /// <param name="y">The second value.</param>
+        /// <returns>
+        /// true if x &lt;= y; otherwise, false.
+        /// </returns>
+        public static bool operator <=(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) <= 0;
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Byte"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator byte(Decimal128 value)
+        {
+            return ToByte(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="char"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator char(Decimal128 value)
+        {
+            return (char)ToUInt16(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Decimal"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator decimal(Decimal128 value)
+        {
+            return ToDecimal(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.Byte"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator Decimal128(byte value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.Decimal"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator Decimal128(decimal value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="double"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator Decimal128(double value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="float"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator Decimal128(float value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator Decimal128(int value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.Int64"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator Decimal128(long value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.SByte"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static implicit operator Decimal128(sbyte value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.Int16"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator Decimal128(short value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.UInt32"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static implicit operator Decimal128(uint value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.UInt16"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static implicit operator Decimal128(ushort value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.UInt64"/> to <see cref="Decimal128"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static implicit operator Decimal128(ulong value)
+        {
+            return new Decimal128(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="double"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator double(Decimal128 value)
+        {
+            return Decimal128.ToDouble(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="float"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator float(Decimal128 value)
+        {
+            return Decimal128.ToSingle(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Int32"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator int(Decimal128 value)
+        {
+            return ToInt32(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Int64"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator long(Decimal128 value)
+        {
+            return ToInt64(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.SByte"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static explicit operator sbyte(Decimal128 value)
+        {
+            return ToSByte(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Int16"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator short(Decimal128 value)
+        {
+            return ToInt16(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.UInt32"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static explicit operator uint(Decimal128 value)
+        {
+            return ToUInt32(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.UInt64"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static explicit operator ulong(Decimal128 value)
+        {
+            return ToUInt64(value);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.UInt16"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        [CLSCompliant(false)]
+        public static explicit operator ushort(Decimal128 value)
+        {
+            return ToUInt16(value);
+        }
+
+        // public static methods
         /// <summary>
         /// Compares two specified Decimal128 values and returns an integer that indicates whether the first value
         /// is greater than, less than, or equal to the second value.
@@ -295,295 +464,6 @@ namespace MongoDB.Bson
         public static int Compare(Decimal128 x, Decimal128 y)
         {
             return Decimal128Comparer.Instance.Compare(x, y);
-        }
-
-        /// <inheritdoc />
-        public int CompareTo(Decimal128 other)
-        {
-            return Decimal128.Compare(this, other);
-        }
-
-        /// <inheritdoc />
-        public bool Equals(Decimal128 other)
-        {
-            return Decimal128.Equals(this, other);
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (obj == null || obj.GetType() != typeof(Decimal128))
-            {
-                return false;
-            }
-            else
-            {
-                return Equals((Decimal128)obj);
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the specified Decimal128 instances are considered equal.
-        /// </summary>
-        /// <param name="x">The first Decimal128 object to compare.</param>
-        /// <param name="y">The second Decimal128 object to compare.</param>
-        /// <returns>True if the objects are considered equal; otherwise false. If both x and y are null, the method returns true.</returns>
-        public static bool Equals(Decimal128 x, Decimal128 y)
-        {
-            return Decimal128.Compare(x, y) == 0;
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            int hash = 17;
-            hash = 37 * hash + _flags.GetHashCode();
-            hash = 37 * hash + _exponent.GetHashCode();
-            hash = 37 * hash + _significand.GetHashCode();
-            return hash;
-        }
-
-        /// <summary>
-        /// Negates the specified x.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <returns>The result of multiplying the value by negative one.</returns>
-        public static Decimal128 Negate(Decimal128 x)
-        {
-            return new Decimal128((byte)(x._flags ^ Flags.SignBit), x._exponent, x._significand);
-        }
-
-        /// <inheritdoc />
-        public override string ToString()
-        {
-            if (Flags.IsFirstForm(_flags))
-            {
-                var coefficientString = _significand.ToString();
-                var adjustedExponent = _exponent + coefficientString.Length - 1;
-
-                string result;
-                if (_exponent > 0 || adjustedExponent < -6)
-                {
-                    result = ToStringWithExponentialNotation(coefficientString, adjustedExponent);
-                }
-                else
-                {
-                    result = ToStringWithoutExponentialNotation(coefficientString, _exponent);
-                }
-
-                if (Flags.IsNegative(_flags))
-                {
-                    result = "-" + result;
-                }
-
-                return result;
-            }
-            else if (Flags.IsSecondForm(_flags))
-            {
-                // invalid representation treated as zero
-                if (_exponent == 0)
-                {
-                    return Flags.IsNegative(_flags) ? "-0" : "0";
-                }
-                else
-                {
-                    var exponentString = _exponent.ToString(NumberFormatInfo.InvariantInfo);
-                    if (_exponent > 0)
-                    {
-                        exponentString = "+" + exponentString;
-                    }
-                    return (Flags.IsNegative(_flags) ? "-0E" : "0E") + exponentString;
-                }
-            }
-            else if (Flags.IsNegativeInfinity(_flags))
-            {
-                return "-Infinity";
-            }
-            else if (Flags.IsPositiveInfinity(_flags))
-            {
-                return "Infinity";
-            }
-            else
-            {
-                return "NaN";
-            }
-        }
-
-        private string ToStringWithExponentialNotation(string coefficientString, int adjustedExponent)
-        {
-            if (coefficientString.Length > 1)
-            {
-                coefficientString = coefficientString.Substring(0, 1) + "." + coefficientString.Substring(1);
-            }
-            var exponentString = adjustedExponent.ToString(NumberFormatInfo.InvariantInfo);
-            if (adjustedExponent >= 0)
-            {
-                exponentString = "+" + exponentString;
-            }
-            return coefficientString + "E" + exponentString;
-        }
-
-        private string ToStringWithoutExponentialNotation(string coefficientString, int exponent)
-        {
-            if (exponent == 0)
-            {
-                return coefficientString;
-            }
-            else
-            {
-                var exponentAbsoluteValue = Math.Abs(exponent);
-                var minimumCoefficientStringLength = exponentAbsoluteValue + 1;
-                if (coefficientString.Length < minimumCoefficientStringLength)
-                {
-                    coefficientString = coefficientString.PadLeft(minimumCoefficientStringLength, '0');
-                }
-                var decimalPointIndex = coefficientString.Length - exponentAbsoluteValue;
-                return coefficientString.Substring(0, decimalPointIndex) + "." + coefficientString.Substring(decimalPointIndex);
-            }
-        }
-
-        /// <inheritdoc />
-        public string ToString(IFormatProvider provider)
-        {
-            return ToString();
-        }
-
-        TypeCode IConvertible.GetTypeCode()
-        {
-            return TypeCode.Object;
-        }
-
-        bool IConvertible.ToBoolean(IFormatProvider provider)
-        {
-            return !Decimal128.Equals(this, Decimal128.Zero);
-        }
-
-        char IConvertible.ToChar(IFormatProvider provider)
-        {
-            throw new InvalidCastException("Invalid cast from Decima128 to Char.");
-        }
-
-        sbyte IConvertible.ToSByte(IFormatProvider provider)
-        {
-            return Decimal128.ToSByte(this);
-        }
-
-        byte IConvertible.ToByte(IFormatProvider provider)
-        {
-            return Decimal128.ToByte(this);
-        }
-
-        short IConvertible.ToInt16(IFormatProvider provider)
-        {
-            return Decimal128.ToInt16(this);
-        }
-
-        ushort IConvertible.ToUInt16(IFormatProvider provider)
-        {
-            return Decimal128.ToUInt16(this);
-        }
-
-        int IConvertible.ToInt32(IFormatProvider provider)
-        {
-            return Decimal128.ToInt32(this);
-        }
-
-        uint IConvertible.ToUInt32(IFormatProvider provider)
-        {
-            return Decimal128.ToUInt32(this);
-        }
-
-        long IConvertible.ToInt64(IFormatProvider provider)
-        {
-            return Decimal128.ToInt64(this);
-        }
-
-        ulong IConvertible.ToUInt64(IFormatProvider provider)
-        {
-            return Decimal128.ToUInt64(this);
-        }
-
-        float IConvertible.ToSingle(IFormatProvider provider)
-        {
-            return Decimal128.ToSingle(this);
-        }
-
-        double IConvertible.ToDouble(IFormatProvider provider)
-        {
-            return Decimal128.ToDouble(this);
-        }
-
-        decimal IConvertible.ToDecimal(IFormatProvider provider)
-        {
-            return Decimal128.ToDecimal(this);
-        }
-
-        DateTime IConvertible.ToDateTime(IFormatProvider provider)
-        {
-            throw new InvalidCastException("Invalid cast from Decima128 to DateTime.");
-        }
-
-        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
-        {
-            var convertible = (IConvertible)this;
-            switch (Type.GetTypeCode(conversionType))
-            {
-                case TypeCode.Boolean: return convertible.ToBoolean(provider);
-                case TypeCode.Byte: return convertible.ToByte(provider);
-                case TypeCode.Char: return convertible.ToChar(provider);
-                case TypeCode.DateTime: return convertible.ToDateTime(provider);
-                case TypeCode.Decimal: return convertible.ToDecimal(provider);
-                case TypeCode.Double: return convertible.ToDouble(provider);
-                case TypeCode.Int16: return convertible.ToInt16(provider);
-                case TypeCode.Int32: return convertible.ToInt32(provider);
-                case TypeCode.Int64: return convertible.ToInt64(provider);
-                case TypeCode.SByte: return convertible.ToSByte(provider);
-                case TypeCode.Single: return convertible.ToSingle(provider);
-                case TypeCode.String: return convertible.ToString(provider);
-                case TypeCode.UInt16: return convertible.ToUInt16(provider);
-                case TypeCode.UInt32: return convertible.ToUInt32(provider);
-                case TypeCode.UInt64: return convertible.ToUInt64(provider);
-                default: throw new InvalidCastException();
-            }
-        }
-
-        /// <summary>
-        /// Gets the high order 64 bits of the binary representation of this instance.
-        /// </summary>
-        /// <returns>The high order 64 bits of the binary representation of this instance.</returns>
-        [CLSCompliant(false)]
-        public ulong GetHighBits()
-        {
-            var biasedExponent = _exponent + __exponentBias;
-
-            ulong highBits;
-            if (Flags.IsFirstForm(_flags))
-            {
-                // first form has implied leading 0 for significand
-                highBits = ((ulong)biasedExponent << 49) | _significand.High;
-            }
-            else if (Flags.IsSecondForm(_flags))
-            {
-                // second form has implied leading 100 for significand
-                highBits = ((ulong)biasedExponent << 47) | (_significand.High & 0x00007fffffffffff);
-            }
-            else
-            {
-                // it's either Infinity or NaN
-                highBits = _significand.High;
-            }
-
-            return ((ulong)_flags << 56) | highBits;
-        }
-
-        /// <summary>
-        /// Gets the low order 64 bits of the binary representation of this instance.
-        /// </summary>
-        /// <returns>The low order 64 bits of the binary representation of this instance.</returns>
-        [CLSCompliant(false)]
-        public ulong GetLowBits()
-        {
-            return _significand.Low;
         }
 
         /// <summary>
@@ -659,6 +539,16 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
+        /// Negates the specified x.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns>The result of multiplying the value by negative one.</returns>
+        public static Decimal128 Negate(Decimal128 x)
+        {
+            return new Decimal128((byte)(x._flags ^ Flags.SignBit), x._exponent, x._significand);
+        }
+
+        /// <summary>
         /// Converts the string representation of a number to its <see cref="Decimal128" /> equivalent.
         /// </summary>
         /// <param name="s">The string representation of the number to convert.</param>
@@ -674,6 +564,257 @@ namespace MongoDB.Bson
             }
 
             return value;
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 8-bit unsigned integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 8-bit unsigned integer equivalent to <paramref name="d" />.</returns>
+        public static byte ToByte(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to a Byte.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="decimal"/>.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A <see cref="decimal"/> equivalent to <paramref name="d" />.</returns>
+        public static decimal ToDecimal(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return Decimal.Zero;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to Decimal.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="double"/>.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A <see cref="double"/> equivalent to <paramref name="d" />.</returns>
+        public static double ToDouble(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0.0;
+            }
+            else if (Flags.IsPositiveInfinity(d._flags))
+            {
+                return double.PositiveInfinity;
+            }
+            else if (Flags.IsNegativeInfinity(d._flags))
+            {
+                return double.NegativeInfinity;
+            }
+            else
+            {
+                return double.NaN;
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 16-bit signed integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 16-bit signed integer equivalent to <paramref name="d" />.</returns>
+        public static short ToInt16(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to an Int16.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 32-bit signed integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 32-bit signed integer equivalent to <paramref name="d" />.</returns>
+        public static int ToInt32(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to an Int32.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 64-bit signed integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 64-bit signed integer equivalent to <paramref name="d" />.</returns>
+        public static long ToInt64(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to an Int64.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 8-bit signed integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 8-bit signed integer equivalent to <paramref name="d" />.</returns>
+        [CLSCompliant(false)]
+        public static sbyte ToSByte(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to an SByte.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="float"/>.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A <see cref="float"/> equivalent to <paramref name="d" />.</returns>
+        public static float ToSingle(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return (float)0.0;
+            }
+            else if (Flags.IsPositiveInfinity(d._flags))
+            {
+                return float.PositiveInfinity;
+            }
+            else if (Flags.IsNegativeInfinity(d._flags))
+            {
+                return float.NegativeInfinity;
+            }
+            else
+            {
+                return float.NaN;
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 16-bit unsigned integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 16-bit unsigned integer equivalent to <paramref name="d" />.</returns>
+        [CLSCompliant(false)]
+        public static ushort ToUInt16(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to a UInt16.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 32-bit unsigned integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 32-bit unsigned integer equivalent to <paramref name="d" />.</returns>
+        [CLSCompliant(false)]
+        public static uint ToUInt32(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to a UInt32.");
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 64-bit unsigned integer.
+        /// </summary>
+        /// <param name="d">The number to convert.</param>
+        /// <returns>A 64-bit unsigned integer equivalent to <paramref name="d" />.</returns>
+        [CLSCompliant(false)]
+        public static ulong ToUInt64(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to a UInt64.");
+            }
         }
 
         /// <summary>
@@ -768,627 +909,7 @@ namespace MongoDB.Bson
             return true;
         }
 
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="decimal"/>.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A <see cref="decimal"/> equivalent to <paramref name="d" />.</returns>
-        public static decimal ToDecimal(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return Decimal.Zero;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to Decimal.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="double"/>.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A <see cref="double"/> equivalent to <paramref name="d" />.</returns>
-        public static double ToDouble(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0.0;
-            }
-            else if (Flags.IsPositiveInfinity(d._flags))
-            {
-                return double.PositiveInfinity;
-            }
-            else if (Flags.IsNegativeInfinity(d._flags))
-            {
-                return double.NegativeInfinity;
-            }
-            else
-            {
-                return double.NaN;
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent <see cref="float"/>.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A <see cref="float"/> equivalent to <paramref name="d" />.</returns>
-        public static float ToSingle(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return (float)0.0;
-            }
-            else if (Flags.IsPositiveInfinity(d._flags))
-            {
-                return float.PositiveInfinity;
-            }
-            else if (Flags.IsNegativeInfinity(d._flags))
-            {
-                return float.NegativeInfinity;
-            }
-            else
-            {
-                return float.NaN;
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 8-bit unsigned integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 8-bit unsigned integer equivalent to <paramref name="d" />.</returns>
-        public static byte ToByte(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to a Byte.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 16-bit signed integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 16-bit signed integer equivalent to <paramref name="d" />.</returns>
-        public static short ToInt16(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to an Int16.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 32-bit signed integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 32-bit signed integer equivalent to <paramref name="d" />.</returns>
-        public static int ToInt32(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to an Int32.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 64-bit signed integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 64-bit signed integer equivalent to <paramref name="d" />.</returns>
-        public static long ToInt64(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to an Int64.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 8-bit signed integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 8-bit signed integer equivalent to <paramref name="d" />.</returns>
-        [CLSCompliant(false)]
-        public static sbyte ToSByte(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to an SByte.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 16-bit unsigned integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 16-bit unsigned integer equivalent to <paramref name="d" />.</returns>
-        [CLSCompliant(false)]
-        public static ushort ToUInt16(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to a UInt16.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 32-bit unsigned integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 32-bit unsigned integer equivalent to <paramref name="d" />.</returns>
-        [CLSCompliant(false)]
-        public static uint ToUInt32(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to a UInt32.");
-            }
-        }
-
-        /// <summary>
-        /// Converts the value of the specified <see cref="Decimal128"/> to the equivalent 64-bit unsigned integer.
-        /// </summary>
-        /// <param name="d">The number to convert.</param>
-        /// <returns>A 64-bit unsigned integer equivalent to <paramref name="d" />.</returns>
-        [CLSCompliant(false)]
-        public static ulong ToUInt64(Decimal128 d)
-        {
-            if (Flags.IsFirstForm(d._flags))
-            {
-                throw new NotImplementedException();
-            }
-            else if (Flags.IsSecondForm(d._flags))
-            {
-                return 0;
-            }
-            else
-            {
-                throw new OverflowException("Infinity or NaN cannot be converted to a UInt64.");
-            }
-        }
-
-        /// <summary>
-        /// Implements the operator ==.
-        /// </summary>
-        /// <param name="lhs">The LHS.</param>
-        /// <param name="rhs">The RHS.</param>
-        /// <returns>
-        /// The result of the operator.
-        /// </returns>
-        public static bool operator ==(Decimal128 lhs, Decimal128 rhs)
-        {
-            if (Decimal128.IsNaN(lhs) || Decimal128.IsNaN(rhs))
-            {
-                return false;
-            }
-            else
-            {
-                return lhs.Equals(rhs);
-            }
-        }
-
-        /// <summary>
-        /// Implements the operator !=.
-        /// </summary>
-        /// <param name="lhs">The LHS.</param>
-        /// <param name="rhs">The RHS.</param>
-        /// <returns>
-        /// The result of the operator.
-        /// </returns>
-        public static bool operator !=(Decimal128 lhs, Decimal128 rhs)
-        {
-            return !(lhs == rhs);
-        }
-
-        /// <summary>
-        /// Returns a value indicating whether a specified Decimal128 is greater than another specified Decimal128.
-        /// </summary>
-        /// <param name="x">The first value.</param>
-        /// <param name="y">The second value.</param>
-        /// <returns>
-        /// true if x &gt; y; otherwise, false.
-        /// </returns>
-        public static bool operator >(Decimal128 x, Decimal128 y)
-        {
-            return Decimal128.Compare(x, y) > 0;
-        }
-
-        /// <summary>
-        /// Returns a value indicating whether a specified Decimal128 is greater than or equal to another another specified Decimal128.
-        /// </summary>
-        /// <param name="x">The first value.</param>
-        /// <param name="y">The second value.</param>
-        /// <returns>
-        /// true if x &gt;= y; otherwise, false.
-        /// </returns>
-        public static bool operator >=(Decimal128 x, Decimal128 y)
-        {
-            return Decimal128.Compare(x, y) >= 0;
-        }
-
-        /// <summary>
-        /// Returns a value indicating whether a specified Decimal128 is less than another specified Decimal128.
-        /// </summary>
-        /// <param name="x">The first value.</param>
-        /// <param name="y">The second value.</param>
-        /// <returns>
-        /// true if x &lt; y; otherwise, false.
-        /// </returns>
-        public static bool operator <(Decimal128 x, Decimal128 y)
-        {
-            return Decimal128.Compare(x, y) < 0;
-        }
-
-        /// <summary>
-        /// Returns a value indicating whether a specified Decimal128 is less than or equal to another another specified Decimal128.
-        /// </summary>
-        /// <param name="x">The first value.</param>
-        /// <param name="y">The second value.</param>
-        /// <returns>
-        /// true if x &lt;= y; otherwise, false.
-        /// </returns>
-        public static bool operator <=(Decimal128 x, Decimal128 y)
-        {
-            return Decimal128.Compare(x, y) <= 0;
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Byte"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator Decimal128(byte value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.SByte"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator Decimal128(sbyte value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int16"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator Decimal128(short value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt16"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator Decimal128(ushort value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator Decimal128(int value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt32"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator Decimal128(uint value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int64"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator Decimal128(long value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt64"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator Decimal128(ulong value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Decimal"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator Decimal128(decimal value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="double"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator Decimal128(double value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="float"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator Decimal128(float value)
-        {
-            return new Decimal128(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Byte"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator byte(Decimal128 value)
-        {
-            return ToByte(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="char"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator char(Decimal128 value)
-        {
-            return (char)ToUInt16(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.SByte"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator sbyte(Decimal128 value)
-        {
-            return ToSByte(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Int16"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator short(Decimal128 value)
-        {
-            return ToInt16(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.UInt16"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator ushort(Decimal128 value)
-        {
-            return ToUInt16(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Int32"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator int(Decimal128 value)
-        {
-            return ToInt32(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.UInt32"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator uint(Decimal128 value)
-        {
-            return ToUInt32(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Int64"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator long(Decimal128 value)
-        {
-            return ToInt64(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.UInt64"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator ulong(Decimal128 value)
-        {
-            return ToUInt64(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="System.Decimal"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator decimal(Decimal128 value)
-        {
-            return ToDecimal(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="double"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator double(Decimal128 value)
-        {
-            return Decimal128.ToDouble(value);
-        }
-
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="Decimal128"/> to <see cref="float"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator float(Decimal128 value)
-        {
-            return Decimal128.ToSingle(value);
-        }
-
-        // private methods
+        // private static methods
         private static string ClampOrRound(ref int exponent, string significandString)
         {
             if (exponent > __exponentMax)
@@ -1460,6 +981,440 @@ namespace MongoDB.Bson
             else
             {
                 return significandString;
+            }
+        }
+        #endregion
+
+        // private fields
+        private readonly byte _flags;
+        private readonly short _exponent;
+        private readonly UInt128 _significand;
+
+        // constructors
+        private Decimal128(byte flags, short exponent, UInt128 significand)
+        {
+            _flags = flags;
+            _exponent = exponent;
+            _significand = significand;
+        }
+
+        private Decimal128(bool isNegative, short exponent, UInt128 significand)
+        {
+            var exponentSevenHighOrderBits = (exponent + __exponentBias) >> 7;
+            _flags = (byte)((isNegative ? Flags.SignBit : 0) | exponentSevenHighOrderBits);
+            _exponent = exponent;
+            _significand = significand;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        public Decimal128(decimal value)
+        {
+            var bits = decimal.GetBits(value);
+
+            _flags = 0;
+            if ((bits[3] & 0x80000000) != 0)
+            {
+                _flags = Flags.SignBit;
+            }
+            _exponent = (short)((bits[3] >> 16) & 0x7F);
+            _exponent *= -1;
+
+            var significandHigh = (ulong)(uint)bits[2];
+            var significandLow = ((ulong)(uint)bits[1] << 32) | (ulong)(uint)bits[0];
+            _significand = new UInt128(significandHigh, significandLow);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        public Decimal128(double value)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        public Decimal128(float value)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        public Decimal128(int value)
+        {
+            _flags = 0;
+            var v = (long)value;
+            if (value < 0)
+            {
+                _flags = Flags.SignBit;
+                v = -v;
+            }
+
+            _exponent = 0;
+            _significand = new UInt128(0, (ulong)v);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        public Decimal128(long value)
+        {
+            _flags = 0;
+            if (value < 0)
+            {
+                _flags = Flags.SignBit;
+                value = -value;
+            }
+
+            _exponent = 0;
+            _significand = new UInt128(0, (ulong)value);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        [CLSCompliant(false)]
+        public Decimal128(uint value)
+        {
+            _flags = 0;
+            _exponent = 0;
+            _significand = new UInt128(0, (ulong)value);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        [CLSCompliant(false)]
+        public Decimal128(ulong value)
+        {
+            _flags = 0;
+            _exponent = 0;
+            _significand = new UInt128(0, (ulong)value);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
+        /// </summary>
+        /// <param name="highBits">The high order 64 bits of the binary representation.</param>
+        /// <param name="lowBits">The low order 64 bits of the binary representation.</param>
+        [CLSCompliant(false)]
+        public Decimal128(ulong highBits, ulong lowBits)
+        {
+            _flags = (byte)(highBits >> 56);
+
+            ulong significandHigh;
+            if (Flags.IsFirstForm(_flags))
+            {
+                // the significand starts with an implied 0 and the last three bits of the combination field
+                _exponent = (short)(((int)(highBits >> 49) & 0x3fff) - __exponentBias);
+                significandHigh = highBits & 0x0001ffffffffffff;
+            }
+            else if (Flags.IsSecondForm(_flags))
+            {
+                // the significand starts with an implied 100 and the last bit of the combination field
+                _exponent = (short)(((int)(highBits >> 47) & 0x3fff) - __exponentBias);
+                significandHigh = 0x0002000000000000 | (highBits & 0x00007fffffffffff);
+            }
+            else
+            {
+                // it's either Infinity or NaN
+                _exponent = 0;
+                significandHigh = highBits & 0x00ffffffffffffff;
+            }
+
+            _significand = new UInt128(significandHigh, lowBits);
+        }
+
+        // public methods
+        /// <inheritdoc />
+        public int CompareTo(Decimal128 other)
+        {
+            return Decimal128.Compare(this, other);
+        }
+
+        /// <inheritdoc />
+        public bool Equals(Decimal128 other)
+        {
+            return Decimal128.Equals(this, other);
+        }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj)
+        {
+            if (obj == null || obj.GetType() != typeof(Decimal128))
+            {
+                return false;
+            }
+            else
+            {
+                return Equals((Decimal128)obj);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the specified Decimal128 instances are considered equal.
+        /// </summary>
+        /// <param name="x">The first Decimal128 object to compare.</param>
+        /// <param name="y">The second Decimal128 object to compare.</param>
+        /// <returns>True if the objects are considered equal; otherwise false. If both x and y are null, the method returns true.</returns>
+        public static bool Equals(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) == 0;
+        }
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            hash = 37 * hash + _flags.GetHashCode();
+            hash = 37 * hash + _exponent.GetHashCode();
+            hash = 37 * hash + _significand.GetHashCode();
+            return hash;
+        }
+
+        /// <summary>
+        /// Gets the high order 64 bits of the binary representation of this instance.
+        /// </summary>
+        /// <returns>The high order 64 bits of the binary representation of this instance.</returns>
+        [CLSCompliant(false)]
+        public ulong GetHighBits()
+        {
+            var biasedExponent = _exponent + __exponentBias;
+
+            ulong highBits;
+            if (Flags.IsFirstForm(_flags))
+            {
+                // first form has implied leading 0 for significand
+                highBits = ((ulong)biasedExponent << 49) | _significand.High;
+            }
+            else if (Flags.IsSecondForm(_flags))
+            {
+                // second form has implied leading 100 for significand
+                highBits = ((ulong)biasedExponent << 47) | (_significand.High & 0x00007fffffffffff);
+            }
+            else
+            {
+                // it's either Infinity or NaN
+                highBits = _significand.High;
+            }
+
+            return ((ulong)_flags << 56) | highBits;
+        }
+
+        /// <summary>
+        /// Gets the low order 64 bits of the binary representation of this instance.
+        /// </summary>
+        /// <returns>The low order 64 bits of the binary representation of this instance.</returns>
+        [CLSCompliant(false)]
+        public ulong GetLowBits()
+        {
+            return _significand.Low;
+        }
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            if (Flags.IsFirstForm(_flags))
+            {
+                var coefficientString = _significand.ToString();
+                var adjustedExponent = _exponent + coefficientString.Length - 1;
+
+                string result;
+                if (_exponent > 0 || adjustedExponent < -6)
+                {
+                    result = ToStringWithExponentialNotation(coefficientString, adjustedExponent);
+                }
+                else
+                {
+                    result = ToStringWithoutExponentialNotation(coefficientString, _exponent);
+                }
+
+                if (Flags.IsNegative(_flags))
+                {
+                    result = "-" + result;
+                }
+
+                return result;
+            }
+            else if (Flags.IsSecondForm(_flags))
+            {
+                // invalid representation treated as zero
+                if (_exponent == 0)
+                {
+                    return Flags.IsNegative(_flags) ? "-0" : "0";
+                }
+                else
+                {
+                    var exponentString = _exponent.ToString(NumberFormatInfo.InvariantInfo);
+                    if (_exponent > 0)
+                    {
+                        exponentString = "+" + exponentString;
+                    }
+                    return (Flags.IsNegative(_flags) ? "-0E" : "0E") + exponentString;
+                }
+            }
+            else if (Flags.IsNegativeInfinity(_flags))
+            {
+                return "-Infinity";
+            }
+            else if (Flags.IsPositiveInfinity(_flags))
+            {
+                return "Infinity";
+            }
+            else
+            {
+                return "NaN";
+            }
+        }
+
+        // explicit IConvertible implementation
+        TypeCode IConvertible.GetTypeCode()
+        {
+            return TypeCode.Object;
+        }
+
+        bool IConvertible.ToBoolean(IFormatProvider provider)
+        {
+            return !Decimal128.Equals(this, Decimal128.Zero);
+        }
+
+        byte IConvertible.ToByte(IFormatProvider provider)
+        {
+            return Decimal128.ToByte(this);
+        }
+
+        char IConvertible.ToChar(IFormatProvider provider)
+        {
+            throw new InvalidCastException("Invalid cast from Decima128 to Char.");
+        }
+
+        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        {
+            throw new InvalidCastException("Invalid cast from Decima128 to DateTime.");
+        }
+
+        decimal IConvertible.ToDecimal(IFormatProvider provider)
+        {
+            return Decimal128.ToDecimal(this);
+        }
+
+        double IConvertible.ToDouble(IFormatProvider provider)
+        {
+            return Decimal128.ToDouble(this);
+        }
+
+        short IConvertible.ToInt16(IFormatProvider provider)
+        {
+            return Decimal128.ToInt16(this);
+        }
+
+        int IConvertible.ToInt32(IFormatProvider provider)
+        {
+            return Decimal128.ToInt32(this);
+        }
+
+        long IConvertible.ToInt64(IFormatProvider provider)
+        {
+            return Decimal128.ToInt64(this);
+        }
+
+        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        {
+            return Decimal128.ToSByte(this);
+        }
+
+        float IConvertible.ToSingle(IFormatProvider provider)
+        {
+            return Decimal128.ToSingle(this);
+        }
+
+        string IConvertible.ToString(IFormatProvider provider)
+        {
+            return ToString();
+        }
+
+        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        {
+            var convertible = (IConvertible)this;
+            switch (Type.GetTypeCode(conversionType))
+            {
+                case TypeCode.Boolean: return convertible.ToBoolean(provider);
+                case TypeCode.Byte: return convertible.ToByte(provider);
+                case TypeCode.Char: return convertible.ToChar(provider);
+                case TypeCode.DateTime: return convertible.ToDateTime(provider);
+                case TypeCode.Decimal: return convertible.ToDecimal(provider);
+                case TypeCode.Double: return convertible.ToDouble(provider);
+                case TypeCode.Int16: return convertible.ToInt16(provider);
+                case TypeCode.Int32: return convertible.ToInt32(provider);
+                case TypeCode.Int64: return convertible.ToInt64(provider);
+                case TypeCode.SByte: return convertible.ToSByte(provider);
+                case TypeCode.Single: return convertible.ToSingle(provider);
+                case TypeCode.String: return convertible.ToString(provider);
+                case TypeCode.UInt16: return convertible.ToUInt16(provider);
+                case TypeCode.UInt32: return convertible.ToUInt32(provider);
+                case TypeCode.UInt64: return convertible.ToUInt64(provider);
+                default: throw new InvalidCastException();
+            }
+        }
+
+        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        {
+            return Decimal128.ToUInt16(this);
+        }
+
+        uint IConvertible.ToUInt32(IFormatProvider provider)
+        {
+            return Decimal128.ToUInt32(this);
+        }
+
+        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        {
+            return Decimal128.ToUInt64(this);
+        }
+
+        // private methods
+        private string ToStringWithExponentialNotation(string coefficientString, int adjustedExponent)
+        {
+            if (coefficientString.Length > 1)
+            {
+                coefficientString = coefficientString.Substring(0, 1) + "." + coefficientString.Substring(1);
+            }
+            var exponentString = adjustedExponent.ToString(NumberFormatInfo.InvariantInfo);
+            if (adjustedExponent >= 0)
+            {
+                exponentString = "+" + exponentString;
+            }
+            return coefficientString + "E" + exponentString;
+        }
+
+        private string ToStringWithoutExponentialNotation(string coefficientString, int exponent)
+        {
+            if (exponent == 0)
+            {
+                return coefficientString;
+            }
+            else
+            {
+                var exponentAbsoluteValue = Math.Abs(exponent);
+                var minimumCoefficientStringLength = exponentAbsoluteValue + 1;
+                if (coefficientString.Length < minimumCoefficientStringLength)
+                {
+                    coefficientString = coefficientString.PadLeft(minimumCoefficientStringLength, '0');
+                }
+                var decimalPointIndex = coefficientString.Length - exponentAbsoluteValue;
+                return coefficientString.Substring(0, decimalPointIndex) + "." + coefficientString.Substring(decimalPointIndex);
             }
         }
 
@@ -1620,6 +1575,61 @@ namespace MongoDB.Bson
 
             private enum Decimal128Type { NaN, NegativeInfinity, Number, PositiveInfity }; // the order matters
             private enum NumberClass { Negative, Zero, Positive }; // the order matters
+        }
+
+        private static class Flags
+        {
+            public const byte SignBit = 0x80;
+
+            public static bool IsFirstForm(byte flags)
+            {
+                return (flags & 0x60) != 0x60;
+            }
+
+            public static bool IsInfinity(byte flags)
+            {
+                return (flags & 0x7C) == 0x78;
+            }
+
+            public static bool IsInfinityOrNaN(byte flags)
+            {
+                return (flags & 0x78) == 0x78;
+            }
+
+            public static bool IsNaN(byte flags)
+            {
+                return (flags & 0x7C) == 0x7C;
+            }
+
+            public static bool IsNegative(byte flags)
+            {
+                return (flags & 0x80) == 0x80;
+            }
+
+            public static bool IsNegativeInfinity(byte flags)
+            {
+                return (flags & 0xFC) == 0xF8;
+            }
+
+            public static bool IsPositiveInfinity(byte flags)
+            {
+                return (flags & 0xFC) == 0x78;
+            }
+
+            public static bool IsQNaN(byte flags)
+            {
+                return (flags & 0x7E) == 0x7C;
+            }
+
+            public static bool IsSecondForm(byte flags)
+            {
+                return (flags & 0x60) == 0x60 && (flags & 0x78) != 0x78;
+            }
+
+            public static bool IsSNaN(byte flags)
+            {
+                return (flags & 0x7E) == 0x7E;
+            }
         }
     }
 }

@@ -214,7 +214,7 @@ namespace MongoDB.Bson.IO
             }
 
             WriteNameHelper(Name);
-            _textWriter.Write("{{ \"$numberDecimal\" : \"{0}\" }}", value.ToString(NumberFormatInfo.InvariantInfo));
+            _textWriter.Write("{{ \"$numberDecimal\" : \"{0}\" }}", value.ToString());
 
             State = GetNextState();
         }

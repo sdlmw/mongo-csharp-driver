@@ -177,7 +177,7 @@ namespace MongoDB.Bson.IO
         /// <returns>A string.</returns>
         public static string ToString(Decimal128 value)
         {
-            return value.ToString(NumberFormatInfo.InvariantInfo);
+            return value.ToString();
         }
 
         /// <summary>

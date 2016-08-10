@@ -33,6 +33,62 @@ namespace MongoDB.Bson
         private const short __exponentMin = -6176;
         private const short __exponentBias = 6176;
 
+        // Flags constants
+        private static class Flags
+        {
+            public const byte SignBit = 0x80;
+
+            public static bool IsFirstForm(byte flags)
+            {
+                return (flags & 0x60) != 0x60;
+            }
+
+            public static bool IsInfinity(byte flags)
+            {
+                return (flags & 0x7C) == 0x78;
+            }
+
+            public static bool IsInfinityOrNaN(byte flags)
+            {
+                return (flags & 0x78) == 0x78;
+            }
+
+            public static bool IsNaN(byte flags)
+            {
+                return (flags & 0x7C) == 0x7C;
+            }
+
+            public static bool IsNegative(byte flags)
+            {
+                return (flags & 0x80) == 0x80;
+            }
+
+            public static bool IsNegativeInfinity(byte flags)
+            {
+                return (flags & 0xFC) == 0xF8;
+            }
+
+            public static bool IsPositiveInfinity(byte flags)
+            {
+                return (flags & 0xFC) == 0x78;
+            }
+
+            public static bool IsQNaN(byte flags)
+            {
+                return (flags & 0x7E) == 0x7C;
+            }
+
+            public static bool IsSecondForm(byte flags)
+            {
+                return (flags & 0x60) == 0x60 && (flags & 0x78) != 0x78;
+            }
+
+            public static bool IsSNaN(byte flags)
+            {
+                return (flags & 0x7E) == 0x7E;
+            }
+        }
+
         private static readonly UInt128 __maxSignificand = UInt128.Parse("9999999999999999999999999999999999");
         private static readonly Decimal128 __maxValue = Decimal128.Parse("9999999999999999999999999999999999E+6111");
         private static readonly Decimal128 __minValue = Decimal128.Parse("-9999999999999999999999999999999999E+6111");
@@ -85,11 +141,15 @@ namespace MongoDB.Bson
 
         private Decimal128(byte flags, short exponent, UInt128 significand)
         {
-            if (exponent > __exponentMax || exponent < __exponentMin)
-            {
-                throw new ArgumentException($"Exponent must be between {__exponentMin} and {__exponentMax}.", nameof(exponent));
-            }
             _flags = flags;
+            _exponent = exponent;
+            _significand = significand;
+        }
+
+        private Decimal128(bool isNegative, short exponent, UInt128 significand)
+        {
+            var exponentSevenHighOrderBits = (exponent + __exponentBias) >> 7;
+            _flags = (byte)((isNegative ? Flags.SignBit : 0) | exponentSevenHighOrderBits);
             _exponent = exponent;
             _significand = significand;
         }
@@ -105,7 +165,7 @@ namespace MongoDB.Bson
             _flags = 0;
             if ((bits[3] & 0x80000000) != 0)
             {
-                _flags = 0x80;
+                _flags = Flags.SignBit;
             }
             _exponent = (short)((bits[3] >> 16) & 0x7F);
             _exponent *= -1;
@@ -143,8 +203,7 @@ namespace MongoDB.Bson
             var v = (long)value;
             if (value < 0)
             {
-                // sign bit
-                _flags = 0x80;
+                _flags = Flags.SignBit;
                 v = -v;
             }
 
@@ -173,8 +232,7 @@ namespace MongoDB.Bson
             _flags = 0;
             if (value < 0)
             {
-                // sign bit
-                _flags = 0x80;
+                _flags = Flags.SignBit;
                 value = -value;
             }
 
@@ -203,14 +261,15 @@ namespace MongoDB.Bson
         public Decimal128(ulong highBits, ulong lowBits)
         {
             _flags = (byte)(highBits >> 56);
+
             ulong significandHigh;
-            if ((_flags & 0x78) == 0x78)
+            if (Flags.IsFirstForm(_flags))
             {
-                // it's either Infinity or NaN
-                _exponent = 0;
-                significandHigh = highBits & 0x00ffffffffffffff;
+                // the significand starts with an implied 0 and the last three bits of the combination field
+                _exponent = (short)(((int)(highBits >> 49) & 0x3fff) - __exponentBias);
+                significandHigh = highBits & 0x0001ffffffffffff;
             }
-            else if ((_flags & 0x60) == 0x60)
+            else if (Flags.IsSecondForm(_flags))
             {
                 // the significand starts with an implied 100 and the last bit of the combination field
                 _exponent = (short)(((int)(highBits >> 47) & 0x3fff) - __exponentBias);
@@ -218,10 +277,11 @@ namespace MongoDB.Bson
             }
             else
             {
-                // the significand starts with an implied 0 and the last three bits of the combination field
-                _exponent = (short)(((int)(highBits >> 49) & 0x3fff) - __exponentBias);
-                significandHigh = highBits & 0x0001ffffffffffff;
+                // it's either Infinity or NaN
+                _exponent = 0;
+                significandHigh = highBits & 0x00ffffffffffffff;
             }
+
             _significand = new UInt128(significandHigh, lowBits);
         }
 
@@ -290,31 +350,40 @@ namespace MongoDB.Bson
         /// <returns>The result of multiplying the value by negative one.</returns>
         public static Decimal128 Negate(Decimal128 x)
         {
-            return new Decimal128((byte)(x._flags ^ 0x80), x._exponent, x._significand);
+            return new Decimal128((byte)(x._flags ^ Flags.SignBit), x._exponent, x._significand);
         }
 
         /// <inheritdoc />
         public override string ToString()
         {
-            if ((_flags & 0x60) == 0x60)
+            if (Flags.IsFirstForm(_flags))
             {
-                if (Decimal128.IsPositiveInfinity(this))
+                var coefficientString = _significand.ToString();
+                var adjustedExponent = _exponent + coefficientString.Length - 1;
+
+                string result;
+                if (_exponent > 0 || adjustedExponent < -6)
                 {
-                    return "Infinity";
+                    result = ToStringWithExponentialNotation(coefficientString, adjustedExponent);
                 }
-                if (Decimal128.IsNegativeInfinity(this))
+                else
                 {
-                    return "-Infinity";
-                }
-                if (Decimal128.IsNaN(this))
-                {
-                    return "NaN";
+                    result = ToStringWithoutExponentialNotation(coefficientString, _exponent);
                 }
 
+                if (Flags.IsNegative(_flags))
+                {
+                    result = "-" + result;
+                }
+
+                return result;
+            }
+            else if (Flags.IsSecondForm(_flags))
+            {
                 // invalid representation treated as zero
                 if (_exponent == 0)
                 {
-                    return (_flags & 0x80) == 0x80 ? "-0" : "0";
+                    return Flags.IsNegative(_flags) ? "-0" : "0";
                 }
                 else
                 {
@@ -323,29 +392,21 @@ namespace MongoDB.Bson
                     {
                         exponentString = "+" + exponentString;
                     }
-                    return ((_flags & 0x80) == 0x80 ? "-0E" : "0E") + exponentString;
+                    return (Flags.IsNegative(_flags) ? "-0E" : "0E") + exponentString;
                 }
             }
-
-            var coefficientString = _significand.ToString();
-            var adjustedExponent = _exponent + coefficientString.Length - 1;
-
-            string result;
-            if (_exponent > 0 || adjustedExponent < -6)
+            else if (Flags.IsNegativeInfinity(_flags))
             {
-                result = ToStringWithExponentialNotation(coefficientString, adjustedExponent);
+                return "-Infinity";
+            }
+            else if (Flags.IsPositiveInfinity(_flags))
+            {
+                return "Infinity";
             }
             else
             {
-                result = ToStringWithoutExponentialNotation(coefficientString, _exponent);
+                return "NaN";
             }
-
-            if ((_flags & 0x80) == 0x80)
-            {
-                result = "-" + result;
-            }
-
-            return result;
         }
 
         private string ToStringWithExponentialNotation(string coefficientString, int adjustedExponent)
@@ -494,20 +555,24 @@ namespace MongoDB.Bson
         public ulong GetHighBits()
         {
             var biasedExponent = _exponent + __exponentBias;
+
             ulong highBits;
-            if ((_flags & 0x70) == 0x70)
+            if (Flags.IsFirstForm(_flags))
             {
-                // it's either Infinity or NaN
-                highBits = _significand.High;
+                // first form has implied leading 0 for significand
+                highBits = ((ulong)biasedExponent << 49) | _significand.High;
             }
-            else if ((_flags & 0x60) == 0x60)
+            else if (Flags.IsSecondForm(_flags))
             {
+                // second form has implied leading 100 for significand
                 highBits = ((ulong)biasedExponent << 47) | (_significand.High & 0x00007fffffffffff);
             }
             else
             {
-                highBits = ((ulong)biasedExponent << 49) | _significand.High;
+                // it's either Infinity or NaN
+                highBits = _significand.High;
             }
+
             return ((ulong)_flags << 56) | highBits;
         }
 
@@ -533,42 +598,42 @@ namespace MongoDB.Bson
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is negative; otherwise, false.</returns>
-        public static bool IsNegative(Decimal128 d) => (d._flags & 0x80) != 0;
+        public static bool IsNegative(Decimal128 d) => Flags.IsNegative(d._flags);
 
         /// <summary>
         /// Returns a value indicating whether the specified number evaluates to negative infinity.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> evaluates to negative infinity; otherwise, false.</returns>
-        public static bool IsNegativeInfinity(Decimal128 d) => (d._flags & 0xFC) == 0xF8;
+        public static bool IsNegativeInfinity(Decimal128 d) => Flags.IsNegativeInfinity(d._flags);
 
         /// <summary>
         /// Returns a value indicating whether the specified number evaluates to positive infinity.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> evaluates to positive infinity; otherwise, false.</returns>
-        public static bool IsPositiveInfinity(Decimal128 d) => (d._flags & 0xFC) == 0x78;
+        public static bool IsPositiveInfinity(Decimal128 d) => Flags.IsPositiveInfinity(d._flags);
 
         /// <summary>
         /// Returns a value indicating whether the specified number is not a number.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is not a number; otherwise, false.</returns>
-        public static bool IsNaN(Decimal128 d) => IsQNaN(d) || IsSNaN(d);
+        public static bool IsNaN(Decimal128 d) => Flags.IsNaN(d._flags);
 
         /// <summary>
         /// Returns a value indicating whether the specified number is a quiet not a number.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is a quiet not a number; otherwise, false.</returns>
-        public static bool IsQNaN(Decimal128 d) => (d._flags & 0x7E) == 0x7C;
+        public static bool IsQNaN(Decimal128 d) => Flags.IsQNaN(d._flags);
 
         /// <summary>
         /// Returns a value indicating whether the specified number is a signaled not a number.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is a signaled not a number; otherwise, false.</returns>
-        public static bool IsSNaN(Decimal128 d) => (d._flags & 0x7E) == 0x7E;
+        public static bool IsSNaN(Decimal128 d) => Flags.IsSNaN(d._flags);
 
         /// <summary>
         /// Gets a value indicating whether this instance is zero.
@@ -578,18 +643,19 @@ namespace MongoDB.Bson
         /// </value>
         public static bool IsZero(Decimal128 d)
         {
-            if (d._significand.Equals(UInt128.Zero))
+            if (Flags.IsFirstForm(d._flags) && d._significand.Equals(UInt128.Zero))
             {
                 return true;
             }
-
-            if ((d._flags & 0x60) == 0x60 && (d._flags & 0x78) != 0x78)
+            else if (Flags.IsSecondForm(d._flags))
             {
-                // invalid representations are interpreted as zero
+                // all second form values are invalid representations and are interpreted as zero
                 return true;
             }
-
-            return false;
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -657,7 +723,7 @@ namespace MongoDB.Bson
                 return false;
             }
 
-            var sign = match.Groups["sign"].Value == "-" ? -1 : 0;
+            var isNegative = match.Groups["sign"].Value == "-";
 
             var exponent = 0;
             if (match.Groups["exponent"].Length != 0)
@@ -696,10 +762,9 @@ namespace MongoDB.Bson
                 return false;
             }
 
-            var flags = sign == -1 ? (byte)0x80 : (byte)0x0;
             var significand = UInt128.Parse(significandString);
 
-            result = new Decimal128(flags, (short)exponent, significand);
+            result = new Decimal128(isNegative, (short)exponent, significand);
             return true;
         }
 
@@ -710,20 +775,18 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="decimal"/> equivalent to <paramref name="d" />.</returns>
         public static decimal ToDecimal(Decimal128 d)
         {
-            if ((d._significand.High >> 32) == 0 && d._exponent >= -128 && d._exponent <= 127)
+            if (Flags.IsFirstForm(d._flags))
             {
-                if (d._flags == 0x80 || d._flags == 0)
-                {
-                    var scale = (byte)-d._exponent;
-                    bool isNegative = d._flags == 0x80; // only the negative bit is set
-                    var highMid = (int)d._significand.High;
-                    var lowMid = (int)(d._significand.Low >> 32);
-                    var low = (int)d._significand.Low;
-                    return new decimal(low, lowMid, highMid, isNegative, scale);
-                }
+                throw new NotImplementedException();
             }
-
-            throw new OverflowException("Value was either too large or too small for a Decimal.");
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return Decimal.Zero;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to Decimal.");
+            }
         }
 
         /// <summary>
@@ -733,7 +796,26 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="double"/> equivalent to <paramref name="d" />.</returns>
         public static double ToDouble(Decimal128 d)
         {
-            throw new NotImplementedException();
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0.0;
+            }
+            else if (Flags.IsPositiveInfinity(d._flags))
+            {
+                return double.PositiveInfinity;
+            }
+            else if (Flags.IsNegativeInfinity(d._flags))
+            {
+                return double.NegativeInfinity;
+            }
+            else
+            {
+                return double.NaN;
+            }
         }
 
         /// <summary>
@@ -743,7 +825,26 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="float"/> equivalent to <paramref name="d" />.</returns>
         public static float ToSingle(Decimal128 d)
         {
-            throw new NotImplementedException();
+            if (Flags.IsFirstForm(d._flags))
+            {
+                throw new NotImplementedException();
+            }
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return (float)0.0;
+            }
+            else if (Flags.IsPositiveInfinity(d._flags))
+            {
+                return float.PositiveInfinity;
+            }
+            else if (Flags.IsNegativeInfinity(d._flags))
+            {
+                return float.NegativeInfinity;
+            }
+            else
+            {
+                return float.NaN;
+            }
         }
 
         /// <summary>
@@ -753,22 +854,18 @@ namespace MongoDB.Bson
         /// <returns>A 8-bit unsigned integer equivalent to <paramref name="d" />.</returns>
         public static byte ToByte(Decimal128 d)
         {
-            uint num;
-            try
+            if (Flags.IsFirstForm(d._flags))
             {
-                num = ToUInt32(d);
+                throw new NotImplementedException();
             }
-            catch (OverflowException ex)
+            else if (Flags.IsSecondForm(d._flags))
             {
-                throw new OverflowException("Value was either too large or too small for a Byte.", ex);
+                return 0;
             }
-
-            if (num < byte.MinValue || num > byte.MaxValue)
+            else
             {
-                throw new OverflowException("Value was either too large or too small for a Byte.");
+                throw new OverflowException("Infinity or NaN cannot be converted to a Byte.");
             }
-
-            return (byte)num;
         }
 
         /// <summary>
@@ -778,22 +875,18 @@ namespace MongoDB.Bson
         /// <returns>A 16-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static short ToInt16(Decimal128 d)
         {
-            int num;
-            try
+            if (Flags.IsFirstForm(d._flags))
             {
-                num = ToInt32(d);
+                throw new NotImplementedException();
             }
-            catch (OverflowException ex)
+            else if (Flags.IsSecondForm(d._flags))
             {
-                throw new OverflowException("Value was either too large or too small for a Int16.", ex);
+                return 0;
             }
-
-            if (num < short.MinValue || num > short.MaxValue)
+            else
             {
-                throw new OverflowException("Value was either too large or too small for a Int16.");
+                throw new OverflowException("Infinity or NaN cannot be converted to an Int16.");
             }
-
-            return (short)num;
         }
 
         /// <summary>
@@ -803,27 +896,18 @@ namespace MongoDB.Bson
         /// <returns>A 32-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static int ToInt32(Decimal128 d)
         {
-            if (d._significand.High == 0 && (d._significand.Low >> 32) == 0)
+            if (Flags.IsFirstForm(d._flags))
             {
-                int num = (int)d._significand.Low;
-                if (d._flags == 0x80) // only the negative bit is set...
-                {
-                    num = -num;
-                    if (num <= 0)
-                    {
-                        return num;
-                    }
-                }
-                else if (d._flags == 0)
-                {
-                    if (num >= 0)
-                    {
-                        return num;
-                    }
-                }
+                throw new NotImplementedException();
             }
-
-            throw new OverflowException("Value was either too large or too small for a Int32.");
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to an Int32.");
+            }
         }
 
         /// <summary>
@@ -833,27 +917,18 @@ namespace MongoDB.Bson
         /// <returns>A 64-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static long ToInt64(Decimal128 d)
         {
-            if (d._significand.High == 0)
+            if (Flags.IsFirstForm(d._flags))
             {
-                long num = (long)d._significand.Low;
-                if (d._flags == 0x80) // only the negative bit is set...
-                {
-                    num = -num;
-                    if (num <= 0L)
-                    {
-                        return num;
-                    }
-                }
-                else if (d._flags == 0)
-                {
-                    if (num >= 0L)
-                    {
-                        return num;
-                    }
-                }
+                throw new NotImplementedException();
             }
-
-            throw new OverflowException("Value was either too large or too small for a Int64.");
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to an Int64.");
+            }
         }
 
         /// <summary>
@@ -864,22 +939,18 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static sbyte ToSByte(Decimal128 d)
         {
-            int num;
-            try
+            if (Flags.IsFirstForm(d._flags))
             {
-                num = ToInt32(d);
+                throw new NotImplementedException();
             }
-            catch (OverflowException ex)
+            else if (Flags.IsSecondForm(d._flags))
             {
-                throw new OverflowException("Value was either too large or too small for a UInt16.", ex);
+                return 0;
             }
-
-            if (num < sbyte.MinValue || num > sbyte.MaxValue)
+            else
             {
-                throw new OverflowException("Value was either too large or too small for a UInt16.");
+                throw new OverflowException("Infinity or NaN cannot be converted to an SByte.");
             }
-
-            return (sbyte)num;
         }
 
         /// <summary>
@@ -890,22 +961,18 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static ushort ToUInt16(Decimal128 d)
         {
-            uint num;
-            try
+            if (Flags.IsFirstForm(d._flags))
             {
-                num = ToUInt32(d);
+                throw new NotImplementedException();
             }
-            catch (OverflowException ex)
+            else if (Flags.IsSecondForm(d._flags))
             {
-                throw new OverflowException("Value was either too large or too small for a UInt16.", ex);
+                return 0;
             }
-
-            if (num < 0u || num > ushort.MaxValue)
+            else
             {
-                throw new OverflowException("Value was either too large or too small for a UInt16.");
+                throw new OverflowException("Infinity or NaN cannot be converted to a UInt16.");
             }
-
-            return (ushort)num;
         }
 
         /// <summary>
@@ -916,16 +983,18 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static uint ToUInt32(Decimal128 d)
         {
-            if (d._significand.High == 0 && (d._significand.Low >> 32) == 0)
+            if (Flags.IsFirstForm(d._flags))
             {
-                uint num = (uint)d._significand.Low;
-                if (d._flags == 0 || num == 0)
-                {
-                    return num;
-                }
+                throw new NotImplementedException();
             }
-
-            throw new OverflowException("Value was either too large or too small for a UInt32.");
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to a UInt32.");
+            }
         }
 
         /// <summary>
@@ -936,16 +1005,18 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static ulong ToUInt64(Decimal128 d)
         {
-            if (d._significand.High == 0)
+            if (Flags.IsFirstForm(d._flags))
             {
-                ulong num = (ulong)d._significand.Low;
-                if (d._flags == 0 || num == 0)
-                {
-                    return num;
-                }
+                throw new NotImplementedException();
             }
-
-            throw new OverflowException("Value was either too large or too small for a UInt64.");
+            else if (Flags.IsSecondForm(d._flags))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new OverflowException("Infinity or NaN cannot be converted to a UInt64.");
+            }
         }
 
         /// <summary>
@@ -1503,7 +1574,7 @@ namespace MongoDB.Bson
                 if (Decimal128.IsZero(x))
                 {
                     // return a zero with the desired exponent
-                    return CreatePositiveDecimal128(goal, UInt128.Zero);
+                    return new Decimal128(Decimal128.IsNegative(x), goal, UInt128.Zero);
                 }
 
                 var exponent = x._exponent;
@@ -1519,7 +1590,7 @@ namespace MongoDB.Bson
                     significand = significandTimes10;
                 }
 
-                return CreatePositiveDecimal128(exponent, significand);
+                return new Decimal128(Decimal128.IsNegative(x), exponent, significand);
             }
 
             private Decimal128 IncreaseExponent(Decimal128 x, short goal)
@@ -1527,7 +1598,7 @@ namespace MongoDB.Bson
                 if (Decimal128.IsZero(x))
                 {
                     // return a zero with the desired exponent
-                    return CreatePositiveDecimal128(goal, UInt128.Zero);
+                    return new Decimal128(Decimal128.IsNegative(x), goal, UInt128.Zero);
                 }
 
                 var exponent = x._exponent;
@@ -1544,14 +1615,7 @@ namespace MongoDB.Bson
                     significand = significandDividedBy10;
                 }
 
-                return CreatePositiveDecimal128(exponent, significand);
-            }
-
-            private Decimal128 CreatePositiveDecimal128(short exponent, UInt128 significand)
-            {
-                var exponentTwoHighOrderBits = (exponent >> 12) & 0x03;
-                var flags = (byte)(exponentTwoHighOrderBits << 5);
-                return new Decimal128(flags, exponent, significand);
+                return new Decimal128(Decimal128.IsNegative(x), exponent, significand);
             }
 
             private enum Decimal128Type { NaN, NegativeInfinity, Number, PositiveInfity }; // the order matters

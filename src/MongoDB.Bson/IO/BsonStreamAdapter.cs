@@ -15,6 +15,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -309,6 +310,14 @@ namespace MongoDB.Bson.IO
         }
 
         /// <inheritdoc/>
+        public override Decimal128 ReadDecimal128()
+        {
+            var lowBits = (ulong)ReadInt64();
+            var highBits = (ulong)ReadInt64();
+            return Decimal128.FromIEEEBits(highBits, lowBits);
+        }
+
+        /// <inheritdoc/>
         public override double ReadDouble()
         {
             ThrowIfDisposed();
@@ -477,6 +486,14 @@ namespace MongoDB.Bson.IO
 
             this.WriteBytes(value, 0, value.Length);
             WriteByte(0);
+        }
+
+        /// <inheritdoc/>
+        public override void WriteDecimal128(Decimal128 value)
+        {
+            ThrowIfDisposed();
+            WriteInt64((long)value.GetIEEELowBits());
+            WriteInt64((long)value.GetIEEEHighBits());
         }
 
         /// <inheritdoc/>

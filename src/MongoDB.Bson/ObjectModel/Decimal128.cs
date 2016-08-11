@@ -677,7 +677,15 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, 0, byte.MaxValue, out value))
+                {
+                    return (byte)value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to a Byte.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -748,7 +756,16 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                var maxNegativeValue = (ulong)short.MaxValue + 1;
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, maxNegativeValue, (ulong)short.MaxValue, out value))
+                {
+                    return Decimal128.IsNegative(d) ? (value == maxNegativeValue ? short.MinValue : (short )(-(short)value)) : (short)value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to an Int16.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -769,7 +786,16 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                var maxNegativeValue = (ulong)int.MaxValue + 1;
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, maxNegativeValue, int.MaxValue, out value))
+                {
+                    return Decimal128.IsNegative(d) ? (value == maxNegativeValue ? int.MinValue : -(int)value) : (int)value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to an Int32.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -790,7 +816,16 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                ulong maxNegativeValue = (ulong)long.MaxValue + 1;
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, maxNegativeValue, long.MaxValue, out value))
+                {
+                    return Decimal128.IsNegative(d) ? (value == maxNegativeValue ? long.MinValue : -(long)value) : (long)value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to an Int64.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -812,7 +847,16 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                ulong maxNegativeValue = (ulong)sbyte.MaxValue + 1;
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, maxNegativeValue, (ulong)sbyte.MaxValue, out value))
+                {
+                    return Decimal128.IsNegative(d) ? (value == maxNegativeValue ? sbyte.MinValue : (sbyte)(-(sbyte)value)) : (sbyte)value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to an SByte.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -863,7 +907,15 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, 0, ushort.MaxValue, out value))
+                {
+                    return (ushort)value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to a UInt16.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -885,7 +937,15 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, 0, uint.MaxValue, out value))
+                {
+                    return (uint)value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to a UInt32.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -907,7 +967,15 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                ulong value;
+                if (Decimal128.TryTruncateToUInt64(d, 0, ulong.MaxValue, out value))
+                {
+                    return value;
+                }
+                else
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to a UInt64.");
+                }
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -1073,6 +1141,30 @@ namespace MongoDB.Bson
             return significandString;
         }
 
+        private static Decimal128 DecreaseExponent(Decimal128 x, short goal)
+        {
+            if (Decimal128.IsZero(x))
+            {
+                // return a zero with the desired exponent
+                return Decimal128.FromComponents(Decimal128.IsNegative(x), goal, UInt128.Zero);
+            }
+
+            var exponent = GetExponent(x);
+            var significand = GetSignificand(x);
+            while (exponent > goal)
+            {
+                var significandTimes10 = UInt128.Multiply(significand, (uint)10);
+                if (significandTimes10.CompareTo(Decimal128.__maxSignificand) <= 0)
+                {
+                    break;
+                }
+                exponent -= 1;
+                significand = significandTimes10;
+            }
+
+            return Decimal128.FromComponents(Decimal128.IsNegative(x), exponent, significand);
+        }
+
         private static Decimal128 FromComponents(bool isNegative, short exponent, UInt128 significand)
         {
             if (exponent < __exponentMin || exponent > __exponentMax)
@@ -1097,6 +1189,31 @@ namespace MongoDB.Bson
         private static UInt128 GetSignificand(Decimal128 d)
         {
             return new UInt128(GetSignificandHighBits(d), GetSignificandLowBits(d));
+        }
+
+        private static Decimal128 IncreaseExponent(Decimal128 x, short goal)
+        {
+            if (Decimal128.IsZero(x))
+            {
+                // return a zero with the desired exponent
+                return Decimal128.FromComponents(Decimal128.IsNegative(x), goal, UInt128.Zero);
+            }
+
+            var exponent = GetExponent(x);
+            var significand = GetSignificand(x);
+            while (exponent < goal)
+            {
+                uint remainder;
+                var significandDividedBy10 = UInt128.Divide(significand, (uint)10, out remainder);
+                if (remainder != 0)
+                {
+                    break;
+                }
+                exponent += 1;
+                significand = significandDividedBy10;
+            }
+
+            return Decimal128.FromComponents(Decimal128.IsNegative(x), exponent, significand);
         }
 
         private static short MapDecimal128BiasedExponentToExponent(short biasedExponent)
@@ -1561,6 +1678,62 @@ namespace MongoDB.Bson
             }
         }
 
+        private static bool TryTruncateToUInt64(Decimal128 d, ulong maxNegativeValue, ulong maxPositiveValue, out ulong value)
+        {
+            if (Decimal128.IsZero(d))
+            {
+                value = 0;
+                return true;
+
+            }
+
+            var exponent = Decimal128.GetExponent(d);
+            var significand = Decimal128.GetSignificand(d);
+
+            if (exponent < 0)
+            {
+                while (exponent < 0)
+                {
+                    uint remainder; // ignored because we are truncating
+                    significand = UInt128.Divide(significand, (uint)10, out remainder);
+                    if (significand.Equals(UInt128.Zero))
+                    {
+                        value = 0;
+                        return true;
+                    }
+                    exponent += 1;
+                }
+            }
+            else if (exponent > 0)
+            {
+                while (exponent > 0)
+                {
+                    significand = UInt128.Multiply(significand, (uint)10);
+                    if (significand.CompareTo(__maxSignificand) > 0)
+                    {
+                        value = 0;
+                        return false;
+                    }
+                    exponent -= 1;
+                }
+            }
+
+            if (exponent != 0)
+            {
+                value = 0;
+                return false;
+            }
+
+            if (significand.High != 0 || significand.Low > (Decimal128.IsNegative(d) ? maxNegativeValue : maxPositiveValue))
+            {
+                value = 0;
+                return false;
+            }
+
+            value = significand.Low;
+            return true;
+        }
+
         // nested types
         private class Decimal128Comparer : IComparer<Decimal128>
         {
@@ -1669,54 +1842,6 @@ namespace MongoDB.Bson
                 }
             }
 
-            private Decimal128 DecreaseExponent(Decimal128 x, short goal)
-            {
-                if (Decimal128.IsZero(x))
-                {
-                    // return a zero with the desired exponent
-                    return Decimal128.FromComponents(Decimal128.IsNegative(x), goal, UInt128.Zero);
-                }
-
-                var exponent = GetExponent(x);
-                var significand = GetSignificand(x);
-                while (exponent > goal)
-                {
-                    var significandTimes10 = UInt128.Multiply(significand, (uint)10);
-                    if (significandTimes10.CompareTo(Decimal128.__maxSignificand) <= 0)
-                    {
-                        break;
-                    }
-                    exponent -= 1;
-                    significand = significandTimes10;
-                }
-
-                return Decimal128.FromComponents(Decimal128.IsNegative(x), exponent, significand);
-            }
-
-            private Decimal128 IncreaseExponent(Decimal128 x, short goal)
-            {
-                if (Decimal128.IsZero(x))
-                {
-                    // return a zero with the desired exponent
-                    return Decimal128.FromComponents(Decimal128.IsNegative(x), goal, UInt128.Zero);
-                }
-
-                var exponent = GetExponent(x);
-                var significand = GetSignificand(x);
-                while (exponent < goal)
-                {
-                    uint remainder;
-                    var significandDividedBy10 = UInt128.Divide(significand, (uint)10, out remainder);
-                    if (remainder != 0)
-                    {
-                        break;
-                    }
-                    exponent += 1;
-                    significand = significandDividedBy10;
-                }
-
-                return Decimal128.FromComponents(Decimal128.IsNegative(x), exponent, significand);
-            }
 
             private enum Decimal128Type { NaN, NegativeInfinity, Number, PositiveInfity }; // the order matters
             private enum NumberClass { Negative, Zero, Positive }; // the order matters

@@ -57,25 +57,25 @@ namespace MongoDB.Bson
         /// Represents negative infinity.
         /// </summary>
         public static Decimal128 NegativeInfinity =>
-            new Decimal128(0xF800000000000000, 0);
+            new Decimal128(Flags.NegativeInfinity, 0);
 
         /// <summary>
         /// Represents positive infinity.
         /// </summary>
         public static Decimal128 PositiveInfinity =>
-            new Decimal128(0x7800000000000000, 0);
+            new Decimal128(Flags.PositiveInfinity, 0);
 
         /// <summary>
         /// Represents a value that is not a number.
         /// </summary>
         public static Decimal128 QNaN =>
-            new Decimal128(0x7C00000000000000, 0);
+            new Decimal128(Flags.QNaN, 0);
 
         /// <summary>
         /// Represents a value that is not a number and raises errors when used in calculations.
         /// </summary>
         public static Decimal128 SNaN =>
-            new Decimal128(0x7E00000000000000, 0);
+            new Decimal128(Flags.SNaN, 0);
 
         /// <summary>
         /// Represents zero.
@@ -467,53 +467,155 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
+        /// Determines whether the specified Decimal128 instances are considered equal.
+        /// </summary>
+        /// <param name="x">The first Decimal128 object to compare.</param>
+        /// <param name="y">The second Decimal128 object to compare.</param>
+        /// <returns>True if the objects are considered equal; otherwise false. If both x and y are null, the method returns true.</returns>
+        public static bool Equals(Decimal128 x, Decimal128 y)
+        {
+            return Decimal128.Compare(x, y) == 0;
+        }
+
+        /// <summary>
+        /// Creates a new Decimal128 value from its components.
+        /// </summary>
+        /// <param name="isNegative">if set to <c>true</c> [is negative].</param>
+        /// <param name="exponent">The exponent.</param>
+        /// <param name="significandHighBits">The signficand high bits.</param>
+        /// <param name="significandLowBits">The significand low bits.</param>
+        /// <returns>A Decimal128 value.</returns>
+        [CLSCompliant(false)]
+        public static Decimal128 FromComponents(bool isNegative, short exponent, ulong significandHighBits, ulong significandLowBits)
+        {
+            return FromComponents(isNegative, exponent, new UInt128(significandHighBits, significandLowBits));
+        }
+
+        /// <summary>
+        /// Creates a new Decimal128 value from the IEEE encoding bits.
+        /// </summary>
+        /// <param name="highBits">The high bits.</param>
+        /// <param name="lowBits">The low bits.</param>
+        /// <returns>A Decimal128 value.</returns>
+        [CLSCompliant(false)]
+        public static Decimal128 FromIEEEBits(ulong highBits, ulong lowBits)
+        {
+            return new Decimal128(MapIEEEHighBitsToDecimal128HighBits(highBits), lowBits);
+        }
+
+        /// <summary>
+        /// Gets the exponent of a Decimal128 value.
+        /// </summary>
+        /// <param name="d">The Decimal128 value.</param>
+        /// <returns>The exponent.</returns>
+        public static short GetExponent(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._highBits))
+            {
+                return MapDecimal128BiasedExponentToExponent((short)((d._highBits & Flags.FirstFormExponentBits) >> 49));
+            }
+            else if (Flags.IsSecondForm(d._highBits))
+            {
+                return MapDecimal128BiasedExponentToExponent((short)((d._highBits & Flags.SecondFormExponentBits) >> 47));
+            }
+            else
+            {
+                throw new InvalidOperationException("GetExponent cannot be called for Infinity or NaN.");
+            }
+        }
+
+        /// <summary>
+        /// Gets the high bits of the significand of a Decimal128 value.
+        /// </summary>
+        /// <param name="d">The Decimal128 value.</param>
+        /// <returns>The high bits of the significand.</returns>
+        [CLSCompliant(false)]
+        public static ulong GetSignificandHighBits(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._highBits))
+            {
+                return d._highBits & Flags.FirstFormSignificandBits;
+            }
+            else if (Flags.IsSecondForm(d._highBits))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new InvalidOperationException("GetSignificandHighBits cannot be called for Infinity or NaN.");
+            }
+        }
+
+        /// <summary>
+        /// Gets the high bits of the significand of a Decimal128 value.
+        /// </summary>
+        /// <param name="d">The Decimal128 value.</param>
+        /// <returns>The high bits of the significand.</returns>
+        [CLSCompliant(false)]
+        public static ulong GetSignificandLowBits(Decimal128 d)
+        {
+            if (Flags.IsFirstForm(d._highBits))
+            {
+                return d._lowBits;
+            }
+            else if (Flags.IsSecondForm(d._highBits))
+            {
+                return 0;
+            }
+            else
+            {
+                throw new InvalidOperationException("GetSignificandLowBits cannot be called for Infinity or NaN.");
+            }
+        }
+
+        /// <summary>
         /// Returns a value indicating whether the specified number evaluates to negative or positive infinity.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> evaluates to negative or positive infinity; otherwise, false.</returns>
-        public static bool IsInfinity(Decimal128 d) => IsPositiveInfinity(d) || IsNegativeInfinity(d);
-
-        /// <summary>
-        /// Returns a value indicating whether the specified number is negative.
-        /// </summary>
-        /// <param name="d">A 128-bit decimal.</param>
-        /// <returns>true if <paramref name="d" /> is negative; otherwise, false.</returns>
-        public static bool IsNegative(Decimal128 d) => Flags.IsNegative(d._flags);
-
-        /// <summary>
-        /// Returns a value indicating whether the specified number evaluates to negative infinity.
-        /// </summary>
-        /// <param name="d">A 128-bit decimal.</param>
-        /// <returns>true if <paramref name="d" /> evaluates to negative infinity; otherwise, false.</returns>
-        public static bool IsNegativeInfinity(Decimal128 d) => Flags.IsNegativeInfinity(d._flags);
-
-        /// <summary>
-        /// Returns a value indicating whether the specified number evaluates to positive infinity.
-        /// </summary>
-        /// <param name="d">A 128-bit decimal.</param>
-        /// <returns>true if <paramref name="d" /> evaluates to positive infinity; otherwise, false.</returns>
-        public static bool IsPositiveInfinity(Decimal128 d) => Flags.IsPositiveInfinity(d._flags);
+        public static bool IsInfinity(Decimal128 d) => Flags.IsInfinity(d._highBits);
 
         /// <summary>
         /// Returns a value indicating whether the specified number is not a number.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is not a number; otherwise, false.</returns>
-        public static bool IsNaN(Decimal128 d) => Flags.IsNaN(d._flags);
+        public static bool IsNaN(Decimal128 d) => Flags.IsNaN(d._highBits);
+
+        /// <summary>
+        /// Returns a value indicating whether the specified number is negative.
+        /// </summary>
+        /// <param name="d">A 128-bit decimal.</param>
+        /// <returns>true if <paramref name="d" /> is negative; otherwise, false.</returns>
+        public static bool IsNegative(Decimal128 d) => Flags.IsNegative(d._highBits);
+
+        /// <summary>
+        /// Returns a value indicating whether the specified number evaluates to negative infinity.
+        /// </summary>
+        /// <param name="d">A 128-bit decimal.</param>
+        /// <returns>true if <paramref name="d" /> evaluates to negative infinity; otherwise, false.</returns>
+        public static bool IsNegativeInfinity(Decimal128 d) => Flags.IsNegativeInfinity(d._highBits);
+
+        /// <summary>
+        /// Returns a value indicating whether the specified number evaluates to positive infinity.
+        /// </summary>
+        /// <param name="d">A 128-bit decimal.</param>
+        /// <returns>true if <paramref name="d" /> evaluates to positive infinity; otherwise, false.</returns>
+        public static bool IsPositiveInfinity(Decimal128 d) => Flags.IsPositiveInfinity(d._highBits);
 
         /// <summary>
         /// Returns a value indicating whether the specified number is a quiet not a number.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is a quiet not a number; otherwise, false.</returns>
-        public static bool IsQNaN(Decimal128 d) => Flags.IsQNaN(d._flags);
+        public static bool IsQNaN(Decimal128 d) => Flags.IsQNaN(d._highBits);
 
         /// <summary>
         /// Returns a value indicating whether the specified number is a signaled not a number.
         /// </summary>
         /// <param name="d">A 128-bit decimal.</param>
         /// <returns>true if <paramref name="d" /> is a signaled not a number; otherwise, false.</returns>
-        public static bool IsSNaN(Decimal128 d) => Flags.IsSNaN(d._flags);
+        public static bool IsSNaN(Decimal128 d) => Flags.IsSNaN(d._highBits);
 
         /// <summary>
         /// Gets a value indicating whether this instance is zero.
@@ -523,11 +625,11 @@ namespace MongoDB.Bson
         /// </value>
         public static bool IsZero(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags) && d._significand.Equals(UInt128.Zero))
+            if (Flags.IsFirstForm(d._highBits) && GetSignificand(d).Equals(UInt128.Zero))
             {
                 return true;
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 // all second form values are invalid representations and are interpreted as zero
                 return true;
@@ -545,7 +647,7 @@ namespace MongoDB.Bson
         /// <returns>The result of multiplying the value by negative one.</returns>
         public static Decimal128 Negate(Decimal128 x)
         {
-            return new Decimal128((byte)(x._flags ^ Flags.SignBit), x._exponent, x._significand);
+            return new Decimal128(x._highBits ^ Flags.SignBit, x._lowBits);
         }
 
         /// <summary>
@@ -573,11 +675,11 @@ namespace MongoDB.Bson
         /// <returns>A 8-bit unsigned integer equivalent to <paramref name="d" />.</returns>
         public static byte ToByte(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -594,11 +696,11 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="decimal"/> equivalent to <paramref name="d" />.</returns>
         public static decimal ToDecimal(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return Decimal.Zero;
             }
@@ -615,19 +717,19 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="double"/> equivalent to <paramref name="d" />.</returns>
         public static double ToDouble(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0.0;
             }
-            else if (Flags.IsPositiveInfinity(d._flags))
+            else if (Flags.IsPositiveInfinity(d._highBits))
             {
                 return double.PositiveInfinity;
             }
-            else if (Flags.IsNegativeInfinity(d._flags))
+            else if (Flags.IsNegativeInfinity(d._highBits))
             {
                 return double.NegativeInfinity;
             }
@@ -644,11 +746,11 @@ namespace MongoDB.Bson
         /// <returns>A 16-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static short ToInt16(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -665,11 +767,11 @@ namespace MongoDB.Bson
         /// <returns>A 32-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static int ToInt32(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -686,11 +788,11 @@ namespace MongoDB.Bson
         /// <returns>A 64-bit signed integer equivalent to <paramref name="d" />.</returns>
         public static long ToInt64(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -708,11 +810,11 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static sbyte ToSByte(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -729,19 +831,19 @@ namespace MongoDB.Bson
         /// <returns>A <see cref="float"/> equivalent to <paramref name="d" />.</returns>
         public static float ToSingle(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return (float)0.0;
             }
-            else if (Flags.IsPositiveInfinity(d._flags))
+            else if (Flags.IsPositiveInfinity(d._highBits))
             {
                 return float.PositiveInfinity;
             }
-            else if (Flags.IsNegativeInfinity(d._flags))
+            else if (Flags.IsNegativeInfinity(d._highBits))
             {
                 return float.NegativeInfinity;
             }
@@ -759,11 +861,11 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static ushort ToUInt16(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -781,11 +883,11 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static uint ToUInt32(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -803,11 +905,11 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public static ulong ToUInt64(Decimal128 d)
         {
-            if (Flags.IsFirstForm(d._flags))
+            if (Flags.IsFirstForm(d._highBits))
             {
                 throw new NotImplementedException();
             }
-            else if (Flags.IsSecondForm(d._flags))
+            else if (Flags.IsSecondForm(d._highBits))
             {
                 return 0;
             }
@@ -905,7 +1007,7 @@ namespace MongoDB.Bson
 
             var significand = UInt128.Parse(significandString);
 
-            result = new Decimal128(isNegative, (short)exponent, significand);
+            result = Decimal128.FromComponents(isNegative, (short)exponent, significand);
             return true;
         }
 
@@ -971,6 +1073,131 @@ namespace MongoDB.Bson
             return significandString;
         }
 
+        private static Decimal128 FromComponents(bool isNegative, short exponent, UInt128 significand)
+        {
+            if (exponent < __exponentMin || exponent > __exponentMax)
+            {
+                throw new ArgumentOutOfRangeException(nameof(exponent));
+            }
+            if (significand.CompareTo(__maxSignificand) > 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(significand));
+            }
+
+            var biasedExponent = MapExponentToDecimal128BiasedExponent(exponent);
+            var highBits = ((ulong)biasedExponent << 49) | significand.High;
+            if (isNegative)
+            {
+                highBits = Flags.SignBit | highBits;
+            }
+
+            return new Decimal128(highBits, significand.Low);
+        }
+
+        private static UInt128 GetSignificand(Decimal128 d)
+        {
+            return new UInt128(GetSignificandHighBits(d), GetSignificandLowBits(d));
+        }
+
+        private static short MapDecimal128BiasedExponentToExponent(short biasedExponent)
+        {
+            if (biasedExponent <= 6111)
+            {
+                return biasedExponent;
+            }
+            else
+            {
+                return (short)(biasedExponent - 12288);
+            }
+        }
+
+        private static ulong MapDecimal128HighBitsToIEEEHighBits(ulong highBits)
+        {
+            // for Decimal128Bias from    0 to  6111: IEEEBias = Decimal128Bias + 6176
+            // for Decimal128Bias from 6112 to 12287: IEEEBias = Decimal128Bias - 6112
+
+            if (Flags.IsFirstForm(highBits))
+            {
+                var exponentBits = highBits & Flags.FirstFormExponentBits;
+                if (exponentBits <= (6111L << 49))
+                {
+                    return highBits + (6176L << 49);
+                }
+                else
+                {
+                    return highBits - (6112L << 49);
+                }
+            }
+            else if (Flags.IsSecondForm(highBits))
+            {
+                var exponentBits = highBits & Flags.SecondFormExponentBits;
+                if (exponentBits <= (6111L << 47))
+                {
+                    return highBits + (6176L << 47);
+                }
+                else
+                {
+                    return highBits - (6112L << 47);
+                }
+            }
+            else
+            {
+                return highBits;
+            }
+        }
+
+        private static short MapExponentToDecimal128BiasedExponent(short exponent)
+        {
+            // internally we use a different bias than IEEE so that a Decimal128 struct filled with zero bytes is a true Decimal128 zero
+            // Decimal128Bias is defined as:
+            // exponents from     0 to 6111: biasedExponent = exponent
+            // exponents from -6176 to   -1: biasedExponent = exponent + 12288
+
+            if (exponent >= 0)
+            {
+                return exponent;
+            }
+            else
+            {
+                return (short)(exponent + 12288);
+            }
+        }
+
+        private static ulong MapIEEEHighBitsToDecimal128HighBits(ulong highBits)
+        {
+            // for IEEEBias from    0 to  6175: Decimal128Bias = IEEEBias + 6112
+            // for IEEEBias from 6176 to 12287: Decimal128Bias = IEEEBias - 6176
+
+            if (Flags.IsFirstForm(highBits))
+            {
+                var exponentBits = highBits & Flags.FirstFormExponentBits;
+                if (exponentBits <= (6175L << 49))
+                {
+                    return highBits + (6112L << 49);
+                }
+                else
+                {
+                    return highBits - (6176L << 49);
+                }
+            }
+            else if (Flags.IsSecondForm(highBits))
+            {
+                var exponentBits = highBits & Flags.SecondFormExponentBits;
+                if (exponentBits <= (6175L << 47))
+                {
+                    return highBits + (6112L << 47);
+                }
+                else
+                {
+                    return highBits - (6176L << 47);
+                }
+            }
+            else
+            {
+                return highBits;
+            }
+        }
+
         private static string RemoveLeadingZeroes(string significandString)
         {
             if (significandString[0] == '0' && significandString.Length > 1)
@@ -986,24 +1213,14 @@ namespace MongoDB.Bson
         #endregion
 
         // private fields
-        private readonly byte _flags;
-        private readonly short _exponent;
-        private readonly UInt128 _significand;
+        private readonly ulong _highBits;
+        private readonly ulong _lowBits;
 
         // constructors
-        private Decimal128(byte flags, short exponent, UInt128 significand)
+        private Decimal128(ulong highBits, ulong lowBits)
         {
-            _flags = flags;
-            _exponent = exponent;
-            _significand = significand;
-        }
-
-        private Decimal128(bool isNegative, short exponent, UInt128 significand)
-        {
-            var exponentSevenHighOrderBits = (exponent + __exponentBias) >> 7;
-            _flags = (byte)((isNegative ? Flags.SignBit : 0) | exponentSevenHighOrderBits);
-            _exponent = exponent;
-            _significand = significand;
+            _highBits = highBits;
+            _lowBits = lowBits;
         }
 
         /// <summary>
@@ -1012,19 +1229,7 @@ namespace MongoDB.Bson
         /// <param name="value">The value.</param>
         public Decimal128(decimal value)
         {
-            var bits = decimal.GetBits(value);
-
-            _flags = 0;
-            if ((bits[3] & 0x80000000) != 0)
-            {
-                _flags = Flags.SignBit;
-            }
-            _exponent = (short)((bits[3] >> 16) & 0x7F);
-            _exponent *= -1;
-
-            var significandHigh = (ulong)(uint)bits[2];
-            var significandLow = ((ulong)(uint)bits[1] << 32) | (ulong)(uint)bits[0];
-            _significand = new UInt128(significandHigh, significandLow);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -1051,16 +1256,16 @@ namespace MongoDB.Bson
         /// <param name="value">The value.</param>
         public Decimal128(int value)
         {
-            _flags = 0;
-            var v = (long)value;
-            if (value < 0)
+            if (value >= 0)
             {
-                _flags = Flags.SignBit;
-                v = -v;
+                _highBits = 0;
+                _lowBits = (ulong)value;
             }
-
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)v);
+            else
+            {
+                _highBits = Flags.SignBit;
+                _lowBits = value == int.MinValue ? (ulong)int.MaxValue + 1 : (ulong)-value;
+            }
         }
 
         /// <summary>
@@ -1069,15 +1274,16 @@ namespace MongoDB.Bson
         /// <param name="value">The value.</param>
         public Decimal128(long value)
         {
-            _flags = 0;
-            if (value < 0)
+            if (value >= 0)
             {
-                _flags = Flags.SignBit;
-                value = -value;
+                _highBits = 0;
+                _lowBits = (ulong)value;
             }
-
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
+            else
+            {
+                _highBits = Flags.SignBit;
+                _lowBits = value == long.MinValue ? (ulong)long.MaxValue + 1 : (ulong)-value;
+            }
         }
 
         /// <summary>
@@ -1087,9 +1293,8 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public Decimal128(uint value)
         {
-            _flags = 0;
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
+            _highBits = 0;
+            _lowBits = value;
         }
 
         /// <summary>
@@ -1099,42 +1304,8 @@ namespace MongoDB.Bson
         [CLSCompliant(false)]
         public Decimal128(ulong value)
         {
-            _flags = 0;
-            _exponent = 0;
-            _significand = new UInt128(0, (ulong)value);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Decimal128"/> struct.
-        /// </summary>
-        /// <param name="highBits">The high order 64 bits of the binary representation.</param>
-        /// <param name="lowBits">The low order 64 bits of the binary representation.</param>
-        [CLSCompliant(false)]
-        public Decimal128(ulong highBits, ulong lowBits)
-        {
-            _flags = (byte)(highBits >> 56);
-
-            ulong significandHigh;
-            if (Flags.IsFirstForm(_flags))
-            {
-                // the significand starts with an implied 0 and the last three bits of the combination field
-                _exponent = (short)(((int)(highBits >> 49) & 0x3fff) - __exponentBias);
-                significandHigh = highBits & 0x0001ffffffffffff;
-            }
-            else if (Flags.IsSecondForm(_flags))
-            {
-                // the significand starts with an implied 100 and the last bit of the combination field
-                _exponent = (short)(((int)(highBits >> 47) & 0x3fff) - __exponentBias);
-                significandHigh = 0x0002000000000000 | (highBits & 0x00007fffffffffff);
-            }
-            else
-            {
-                // it's either Infinity or NaN
-                _exponent = 0;
-                significandHigh = highBits & 0x00ffffffffffffff;
-            }
-
-            _significand = new UInt128(significandHigh, lowBits);
+            _highBits = 0;
+            _lowBits = value;
         }
 
         // public methods
@@ -1163,24 +1334,12 @@ namespace MongoDB.Bson
             }
         }
 
-        /// <summary>
-        /// Determines whether the specified Decimal128 instances are considered equal.
-        /// </summary>
-        /// <param name="x">The first Decimal128 object to compare.</param>
-        /// <param name="y">The second Decimal128 object to compare.</param>
-        /// <returns>True if the objects are considered equal; otherwise false. If both x and y are null, the method returns true.</returns>
-        public static bool Equals(Decimal128 x, Decimal128 y)
-        {
-            return Decimal128.Compare(x, y) == 0;
-        }
-
         /// <inheritdoc />
         public override int GetHashCode()
         {
             int hash = 17;
-            hash = 37 * hash + _flags.GetHashCode();
-            hash = 37 * hash + _exponent.GetHashCode();
-            hash = 37 * hash + _significand.GetHashCode();
+            hash = 37 * hash + _highBits.GetHashCode();
+            hash = 37 * hash + _lowBits.GetHashCode();
             return hash;
         }
 
@@ -1189,28 +1348,9 @@ namespace MongoDB.Bson
         /// </summary>
         /// <returns>The high order 64 bits of the binary representation of this instance.</returns>
         [CLSCompliant(false)]
-        public ulong GetHighBits()
+        public ulong GetIEEEHighBits()
         {
-            var biasedExponent = _exponent + __exponentBias;
-
-            ulong highBits;
-            if (Flags.IsFirstForm(_flags))
-            {
-                // first form has implied leading 0 for significand
-                highBits = ((ulong)biasedExponent << 49) | _significand.High;
-            }
-            else if (Flags.IsSecondForm(_flags))
-            {
-                // second form has implied leading 100 for significand
-                highBits = ((ulong)biasedExponent << 47) | (_significand.High & 0x00007fffffffffff);
-            }
-            else
-            {
-                // it's either Infinity or NaN
-                highBits = _significand.High;
-            }
-
-            return ((ulong)_flags << 56) | highBits;
+            return MapDecimal128HighBitsToIEEEHighBits(_highBits);
         }
 
         /// <summary>
@@ -1218,58 +1358,61 @@ namespace MongoDB.Bson
         /// </summary>
         /// <returns>The low order 64 bits of the binary representation of this instance.</returns>
         [CLSCompliant(false)]
-        public ulong GetLowBits()
+        public ulong GetIEEELowBits()
         {
-            return _significand.Low;
+            return _lowBits;
         }
 
         /// <inheritdoc />
         public override string ToString()
         {
-            if (Flags.IsFirstForm(_flags))
+            if (Flags.IsFirstForm(_highBits))
             {
-                var coefficientString = _significand.ToString();
-                var adjustedExponent = _exponent + coefficientString.Length - 1;
+                var exponent = GetExponent(this);
+                var significand = GetSignificand(this);
+                var coefficientString = significand.ToString();
+                var adjustedExponent = exponent + coefficientString.Length - 1;
 
                 string result;
-                if (_exponent > 0 || adjustedExponent < -6)
+                if (exponent > 0 || adjustedExponent < -6)
                 {
                     result = ToStringWithExponentialNotation(coefficientString, adjustedExponent);
                 }
                 else
                 {
-                    result = ToStringWithoutExponentialNotation(coefficientString, _exponent);
+                    result = ToStringWithoutExponentialNotation(coefficientString, exponent);
                 }
 
-                if (Flags.IsNegative(_flags))
+                if (Flags.IsNegative(_highBits))
                 {
                     result = "-" + result;
                 }
 
                 return result;
             }
-            else if (Flags.IsSecondForm(_flags))
+            else if (Flags.IsSecondForm(_highBits))
             {
                 // invalid representation treated as zero
-                if (_exponent == 0)
+                var exponent = GetExponent(this);
+                if (exponent == 0)
                 {
-                    return Flags.IsNegative(_flags) ? "-0" : "0";
+                    return Flags.IsNegative(_highBits) ? "-0" : "0";
                 }
                 else
                 {
-                    var exponentString = _exponent.ToString(NumberFormatInfo.InvariantInfo);
-                    if (_exponent > 0)
+                    var exponentString = exponent.ToString(NumberFormatInfo.InvariantInfo);
+                    if (exponent > 0)
                     {
                         exponentString = "+" + exponentString;
                     }
-                    return (Flags.IsNegative(_flags) ? "-0E" : "0E") + exponentString;
+                    return (Flags.IsNegative(_highBits) ? "-0E" : "0E") + exponentString;
                 }
             }
-            else if (Flags.IsNegativeInfinity(_flags))
+            else if (Flags.IsNegativeInfinity(_highBits))
             {
                 return "-Infinity";
             }
-            else if (Flags.IsPositiveInfinity(_flags))
+            else if (Flags.IsPositiveInfinity(_highBits))
             {
                 return "Infinity";
             }
@@ -1497,30 +1640,32 @@ namespace MongoDB.Bson
 
             private int ComparePositiveNumbers(Decimal128 x, Decimal128 y)
             {
-                var exponentDifference = Math.Abs(x._exponent - y._exponent);
+                var xExponent = GetExponent(x);
+                var yExponent = GetExponent(y);
+                var exponentDifference = Math.Abs(xExponent - yExponent);
                 if (exponentDifference <= 66)
                 {
                     // we may or may not be able to make the exponents equal but we won't know until we try
                     // but we do know we can't eliminate an exponent difference larger than 66
-                    if (x._exponent < y._exponent)
+                    if (xExponent < yExponent)
                     {
-                        x = IncreaseExponent(x, y._exponent);
-                        y = DecreaseExponent(y, x._exponent);
+                        x = IncreaseExponent(x, yExponent);
+                        y = DecreaseExponent(y, xExponent);
                     }
-                    else if (x._exponent > y._exponent)
+                    else if (xExponent > yExponent)
                     {
-                        x = DecreaseExponent(x, y._exponent);
-                        y = IncreaseExponent(y, x._exponent);
+                        x = DecreaseExponent(x, yExponent);
+                        y = IncreaseExponent(y, xExponent);
                     }
                 }
 
-                if (x._exponent == y._exponent)
+                if (xExponent == yExponent)
                 {
-                    return x._significand.CompareTo(y._significand);
+                    return GetSignificand(x).CompareTo(GetSignificand(y));
                 }
                 else
                 {
-                    return x._exponent.CompareTo(y._exponent);
+                    return xExponent.CompareTo(yExponent);
                 }
             }
 
@@ -1529,11 +1674,11 @@ namespace MongoDB.Bson
                 if (Decimal128.IsZero(x))
                 {
                     // return a zero with the desired exponent
-                    return new Decimal128(Decimal128.IsNegative(x), goal, UInt128.Zero);
+                    return Decimal128.FromComponents(Decimal128.IsNegative(x), goal, UInt128.Zero);
                 }
 
-                var exponent = x._exponent;
-                var significand = x._significand;
+                var exponent = GetExponent(x);
+                var significand = GetSignificand(x);
                 while (exponent > goal)
                 {
                     var significandTimes10 = UInt128.Multiply(significand, (uint)10);
@@ -1545,7 +1690,7 @@ namespace MongoDB.Bson
                     significand = significandTimes10;
                 }
 
-                return new Decimal128(Decimal128.IsNegative(x), exponent, significand);
+                return Decimal128.FromComponents(Decimal128.IsNegative(x), exponent, significand);
             }
 
             private Decimal128 IncreaseExponent(Decimal128 x, short goal)
@@ -1553,11 +1698,11 @@ namespace MongoDB.Bson
                 if (Decimal128.IsZero(x))
                 {
                     // return a zero with the desired exponent
-                    return new Decimal128(Decimal128.IsNegative(x), goal, UInt128.Zero);
+                    return Decimal128.FromComponents(Decimal128.IsNegative(x), goal, UInt128.Zero);
                 }
 
-                var exponent = x._exponent;
-                var significand = x._significand;
+                var exponent = GetExponent(x);
+                var significand = GetSignificand(x);
                 while (exponent < goal)
                 {
                     uint remainder;
@@ -1570,7 +1715,7 @@ namespace MongoDB.Bson
                     significand = significandDividedBy10;
                 }
 
-                return new Decimal128(Decimal128.IsNegative(x), exponent, significand);
+                return Decimal128.FromComponents(Decimal128.IsNegative(x), exponent, significand);
             }
 
             private enum Decimal128Type { NaN, NegativeInfinity, Number, PositiveInfity }; // the order matters
@@ -1579,56 +1724,70 @@ namespace MongoDB.Bson
 
         private static class Flags
         {
-            public const byte SignBit = 0x80;
+            public const ulong SignBit = 0x8000000000000000;
+            public const ulong FirstFormLeadingBits = 0x6000000000000000;
+            public const ulong FirstFormLeadingBitsMax = 0x4000000000000000;
+            public const ulong FirstFormExponentBits = 0x7FFE000000000000;
+            public const ulong FirstFormSignificandBits = 0x0001FFFFFFFFFFFF;
+            public const ulong SecondFormLeadingBits = 0x7800000000000000;
+            public const ulong SecondFormLeadingBitsMin = 0x6000000000000000;
+            public const ulong SecondFormLeadingBitsMax = 0x7000000000000000;
+            public const ulong SecondFormExponentBits = 0x1FFF800000000000;
+            public const ulong InfinityBits = 0x7C00000000000000;
+            public const ulong Infinity = 0x7800000000000000;
+            public const ulong SignedInfinityBits = 0xFC00000000000000;
+            public const ulong PositiveInfinity = 0x7800000000000000;
+            public const ulong NegativeInfinity = 0xF800000000000000;
+            public const ulong PartialNaNBits = 0x7C00000000000000;
+            public const ulong PartialNaN = 0x7C00000000000000;
+            public const ulong NaNBits = 0x7E00000000000000;
+            public const ulong QNaN = 0x7C00000000000000;
+            public const ulong SNaN = 0x7E00000000000000;
 
-            public static bool IsFirstForm(byte flags)
+            public static bool IsFirstForm(ulong highBits)
             {
-                return (flags & 0x60) != 0x60;
+                return (highBits & Flags.FirstFormLeadingBits) <= Flags.FirstFormLeadingBitsMax;
             }
 
-            public static bool IsInfinity(byte flags)
+            public static bool IsInfinity(ulong highBits)
             {
-                return (flags & 0x7C) == 0x78;
+                return (highBits & Flags.InfinityBits) == Flags.Infinity;
             }
 
-            public static bool IsInfinityOrNaN(byte flags)
+            public static bool IsNaN(ulong highBits)
             {
-                return (flags & 0x78) == 0x78;
+                return (highBits & Flags.PartialNaNBits) == Flags.PartialNaN;
             }
 
-            public static bool IsNaN(byte flags)
+            public static bool IsNegative(ulong highBits)
             {
-                return (flags & 0x7C) == 0x7C;
+                return (highBits & Flags.SignBit) != 0;
             }
 
-            public static bool IsNegative(byte flags)
+            public static bool IsNegativeInfinity(ulong highBits)
             {
-                return (flags & 0x80) == 0x80;
+                return (highBits & Flags.SignedInfinityBits) == Flags.NegativeInfinity;
             }
 
-            public static bool IsNegativeInfinity(byte flags)
+            public static bool IsPositiveInfinity(ulong highBits)
             {
-                return (flags & 0xFC) == 0xF8;
+                return (highBits & Flags.SignedInfinityBits) == Flags.PositiveInfinity;
             }
 
-            public static bool IsPositiveInfinity(byte flags)
+            public static bool IsQNaN(ulong highBits)
             {
-                return (flags & 0xFC) == 0x78;
+                return (highBits & Flags.NaNBits) == Flags.QNaN;
             }
 
-            public static bool IsQNaN(byte flags)
+            public static bool IsSecondForm(ulong highBits)
             {
-                return (flags & 0x7E) == 0x7C;
+                var secondFormLeadingBits = highBits & Flags.SecondFormLeadingBits;
+                return secondFormLeadingBits >= Flags.SecondFormLeadingBitsMin & secondFormLeadingBits <= Flags.SecondFormLeadingBitsMax;
             }
 
-            public static bool IsSecondForm(byte flags)
+            public static bool IsSNaN(ulong highBits)
             {
-                return (flags & 0x60) == 0x60 && (flags & 0x78) != 0x78;
-            }
-
-            public static bool IsSNaN(byte flags)
-            {
-                return (flags & 0x7E) == 0x7E;
+                return (highBits & Flags.NaNBits) == Flags.SNaN;
             }
         }
     }

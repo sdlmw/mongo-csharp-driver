@@ -314,7 +314,7 @@ namespace MongoDB.Bson.IO
         {
             var lowBits = (ulong)ReadInt64();
             var highBits = (ulong)ReadInt64();
-            return new Decimal128(highBits, lowBits);
+            return Decimal128.FromIEEEBits(highBits, lowBits);
         }
 
         /// <inheritdoc/>
@@ -492,8 +492,8 @@ namespace MongoDB.Bson.IO
         public override void WriteDecimal128(Decimal128 value)
         {
             ThrowIfDisposed();
-            WriteInt64((long)value.GetLowBits());
-            WriteInt64((long)value.GetHighBits());
+            WriteInt64((long)value.GetIEEELowBits());
+            WriteInt64((long)value.GetIEEEHighBits());
         }
 
         /// <inheritdoc/>

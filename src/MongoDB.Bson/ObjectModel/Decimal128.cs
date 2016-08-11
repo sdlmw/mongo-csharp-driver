@@ -706,7 +706,46 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                var exponent = Decimal128.GetExponent(d);
+
+                // try to get the exponent within the range of 0 to -28
+                if (exponent > 0)
+                {
+                    d = Decimal128.DecreaseExponent(d, 0);
+                    exponent = Decimal128.GetExponent(d);
+                }
+                else if (exponent < -28)
+                {
+                    d = Decimal128.IncreaseExponent(d, -28);
+                    exponent = Decimal128.GetExponent(d);
+                }
+
+                // try to get the significand to have zeros for the high order 32 bits
+                var significand = Decimal128.GetSignificand(d);
+                while ((significand.High >> 32) != 0)
+                {
+                    uint remainder;
+                    significand = UInt128.Divide(significand, (uint)10, out remainder);
+                    if (remainder != 0)
+                    {
+                        break;
+                    }
+                    exponent += 1;
+                }
+
+
+                if (exponent < -28 || exponent > 0 || (significand.High >> 32) != 0)
+                {
+                    throw new OverflowException("Value is too large or too small to be converted to a Decimal.");
+                }
+
+                var lo = (int)significand.Low;
+                var mid = (int)(significand.Low >> 32);
+                var hi = (int)significand.High;
+                var isNegative = Decimal128.IsNegative(d);
+                var scale = (byte)(-exponent);
+
+                return new decimal(lo, mid, hi, isNegative, scale);
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -1346,7 +1385,15 @@ namespace MongoDB.Bson
         /// <param name="value">The value.</param>
         public Decimal128(decimal value)
         {
-            throw new NotImplementedException();
+            var bits = decimal.GetBits(value);
+            var isNegative = (bits[3] & 0x80000000) != 0;
+            var scale = (short)((bits[3] & 0x00FF0000) >> 16);
+            var exponent = (short)-scale;
+            var significandHigh = (ulong)(uint)bits[2];
+            var significandLow = ((ulong)(uint)bits[1] << 32) | (ulong)(uint)bits[0];
+
+            _highBits = (isNegative ? Flags.SignBit : 0) | ((ulong)MapExponentToDecimal128BiasedExponent(exponent) << 49) | significandHigh;
+            _lowBits = significandLow;
         }
 
         /// <summary>

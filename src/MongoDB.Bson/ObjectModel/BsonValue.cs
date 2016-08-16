@@ -33,10 +33,10 @@ namespace MongoDB.Bson
             { BsonType.MinKey, 1 },
             { BsonType.Undefined, 2 },
             { BsonType.Null, 3 },
+            { BsonType.Decimal128, 4 },
             { BsonType.Double, 4 },
             { BsonType.Int32, 4 },
             { BsonType.Int64, 4 },
-            { BsonType.Decimal128, 4 },
             { BsonType.String, 5 },
             { BsonType.Symbol, 5 },
             { BsonType.Document, 6 },
@@ -546,6 +546,7 @@ namespace MongoDB.Bson
             get
             {
                 return
+                    BsonType == BsonType.Decimal128 ||
                     BsonType == BsonType.Double ||
                     BsonType == BsonType.Int32 ||
                     BsonType == BsonType.Int64;

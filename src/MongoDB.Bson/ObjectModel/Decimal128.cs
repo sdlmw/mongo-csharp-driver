@@ -60,6 +60,12 @@ namespace MongoDB.Bson
             new Decimal128(Flags.NegativeInfinity, 0);
 
         /// <summary>
+        /// Represents one.
+        /// </summary>
+        public static Decimal128 One =>
+            new Decimal128(0, 1);
+
+        /// <summary>
         /// Represents positive infinity.
         /// </summary>
         public static Decimal128 PositiveInfinity =>
@@ -725,12 +731,13 @@ namespace MongoDB.Bson
                 while ((significand.High >> 32) != 0)
                 {
                     uint remainder;
-                    significand = UInt128.Divide(significand, (uint)10, out remainder);
+                    var significandDividedBy10 = UInt128.Divide(significand, (uint)10, out remainder);
                     if (remainder != 0)
                     {
                         break;
                     }
                     exponent += 1;
+                    significand = significandDividedBy10;
                 }
 
 

@@ -711,6 +711,7 @@ namespace MongoDB.Bson.IO
                 case BsonType.Boolean: skip = 1; break;
                 case BsonType.DateTime: skip = 8; break;
                 case BsonType.Document: skip = ReadSize() - 4; break;
+                case BsonType.Decimal128: skip = 16; break;
                 case BsonType.Double: skip = 8; break;
                 case BsonType.Int32: skip = 4; break;
                 case BsonType.Int64: skip = 8; break;

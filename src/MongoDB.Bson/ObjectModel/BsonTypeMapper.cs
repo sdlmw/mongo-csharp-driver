@@ -590,7 +590,7 @@ namespace MongoDB.Bson
                 case Conversion.UInt32ToBsonInt32: return (BsonInt32)(int)(uint)value;
                 case Conversion.UInt32ToBsonInt64: return (BsonInt64)(long)(uint)value;
                 case Conversion.UInt64ToBsonBoolean: return (BsonBoolean)((ulong)value != 0);
-                case Conversion.UInt64ToBsonDecimal128: return (BsonDecimal128)(ulong)value;
+                case Conversion.UInt64ToBsonDecimal128: return (BsonDecimal128)(Decimal128)(ulong)value;
                 case Conversion.UInt64ToBsonDouble: return (BsonDouble)(double)(ulong)value;
                 case Conversion.UInt64ToBsonInt64: return (BsonInt64)(long)(ulong)value;
                 case Conversion.UInt64ToBsonTimestamp: return new BsonTimestamp((long)(ulong)value);

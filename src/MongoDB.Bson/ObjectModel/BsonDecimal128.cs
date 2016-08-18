@@ -21,8 +21,12 @@ namespace MongoDB.Bson
     /// Represents a BSON Decimal128 value.
     /// </summary>
     /// <seealso cref="MongoDB.Bson.BsonValue" />
+#if NET45
+    [Serializable]
+#endif
     public class BsonDecimal128 : BsonValue, IComparable<BsonDecimal128>, IEquatable<BsonDecimal128>
     {
+        // private fields
         private readonly Decimal128 _value;
 
         /// <summary>
@@ -34,8 +38,19 @@ namespace MongoDB.Bson
             _value = value;
         }
 
+        // public properties
         /// <inheritdoc />
-        public override BsonType BsonType => BsonType.Decimal128;
+        public override BsonType BsonType
+        {
+            get { return BsonType.Decimal128; }
+        }
+
+        /// <inheritdoc />
+        [Obsolete("Use Value instead.")]
+        public override object RawValue
+        {
+            get { return _value; }
+        }
 
         /// <summary>
         /// Gets the value.
@@ -45,7 +60,62 @@ namespace MongoDB.Bson
             get { return _value; }
         }
 
-        /// <inheritdoc />
+        // public operators
+        /// <summary>
+        /// Converts a Decimal128 to a BsonDecimal128.
+        /// </summary>
+        /// <param name="value">A Decimal128.</param>
+        /// <returns>A BsonDecimal128.</returns>
+        public static implicit operator BsonDecimal128(Decimal128 value)
+        {
+            return new BsonDecimal128(value);
+        }
+
+        /// <summary>
+        /// Compares two BsonDecimal128 values.
+        /// </summary>
+        /// <param name="lhs">The first BsonDecimal128.</param>
+        /// <param name="rhs">The other BsonDecimal128.</param>
+        /// <returns>True if the two BsonDecimal128 values are not equal according to ==.</returns>
+        public static bool operator !=(BsonDecimal128 lhs, BsonDecimal128 rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+        /// <summary>
+        /// Compares two BsonDecimal128 values.
+        /// </summary>
+        /// <param name="lhs">The first BsonDecimal128.</param>
+        /// <param name="rhs">The other BsonDecimal128.</param>
+        /// <returns>True if the two BsonDecimal128 values are equal according to ==.</returns>
+        public static bool operator ==(BsonDecimal128 lhs, BsonDecimal128 rhs)
+        {
+            if (object.ReferenceEquals(lhs, null)) { return object.ReferenceEquals(rhs, null); }
+            return lhs.OperatorEqualsImplementation(rhs);
+        }
+
+        // public static methods
+        /// <summary>
+        /// Creates a new instance of the BsonDecimal128 class.
+        /// </summary>
+        /// <param name="value">An object to be mapped to a BsonDecimal128.</param>
+        /// <returns>A BsonDecimal128.</returns>
+        public new static BsonDecimal128 Create(object value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException("value");
+            }
+
+            return (BsonDecimal128)BsonTypeMapper.MapToBsonValue(value, BsonType.Decimal128);
+        }
+
+        // public methods
+        /// <summary>
+        /// Compares this BsonDecimal128 to another BsonDecimal128.
+        /// </summary>
+        /// <param name="other">The other BsonDecimal128.</param>
+        /// <returns>A 32-bit signed integer that indicates whether this BsonDecimal128 is less than, equal to, or greather than the other.</returns>
         public int CompareTo(BsonDecimal128 other)
         {
             if (other == null) { return 1; }
@@ -56,283 +126,224 @@ namespace MongoDB.Bson
         public override int CompareTo(BsonValue other)
         {
             if (other == null) { return 1; }
+
             var otherDecimal128 = other as BsonDecimal128;
             if (otherDecimal128 != null)
             {
-                return CompareTo(otherDecimal128);
+                return _value.CompareTo(otherDecimal128.Value);
             }
+
+            var otherInt32 = other as BsonInt32;
+            if (otherInt32 != null)
+            {
+                return _value.CompareTo((Decimal128)otherInt32.Value);
+            }
+
+            var otherInt64 = other as BsonInt64;
+            if (otherInt64 != null)
+            {
+                return _value.CompareTo((Decimal128)otherInt64.Value);
+            }
+
+            var otherDouble = other as BsonDouble;
+            if (otherDouble != null)
+            {
+                return _value.CompareTo((Decimal128)otherDouble.Value);
+            }
+
             return CompareTypeTo(other);
         }
 
-        /// <inheritdoc />
-        public bool Equals(BsonDecimal128 other)
+        /// <summary>
+        /// Compares this BsonDecimal128 to another BsonDecimal128.
+        /// </summary>
+        /// <param name="rhs">The other BsonDecimal128.</param>
+        /// <returns>True if the two BsonDecimal128 values are equal.</returns>
+        public bool Equals(BsonDecimal128 rhs)
         {
-            if (other == null)
-            {
-                return false;
-            }
-
-            return _value.Equals(other._value);
+            if (object.ReferenceEquals(rhs, null) || GetType() != rhs.GetType()) { return false; }
+            return _value.Equals(rhs._value); // use Equals instead of == so NaN is handled correctly
         }
 
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            return Equals(obj as BsonDecimal128);
+            return Equals(obj as BsonDecimal128); // works even if obj is null or of a different type
         }
 
         /// <inheritdoc />
-        public override int GetHashCode() => _value.GetHashCode();
+        public override int GetHashCode()
+        {
+            // see Effective Java by Joshua Bloch
+            int hash = 17;
+            hash = 37 * hash + BsonType.GetHashCode();
+            hash = 37 * hash + _value.GetHashCode();
+            return hash;
+        }
 
         /// <inheritdoc />
-        public override string ToString() => _value.ToString();
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Byte"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal128(byte value)
+        public override bool ToBoolean()
         {
-            return new BsonDecimal128(value);
+            return !(Decimal128.IsNaN(_value) || _value.Equals(0.0));
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.SByte"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator BsonDecimal128(sbyte value)
+        /// <inheritdoc />
+        public override decimal ToDecimal()
         {
-            return new BsonDecimal128(value);
+            return Decimal128.ToDecimal(_value);
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int16"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal128(short value)
+        /// <inheritdoc />
+        public override Decimal128 ToDecimal128()
         {
-            return new BsonDecimal128(value);
+            return _value;
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt16"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator BsonDecimal128(ushort value)
+        /// <inheritdoc />
+        public override double ToDouble()
         {
-            return new BsonDecimal128(value);
+            return Decimal128.ToDouble(_value);
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal128(int value)
+        /// <inheritdoc />
+        public override int ToInt32()
         {
-            return new BsonDecimal128(value);
+            return Decimal128.ToInt32(_value);
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt32"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator BsonDecimal128(uint value)
+        /// <inheritdoc />
+        public override long ToInt64()
         {
-            return new BsonDecimal128(value);
+            return Decimal128.ToInt64(_value);
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Int64"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal128(long value)
+        /// <inheritdoc />
+        public override string ToString()
         {
-            return new BsonDecimal128(value);
+            return _value.ToString();
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt64"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static implicit operator BsonDecimal128(ulong value)
+        // protected methods
+        /// <inheritdoc/>
+        protected override TypeCode IConvertibleGetTypeCodeImplementation()
         {
-            return new BsonDecimal128(value);
+            return TypeCode.Object;
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="System.Decimal"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal128(decimal value)
+        /// <inheritdoc/>
+        protected override bool IConvertibleToBooleanImplementation(IFormatProvider provider)
         {
-            return new BsonDecimal128(value);
+            return Convert.ToBoolean(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="Decimal128"/> to <see cref="BsonDecimal128"/>.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator BsonDecimal128(Decimal128 value)
+        /// <inheritdoc/>
+        protected override byte IConvertibleToByteImplementation(IFormatProvider provider)
         {
-            return new BsonDecimal128(value);
+            return Convert.ToByte(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Byte"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator byte(BsonDecimal128 value)
+        /// <inheritdoc/>
+        protected override decimal IConvertibleToDecimalImplementation(IFormatProvider provider)
         {
-            return (byte)value._value;
+            return Convert.ToDecimal(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.SByte"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator sbyte(BsonDecimal128 value)
+        /// <inheritdoc/>
+        protected override double IConvertibleToDoubleImplementation(IFormatProvider provider)
         {
-            return (sbyte)value._value;
+            return Convert.ToDouble(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Int16"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator short(BsonDecimal128 value)
+        /// <inheritdoc/>
+        protected override short IConvertibleToInt16Implementation(IFormatProvider provider)
         {
-            return (short)value._value;
+            return Convert.ToInt16(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.UInt16"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator ushort(BsonDecimal128 value)
+        /// <inheritdoc/>
+        protected override int IConvertibleToInt32Implementation(IFormatProvider provider)
         {
-            return (ushort)value._value;
+            return Convert.ToInt32(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Int32"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator int(BsonDecimal128 value)
+        /// <inheritdoc/>
+        protected override long IConvertibleToInt64Implementation(IFormatProvider provider)
         {
-            return (int)value._value;
+            return Convert.ToInt64(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.UInt32"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator uint(BsonDecimal128 value)
+        /// <inheritdoc/>
+#pragma warning disable 3002
+        protected override sbyte IConvertibleToSByteImplementation(IFormatProvider provider)
         {
-            return (uint)value._value;
+            return Convert.ToSByte(_value, provider);
+        }
+#pragma warning restore
+
+        /// <inheritdoc/>
+        protected override float IConvertibleToSingleImplementation(IFormatProvider provider)
+        {
+            return Convert.ToSingle(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Int64"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator long(BsonDecimal128 value)
+        /// <inheritdoc/>
+        protected override string IConvertibleToStringImplementation(IFormatProvider provider)
         {
-            return (long)value._value;
+            return Convert.ToString(_value, provider);
         }
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.UInt64"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        [CLSCompliant(false)]
-        public static explicit operator ulong(BsonDecimal128 value)
+        /// <inheritdoc/>
+#pragma warning disable 3002
+        protected override ushort IConvertibleToUInt16Implementation(IFormatProvider provider)
         {
-            return (ulong)value._value;
+            return Convert.ToUInt16(_value, provider);
         }
+#pragma warning restore
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="System.Decimal"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator decimal(BsonDecimal128 value)
+        /// <inheritdoc/>
+#pragma warning disable 3002
+        protected override uint IConvertibleToUInt32Implementation(IFormatProvider provider)
         {
-            return (decimal)value._value;
+            return Convert.ToUInt32(_value, provider);
         }
+#pragma warning restore
 
-        /// <summary>
-        /// Performs an explicit conversion from <see cref="BsonDecimal128"/> to <see cref="Decimal128"/>.
-        /// </summary>
-        /// <param name="value">The value to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static explicit operator Decimal128(BsonDecimal128 value)
+        /// <inheritdoc/>
+#pragma warning disable 3002
+        protected override ulong IConvertibleToUInt64Implementation(IFormatProvider provider)
         {
-            return value._value;
+            return Convert.ToUInt64(_value, provider);
+        }
+#pragma warning restore
+
+        /// <inheritdoc/>
+        protected override bool OperatorEqualsImplementation(BsonValue rhs)
+        {
+            var rhsDecimal128 = rhs as BsonDecimal128;
+            if (rhsDecimal128 != null)
+            {
+                return _value == rhsDecimal128._value; // use == instead of Equals so NaN is handled correctly
+            }
+
+            var rhsInt32 = rhs as BsonInt32;
+            if (rhsInt32 != null)
+            {
+                return _value == (Decimal128)rhsInt32.Value;
+            }
+
+            var rhsInt64 = rhs as BsonInt64;
+            if (rhsInt64 != null)
+            {
+                return _value == (Decimal128)rhsInt64.Value;
+            }
+
+            var rhsDouble = rhs as BsonDouble;
+            if (rhsDouble != null)
+            {
+                return _value == (Decimal128)rhsDouble.Value; // use == instead of Equals so NaN is handled correctly
+            }
+
+            return this.Equals(rhs);
         }
     }
 }

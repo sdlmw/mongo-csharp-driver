@@ -86,14 +86,6 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
-        /// Casts the BsonValue to a BsonDecimal128 (throws an InvalidCastException if the cast is not valid).
-        /// </summary>
-        public BsonDecimal128 AsBsonDecimal128
-        {
-            get { return (BsonDecimal128)this; }
-        }
-
-        /// <summary>
         /// Casts the BsonValue to a BsonDocument (throws an InvalidCastException if the cast is not valid).
         /// </summary>
         public BsonDocument AsBsonDocument
@@ -1293,6 +1285,26 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
+        /// Converts this BsonValue to a Decimal.
+        /// </summary>
+        /// <returns>A Decimal.</returns>
+        public virtual decimal ToDecimal()
+        {
+            var message = string.Format("{0} does not support ToDecimal.", this.GetType().Name);
+            throw new NotSupportedException(message);
+        }
+
+        /// <summary>
+        /// Converts this BsonValue to a Decimal128.
+        /// </summary>
+        /// <returns>A Decimal128.</returns>
+        public virtual Decimal128 ToDecimal128()
+        {
+            var message = string.Format("{0} does not support ToDecimal128.", this.GetType().Name);
+            throw new NotSupportedException(message);
+        }
+
+        /// <summary>
         /// Converts this BsonValue to a Double.
         /// </summary>
         /// <returns>A Double.</returns>
@@ -1617,6 +1629,7 @@ namespace MongoDB.Bson
             {
                 case BsonType.Boolean: return Convert.ChangeType(this.AsBoolean, conversionType, provider);
                 case BsonType.DateTime: return Convert.ChangeType(this.ToUniversalTime(), conversionType, provider);
+                case BsonType.Decimal128: return Convert.ChangeType(this.AsDecimal128, conversionType, provider);
                 case BsonType.Double: return Convert.ChangeType(this.AsDouble, conversionType, provider);
                 case BsonType.Int32: return Convert.ChangeType(this.AsInt32, conversionType, provider);
                 case BsonType.Int64: return Convert.ChangeType(this.AsInt64, conversionType, provider);

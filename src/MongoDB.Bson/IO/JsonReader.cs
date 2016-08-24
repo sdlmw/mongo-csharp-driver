@@ -1485,13 +1485,13 @@ namespace MongoDB.Bson.IO
             VerifyToken("(");
             var valueToken = PopToken();
             Decimal128 value;
-            if (valueToken.Type == JsonTokenType.Int32 || valueToken.Type == JsonTokenType.Int64)
-            {
-                value = new Decimal128(valueToken.Int64Value);
-            }
-            else if (valueToken.Type == JsonTokenType.String)
+            if (valueToken.Type == JsonTokenType.String)
             {
                 value = Decimal128.Parse(valueToken.StringValue);
+            }
+            else if (valueToken.Type == JsonTokenType.Int32 || valueToken.Type == JsonTokenType.Int64)
+            {
+                value = new Decimal128(valueToken.Int64Value);
             }
             else
             {

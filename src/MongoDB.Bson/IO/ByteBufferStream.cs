@@ -601,8 +601,8 @@ namespace MongoDB.Bson.IO
         public override void WriteDecimal128(Decimal128 value)
         {
             ThrowIfDisposed();
-            WriteInt64((int)value.GetIEEELowBits());
-            WriteInt64((int)value.GetIEEEHighBits());
+            WriteInt64((long)value.GetIEEELowBits());
+            WriteInt64((long)value.GetIEEEHighBits());
         }
 
         /// <inheritdoc/>

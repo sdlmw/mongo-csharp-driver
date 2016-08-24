@@ -661,7 +661,7 @@ namespace MongoDB.Bson
         /// <returns>A BsonValue.</returns>
         public static implicit operator BsonValue(decimal value)
         {
-            return (BsonDecimal128)value;
+            return (BsonDecimal128)(Decimal128)value;
         }
 
         /// <summary>
@@ -671,7 +671,7 @@ namespace MongoDB.Bson
         /// <returns>A BsonValue.</returns>
         public static implicit operator BsonValue(decimal? value)
         {
-            return value.HasValue ? (BsonValue)(BsonDecimal128)value.Value : BsonNull.Value;
+            return value.HasValue ? (BsonValue)(BsonDecimal128)(Decimal128)value.Value : BsonNull.Value;
         }
 
         /// <summary>

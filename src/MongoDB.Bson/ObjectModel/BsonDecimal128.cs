@@ -14,6 +14,7 @@
 */
 
 using System;
+using MongoDB.Bson.IO;
 
 namespace MongoDB.Bson
 {
@@ -220,7 +221,7 @@ namespace MongoDB.Bson
         /// <inheritdoc />
         public override string ToString()
         {
-            return _value.ToString();
+            return JsonConvert.ToString(_value);
         }
 
         // protected methods

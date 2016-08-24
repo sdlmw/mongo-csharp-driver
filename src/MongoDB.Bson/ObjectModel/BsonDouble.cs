@@ -15,6 +15,7 @@
 
 using System;
 using System.Globalization;
+using MongoDB.Bson.IO;
 
 namespace MongoDB.Bson
 {
@@ -244,7 +245,7 @@ namespace MongoDB.Bson
         /// <inheritdoc />
         public override string ToString()
         {
-            return _value.ToString("R", NumberFormatInfo.InvariantInfo);
+            return JsonConvert.ToString(_value);
         }
 
         // protected methods

@@ -37,6 +37,7 @@ namespace MongoDB.Bson
             { typeof(byte[]), Conversion.ByteArrayToBsonBinary },
             { typeof(DateTime), Conversion.DateTimeToBsonDateTime },
             { typeof(decimal), Conversion.DecimalToBsonDecimal128 },
+            { typeof(Decimal128), Conversion.NewBsonDecimal128 },
             { typeof(double), Conversion.NewBsonDouble },
             { typeof(float), Conversion.SingleToBsonDouble },
             { typeof(Guid), Conversion.GuidToBsonBinary },
@@ -90,10 +91,17 @@ namespace MongoDB.Bson
             { Mapping.FromTo(typeof(byte[]), BsonType.ObjectId), Conversion.ByteArrayToBsonObjectId },
             { Mapping.FromTo(typeof(DateTime), BsonType.DateTime), Conversion.DateTimeToBsonDateTime },
             { Mapping.FromTo(typeof(DateTimeOffset), BsonType.DateTime), Conversion.DateTimeOffsetToBsonDateTime },
+            { Mapping.FromTo(typeof(decimal), BsonType.Boolean), Conversion.DecimalToBsonBoolean },
             { Mapping.FromTo(typeof(decimal), BsonType.Decimal128), Conversion.DecimalToBsonDecimal128 },
+            { Mapping.FromTo(typeof(decimal), BsonType.Double), Conversion.DecimalToBsonDouble },
+            { Mapping.FromTo(typeof(Decimal128), BsonType.Boolean), Conversion.Decimal128ToBsonBoolean },
+            { Mapping.FromTo(typeof(Decimal128), BsonType.Decimal128), Conversion.NewBsonDecimal128 },
+            { Mapping.FromTo(typeof(Decimal128), BsonType.Double), Conversion.Decimal128ToBsonDouble },
             { Mapping.FromTo(typeof(double), BsonType.Boolean), Conversion.DoubleToBsonBoolean },
+            { Mapping.FromTo(typeof(double), BsonType.Decimal128), Conversion.DoubleToBsonDecimal128 },
             { Mapping.FromTo(typeof(double), BsonType.Double), Conversion.NewBsonDouble },
             { Mapping.FromTo(typeof(float), BsonType.Boolean), Conversion.SingleToBsonBoolean },
+            { Mapping.FromTo(typeof(float), BsonType.Decimal128), Conversion.SingleToBsonDecimal128 },
             { Mapping.FromTo(typeof(float), BsonType.Double), Conversion.SingleToBsonDouble },
             { Mapping.FromTo(typeof(Guid), BsonType.Binary), Conversion.GuidToBsonBinary },
             { Mapping.FromTo(typeof(int), BsonType.Boolean), Conversion.Int32ToBsonBoolean },
@@ -328,6 +336,8 @@ namespace MongoDB.Bson
                     return bsonValue.AsBoolean;
                 case BsonType.DateTime:
                     return bsonValue.ToUniversalTime();
+                case BsonType.Decimal128:
+                    return bsonValue.AsDecimal128;
                 case BsonType.Document:
                     var bsonDocument = (BsonDocument)bsonValue;
                     if (options.MapBsonDocumentTo == typeof(BsonDocument))
@@ -524,33 +534,40 @@ namespace MongoDB.Bson
                 case Conversion.ByteArrayToBsonBinary: return new BsonBinaryData((byte[])value);
                 case Conversion.ByteArrayToBsonObjectId: return new BsonObjectId(new ObjectId((byte[])value));
                 case Conversion.ByteToBsonBoolean: return (BsonBoolean)((byte)value != 0);
-                case Conversion.ByteToBsonDecimal128: return (BsonDecimal128)(byte)value;
+                case Conversion.ByteToBsonDecimal128: return (BsonDecimal128)(Decimal128)(byte)value;
                 case Conversion.ByteToBsonDouble: return (BsonDouble)(double)(byte)value;
                 case Conversion.ByteToBsonInt32: return (BsonInt32)(int)(byte)value;
                 case Conversion.ByteToBsonInt64: return (BsonInt64)(long)(byte)value;
                 case Conversion.CharToBsonBoolean: return (BsonBoolean)((char)value != 0);
+                case Conversion.CharToBsonDecimal128: return (BsonDecimal128)(Decimal128)(char)value;
                 case Conversion.CharToBsonDouble: return (BsonDouble)(double)(char)value;
                 case Conversion.CharToBsonInt32: return (BsonInt32)(int)(char)value;
                 case Conversion.CharToBsonInt64: return (BsonInt64)(long)(char)value;
                 case Conversion.DateTimeOffsetToBsonDateTime: return new BsonDateTime(((DateTimeOffset)value).UtcDateTime);
                 case Conversion.DateTimeToBsonDateTime: return new BsonDateTime((DateTime)value);
-                case Conversion.DecimalToBsonDecimal128: return (BsonDecimal128)(decimal)value;
+                case Conversion.DecimalToBsonBoolean: return (BsonBoolean)((decimal)value != 0M);
+                case Conversion.DecimalToBsonDecimal128: return (BsonDecimal128)(Decimal128)(decimal)value;
+                case Conversion.DecimalToBsonDouble: return (BsonDouble)(double)(decimal)value;
+                case Conversion.Decimal128ToBsonBoolean: var d128 = (Decimal128)value; return (BsonBoolean)(!(Decimal128.IsNaN(d128) || d128 == Decimal128.Zero));
+                case Conversion.Decimal128ToBsonDouble: return (BsonDouble)(double)(Decimal128)value;
                 case Conversion.DoubleToBsonBoolean: var d = (double)value; return (BsonBoolean)(!(double.IsNaN(d) || d == 0.0));
+                case Conversion.DoubleToBsonDecimal128: return (BsonDecimal128)(Decimal128)(double)value;
                 case Conversion.GuidToBsonBinary: return new BsonBinaryData((Guid)value);
                 case Conversion.Int16ToBsonBoolean: return (BsonBoolean)((short)value != 0);
-                case Conversion.Int16ToBsonDecimal128: return (BsonDecimal128)(short)value;
+                case Conversion.Int16ToBsonDecimal128: return (BsonDecimal128)(Decimal128)(short)value;
                 case Conversion.Int16ToBsonDouble: return (BsonDouble)(double)(short)value;
                 case Conversion.Int16ToBsonInt32: return (BsonInt32)(int)(short)value;
                 case Conversion.Int16ToBsonInt64: return (BsonInt64)(long)(short)value;
                 case Conversion.Int32ToBsonBoolean: return (BsonBoolean)((int)value != 0);
-                case Conversion.Int32ToBsonDecimal128: return (BsonDecimal128)(int)value;
+                case Conversion.Int32ToBsonDecimal128: return (BsonDecimal128)(Decimal128)(int)value;
                 case Conversion.Int32ToBsonDouble: return (BsonDouble)(double)(int)value;
                 case Conversion.Int32ToBsonInt64: return (BsonInt64)(long)(int)value;
                 case Conversion.Int64ToBsonBoolean: return (BsonBoolean)((long)value != 0);
-                case Conversion.Int64ToBsonDecimal128: return (BsonDecimal128)(long)value;
+                case Conversion.Int64ToBsonDecimal128: return (BsonDecimal128)(Decimal128)(long)value;
                 case Conversion.Int64ToBsonDouble: return (BsonDouble)(double)(long)value;
                 case Conversion.Int64ToBsonTimestamp: return new BsonTimestamp((long)value);
                 case Conversion.NewBsonBoolean: return (BsonBoolean)((bool)value);
+                case Conversion.NewBsonDecimal128: return (BsonDecimal128)(Decimal128)value;
                 case Conversion.NewBsonDouble: return (BsonDouble)(double)value;
                 case Conversion.NewBsonInt32: return (BsonInt32)(int)value;
                 case Conversion.NewBsonInt64: return (BsonInt64)(long)value;
@@ -558,11 +575,12 @@ namespace MongoDB.Bson
                 case Conversion.NewBsonString: return (BsonString)(string)value;
                 case Conversion.RegexToBsonRegularExpression: return new BsonRegularExpression((Regex)value);
                 case Conversion.SByteToBsonBoolean: return (BsonBoolean)((sbyte)value != 0);
-                case Conversion.SByteToBsonDecimal128: return (BsonDecimal128)(sbyte)value;
+                case Conversion.SByteToBsonDecimal128: return (BsonDecimal128)(Decimal128)(sbyte)value;
                 case Conversion.SByteToBsonDouble: return (BsonDouble)(double)(sbyte)value;
                 case Conversion.SByteToBsonInt32: return (BsonInt32)(int)(sbyte)value;
                 case Conversion.SByteToBsonInt64: return (BsonInt64)(long)(sbyte)value;
                 case Conversion.SingleToBsonBoolean: var f = (float)value; return (BsonBoolean)(!(float.IsNaN(f) || f == 0.0f));
+                case Conversion.SingleToBsonDecimal128: return (BsonDecimal128)(Decimal128)(float)value;
                 case Conversion.SingleToBsonDouble: return (BsonDouble)(double)(float)value;
                 case Conversion.StringToBsonBoolean: return (BsonBoolean)((string)value != "");
                 case Conversion.StringToBsonDateTime:
@@ -580,12 +598,12 @@ namespace MongoDB.Bson
                 case Conversion.StringToBsonSymbol: return BsonSymbolTable.Lookup((string)value);
                 case Conversion.StringToBsonTimestamp: return new BsonTimestamp(JsonConvert.ToInt64((string)value));
                 case Conversion.UInt16ToBsonBoolean: return (BsonValue)((ushort)value != 0);
-                case Conversion.UInt16ToBsonDecimal128: return (BsonDecimal128)(ushort)value;
+                case Conversion.UInt16ToBsonDecimal128: return (BsonDecimal128)(Decimal128)(ushort)value;
                 case Conversion.UInt16ToBsonDouble: return (BsonDouble)(double)(ushort)value;
                 case Conversion.UInt16ToBsonInt32: return (BsonInt32)(int)(ushort)value;
                 case Conversion.UInt16ToBsonInt64: return (BsonInt64)(long)(ushort)value;
                 case Conversion.UInt32ToBsonBoolean: return (BsonBoolean)((uint)value != 0);
-                case Conversion.UInt32ToBsonDecimal128: return (BsonDecimal128)(uint)value;
+                case Conversion.UInt32ToBsonDecimal128: return (BsonDecimal128)(Decimal128)(uint)value;
                 case Conversion.UInt32ToBsonDouble: return (BsonDouble)(double)(uint)value;
                 case Conversion.UInt32ToBsonInt32: return (BsonInt32)(int)(uint)value;
                 case Conversion.UInt32ToBsonInt64: return (BsonInt64)(long)(uint)value;
@@ -616,13 +634,19 @@ namespace MongoDB.Bson
             ByteToBsonInt32,
             ByteToBsonInt64,
             CharToBsonBoolean,
+            CharToBsonDecimal128,
             CharToBsonDouble,
             CharToBsonInt32,
             CharToBsonInt64,
             DateTimeOffsetToBsonDateTime,
             DateTimeToBsonDateTime,
+            DecimalToBsonBoolean,
             DecimalToBsonDecimal128,
+            DecimalToBsonDouble,
+            Decimal128ToBsonBoolean,
+            Decimal128ToBsonDouble,
             DoubleToBsonBoolean,
+            DoubleToBsonDecimal128,
             GuidToBsonBinary,
             Int16ToBsonBoolean,
             Int16ToBsonDecimal128,
@@ -638,6 +662,7 @@ namespace MongoDB.Bson
             Int64ToBsonDouble,
             Int64ToBsonTimestamp,
             NewBsonBoolean,
+            NewBsonDecimal128,
             NewBsonDouble,
             NewBsonInt32,
             NewBsonInt64,
@@ -650,6 +675,7 @@ namespace MongoDB.Bson
             SByteToBsonInt32,
             SByteToBsonInt64,
             SingleToBsonBoolean,
+            SingleToBsonDecimal128,
             SingleToBsonDouble,
             StringToBsonBoolean,
             StringToBsonDateTime,

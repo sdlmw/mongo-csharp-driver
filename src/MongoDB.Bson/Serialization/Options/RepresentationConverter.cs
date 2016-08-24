@@ -527,7 +527,7 @@ namespace MongoDB.Bson.Serialization.Options
             }
             else
             {
-                intValue = (short)value;
+                intValue = (int)value;
             }
             if (!_allowTruncation && value != (Decimal128)intValue)
             {
@@ -691,7 +691,7 @@ namespace MongoDB.Bson.Serialization.Options
             }
             else
             {
-                longValue = (short)value;
+                longValue = (long)value;
             }
             if (!_allowTruncation && value != (Decimal128)longValue)
             {

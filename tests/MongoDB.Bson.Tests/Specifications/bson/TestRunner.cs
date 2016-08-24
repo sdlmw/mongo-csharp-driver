@@ -134,7 +134,8 @@ namespace MongoDB.Bson.Specifications.bson
 
         private string EncodeExtjson(BsonDocument document)
         {
-            return document.ToString().Replace(" ", "");
+            var json = document.ToJson(new JsonWriterSettings { OutputMode = JsonOutputMode.Strict });
+            return json.Replace(" ", "");
         }
 
         private void RunParseError(BsonDocument definition)

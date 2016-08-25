@@ -773,7 +773,9 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                // TODO: implement this more efficiently
+                var stringValue = d.ToString();
+                return double.Parse(stringValue);
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -923,7 +925,9 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                throw new NotImplementedException();
+                // TODO: implement this more efficiently
+                var stringValue = d.ToString();
+                return float.Parse(stringValue);
             }
             else if (Flags.IsSecondForm(d._highBits))
             {
@@ -1409,7 +1413,12 @@ namespace MongoDB.Bson
         /// <param name="value">The value.</param>
         public Decimal128(double value)
         {
-            throw new NotImplementedException();
+            // TODO: implement this more efficiently
+            var stringValue = value.ToString("G17");
+            var decimal128Value = Decimal128.Parse(stringValue);
+            _highBits = MapIEEEHighBitsToDecimal128HighBits(decimal128Value.GetIEEEHighBits());
+            _lowBits = decimal128Value.GetIEEELowBits();
+
         }
 
         /// <summary>
@@ -1418,7 +1427,11 @@ namespace MongoDB.Bson
         /// <param name="value">The value.</param>
         public Decimal128(float value)
         {
-            throw new NotImplementedException();
+            // TODO: implement this more efficiently
+            var stringValue = value.ToString("G17");
+            var decimal128Value = Decimal128.Parse(stringValue);
+            _highBits = MapIEEEHighBitsToDecimal128HighBits(decimal128Value.GetIEEEHighBits());
+            _lowBits = decimal128Value.GetIEEELowBits();
         }
 
         /// <summary>
@@ -1601,7 +1614,7 @@ namespace MongoDB.Bson
 
         bool IConvertible.ToBoolean(IFormatProvider provider)
         {
-            return !Decimal128.Equals(this, Decimal128.Zero);
+            return !(Decimal128.Equals(this, Decimal128.Zero) || Decimal128.IsNaN(this));
         }
 
         byte IConvertible.ToByte(IFormatProvider provider)

@@ -185,7 +185,7 @@ namespace MongoDB.Bson
         /// <inheritdoc />
         public override bool ToBoolean()
         {
-            return !(Decimal128.IsNaN(_value) || _value.Equals(0.0));
+            return !(Decimal128.IsNaN(_value) || _value.Equals(Decimal128.Zero));
         }
 
         /// <inheritdoc />
@@ -234,70 +234,70 @@ namespace MongoDB.Bson
         /// <inheritdoc/>
         protected override bool IConvertibleToBooleanImplementation(IFormatProvider provider)
         {
-            return Convert.ToBoolean(_value, provider);
+            return ((IConvertible)_value).ToBoolean(provider);
         }
 
         /// <inheritdoc/>
         protected override byte IConvertibleToByteImplementation(IFormatProvider provider)
         {
-            return Convert.ToByte(_value, provider);
+            return ((IConvertible)_value).ToByte(provider);
         }
 
         /// <inheritdoc/>
         protected override decimal IConvertibleToDecimalImplementation(IFormatProvider provider)
         {
-            return Convert.ToDecimal(_value, provider);
+            return ((IConvertible)_value).ToDecimal(provider);
         }
 
         /// <inheritdoc/>
         protected override double IConvertibleToDoubleImplementation(IFormatProvider provider)
         {
-            return Convert.ToDouble(_value, provider);
+            return ((IConvertible)_value).ToDouble(provider);
         }
 
         /// <inheritdoc/>
         protected override short IConvertibleToInt16Implementation(IFormatProvider provider)
         {
-            return Convert.ToInt16(_value, provider);
+            return ((IConvertible)_value).ToInt16(provider);
         }
 
         /// <inheritdoc/>
         protected override int IConvertibleToInt32Implementation(IFormatProvider provider)
         {
-            return Convert.ToInt32(_value, provider);
+            return ((IConvertible)_value).ToInt32(provider);
         }
 
         /// <inheritdoc/>
         protected override long IConvertibleToInt64Implementation(IFormatProvider provider)
         {
-            return Convert.ToInt64(_value, provider);
+            return ((IConvertible)_value).ToInt64(provider);
         }
 
         /// <inheritdoc/>
 #pragma warning disable 3002
         protected override sbyte IConvertibleToSByteImplementation(IFormatProvider provider)
         {
-            return Convert.ToSByte(_value, provider);
+            return ((IConvertible)_value).ToSByte(provider);
         }
 #pragma warning restore
 
         /// <inheritdoc/>
         protected override float IConvertibleToSingleImplementation(IFormatProvider provider)
         {
-            return Convert.ToSingle(_value, provider);
+            return ((IConvertible)_value).ToSingle(provider);
         }
 
         /// <inheritdoc/>
         protected override string IConvertibleToStringImplementation(IFormatProvider provider)
         {
-            return Convert.ToString(_value, provider);
+            return ((IConvertible)_value).ToString(provider);
         }
 
         /// <inheritdoc/>
 #pragma warning disable 3002
         protected override ushort IConvertibleToUInt16Implementation(IFormatProvider provider)
         {
-            return Convert.ToUInt16(_value, provider);
+            return ((IConvertible)_value).ToUInt16(provider);
         }
 #pragma warning restore
 
@@ -305,7 +305,7 @@ namespace MongoDB.Bson
 #pragma warning disable 3002
         protected override uint IConvertibleToUInt32Implementation(IFormatProvider provider)
         {
-            return Convert.ToUInt32(_value, provider);
+            return ((IConvertible)_value).ToUInt32(provider);
         }
 #pragma warning restore
 
@@ -313,7 +313,7 @@ namespace MongoDB.Bson
 #pragma warning disable 3002
         protected override ulong IConvertibleToUInt64Implementation(IFormatProvider provider)
         {
-            return Convert.ToUInt64(_value, provider);
+            return ((IConvertible)_value).ToUInt64(provider);
         }
 #pragma warning restore
 

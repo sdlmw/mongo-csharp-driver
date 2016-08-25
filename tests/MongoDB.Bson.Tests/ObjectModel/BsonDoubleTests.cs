@@ -26,20 +26,19 @@ namespace MongoDB.Bson.Tests.ObjectModel
 {
     public class BsonDoubleTests
     {
-        // TODO: uncomment test when conversion from double to Decimal128 is implemented
-        //[Theory]
-        //[InlineData(0.0, 1.0, -1)]
-        //[InlineData(0.0, 0.0, 0)]
-        //[InlineData(1.0, 0.0, 1)]
-        //public void CompareTo_BsonDecimal128_should_return_expected_result(double doubleValue, double otherDoubleValue, int expectedResult)
-        //{
-        //    var subject = new BsonDouble(doubleValue);
-        //    var other = new BsonDecimal128((Decimal128)(decimal)otherDoubleValue);
+        [Theory]
+        [InlineData(0.0, 1.0, -1)]
+        [InlineData(0.0, 0.0, 0)]
+        [InlineData(1.0, 0.0, 1)]
+        public void CompareTo_BsonDecimal128_should_return_expected_result(double doubleValue, double otherDoubleValue, int expectedResult)
+        {
+            var subject = new BsonDouble(doubleValue);
+            var other = new BsonDecimal128((Decimal128)(decimal)otherDoubleValue);
 
-        //    var result = subject.CompareTo(other);
+            var result = subject.CompareTo(other);
 
-        //    result.Should().Be(expectedResult);
-        //}
+            result.Should().Be(expectedResult);
+        }
 
         [Theory]
         [InlineData(0.0, 1.0, -1)]
@@ -121,21 +120,20 @@ namespace MongoDB.Bson.Tests.ObjectModel
             result2.Should().BeSameAs(result1);
         }
 
-        // TODO: uncomment test when conversion from Decimal128 to double is implemented
-        //[Theory]
-        //[InlineData(1.0, 1.0, true)]
-        //[InlineData(1.0, 2.0, false)]
-        //[InlineData(2.0, 1.0, false)]
-        //[InlineData(double.NaN, double.NaN, true)]
-        //public void operator_equals_with_BsonDecimal128_should_return_expected_result(double lhsDoubleValue, double rhsDoubleValue, bool expectedResult)
-        //{
-        //    var lhs = new BsonDouble(lhsDoubleValue);
-        //    var rhs = new BsonDecimal128((Decimal128)(decimal)rhsDoubleValue);
+        [Theory]
+        [InlineData(1.0, 1.0, true)]
+        [InlineData(1.0, 2.0, false)]
+        [InlineData(2.0, 1.0, false)]
+        [InlineData(double.NaN, double.NaN, false)]
+        public void operator_equals_with_BsonDecimal128_should_return_expected_result(double lhsDoubleValue, double rhsDoubleValue, bool expectedResult)
+        {
+            var lhs = new BsonDouble(lhsDoubleValue);
+            var rhs = new BsonDecimal128(double.IsNaN(rhsDoubleValue) ? Decimal128.QNaN : (Decimal128)(decimal)rhsDoubleValue);
 
-        //    var result = lhs == rhs;
+            var result = lhs == rhs;
 
-        //    result.Should().Be(expectedResult);
-        //}
+            result.Should().Be(expectedResult);
+        }
 
         [Theory]
         [InlineData(1.0, 1.0, true)]
@@ -218,17 +216,16 @@ namespace MongoDB.Bson.Tests.ObjectModel
             result.Should().Be((decimal)doubleValue);
         }
 
-        // TODO: uncomment test when conversion from double to Decimal128 is implemented
-        //[Theory]
-        //[InlineData(-1.0)]
-        //[InlineData(1.0)]
-        //public void ToDecimal128_should_return_expected_result(double doubleValue)
-        //{
-        //    var subject = new BsonDouble(doubleValue);
+        [Theory]
+        [InlineData(-1.0)]
+        [InlineData(1.0)]
+        public void ToDecimal128_should_return_expected_result(double doubleValue)
+        {
+            var subject = new BsonDouble(doubleValue);
 
-        //    var result = subject.ToDecimal128();
+            var result = subject.ToDecimal128();
 
-        //    result.Should().Be((Decimal128)(decimal)doubleValue);
-        //}
+            result.Should().Be((Decimal128)(decimal)doubleValue);
+        }
     }
 }

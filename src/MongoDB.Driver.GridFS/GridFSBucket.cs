@@ -14,6 +14,7 @@
 */
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -34,6 +35,7 @@ namespace MongoDB.Driver.GridFS
     /// <summary>
     /// Represents a GridFS bucket.
     /// </summary>
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable")] // we can get away with not calling Dispose on our SemaphoreSlim
     public class GridFSBucket<TFileId> : IGridFSBucket<TFileId>
     {
         // fields

@@ -14,6 +14,7 @@
 */
 
 using System;
+using MongoDB.Bson.IO;
 
 namespace MongoDB.Bson.Serialization
 {
@@ -71,6 +72,27 @@ namespace MongoDB.Bson.Serialization
         {
             var args = new BsonSerializationArgs { NominalType = serializer.ValueType };
             serializer.Serialize(context, args, value);
+        }
+
+        /// <summary>
+        /// Converts a value to a BsonValue by serializing it.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="serializer">The serializer.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>The serialized value.</returns>
+        public static BsonValue ToBsonValue<TValue>(this IBsonSerializer<TValue> serializer, TValue value)
+        {
+            var document = new BsonDocument();
+            using (var writer = new BsonDocumentWriter(document))
+            {
+                var context = BsonSerializationContext.CreateRoot(writer);
+                writer.WriteStartDocument();
+                writer.WriteName("x");
+                serializer.Serialize(context, value);
+                writer.WriteEndDocument();
+            }
+            return document[0];
         }
     }
 }

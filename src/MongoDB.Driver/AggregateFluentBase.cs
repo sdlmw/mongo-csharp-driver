@@ -66,6 +66,37 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
+        public virtual IAggregateFluent<BsonDocument> Facet(
+            IEnumerable<AggregateFacet<TResult, BsonDocument>> facets)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IAggregateFluent<AggregateFacetResult<TResult1>> Facet<TResult1>(
+            AggregateFacet<TResult, TResult1> facet1)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IAggregateFluent<AggregateFacetResult<TResult1, TResult2>> Facet<TResult1, TResult2>(
+            AggregateFacet<TResult, TResult1> facet1,
+            AggregateFacet<TResult, TResult2> facet2)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IAggregateFluent<AggregateFacetResult<TResult1, TResult2, TResult3>> Facet<TResult1, TResult2, TResult3>(
+            AggregateFacet<TResult, TResult1> facet1,
+            AggregateFacet<TResult, TResult2> facet2,
+            AggregateFacet<TResult, TResult3> facet3)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
         public abstract IAggregateFluent<TNewResult> Group<TNewResult>(ProjectionDefinition<TResult, TNewResult> group);
 
         /// <inheritdoc />

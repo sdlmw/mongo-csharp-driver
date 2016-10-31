@@ -153,6 +153,124 @@ namespace MongoDB.Driver
             return AppendStage<AggregateCountResult>(stage);
         }
 
+        public override IAggregateFluent<BsonDocument> Facet(
+           IEnumerable<AggregateFacet<TResult, BsonDocument>> facets)
+        {
+            const string operatorName = "$facet";
+            var stage = new DelegatedPipelineStageDefinition<TResult, BsonDocument>(
+                operatorName,
+                (s, sr) =>
+                {
+                    var facetsDocument = new BsonDocument();
+                    foreach (var facet in facets)
+                    {
+                        var renderedPipeline = facet.Pipeline.Render(s, sr);
+                        facetsDocument.Add(facet.Name, new BsonArray(renderedPipeline.Documents));
+                    }
+                    var document = new BsonDocument(operatorName, facetsDocument);
+                    return new RenderedPipelineStageDefinition<BsonDocument>(operatorName, document, BsonDocumentSerializer.Instance);
+                });
+
+            return AppendStage<BsonDocument>(stage);
+        }
+
+        public override IAggregateFluent<AggregateFacetResult<TResult1>> Facet<TResult1>(
+            AggregateFacet<TResult, TResult1> facet1)
+        {
+            const string operatorName = "$facet";
+            var stage = new DelegatedPipelineStageDefinition<TResult, AggregateFacetResult<TResult1>>(
+                operatorName,
+                (s, sr) =>
+                {
+                    var renderedPipeline1 = facet1.Pipeline.Render(s, sr);
+                    var document = new BsonDocument
+                    {
+                        { operatorName, new BsonDocument
+                            {
+                                { facet1.Name, new BsonArray(renderedPipeline1.Documents) }
+                            }
+                        }
+                    };
+                    var result1Serializer = sr.GetSerializer<TResult1>();
+                    var resultSerializer = new AggregateFacetResult<TResult1>.Serializer(facet1.Name, result1Serializer);
+                    return new RenderedPipelineStageDefinition<AggregateFacetResult<TResult1>>(operatorName, document, resultSerializer);
+                });
+
+            return AppendStage<AggregateFacetResult<TResult1>>(stage);
+        }
+
+        public override IAggregateFluent<AggregateFacetResult<TResult1, TResult2>> Facet<TResult1, TResult2>(
+            AggregateFacet<TResult, TResult1> facet1,
+            AggregateFacet<TResult, TResult2> facet2)
+        {
+            const string operatorName = "$facet";
+            var stage = new DelegatedPipelineStageDefinition<TResult, AggregateFacetResult<TResult1, TResult2>>(
+                operatorName,
+                (s, sr) =>
+                {
+                    var renderedPipeline1 = facet1.Pipeline.Render(s, sr);
+                    var renderedPipeline2 = facet2.Pipeline.Render(s, sr);
+                    var document = new BsonDocument
+                    {
+                        { operatorName, new BsonDocument
+                            {
+                                { facet1.Name, new BsonArray(renderedPipeline1.Documents) },
+                                { facet2.Name, new BsonArray(renderedPipeline2.Documents) }
+                            }
+                        }
+                    };
+                    var result1Serializer = sr.GetSerializer<TResult1>();
+                    var result2Serializer = sr.GetSerializer<TResult2>();
+                    var resultSerializer = new AggregateFacetResult<TResult1, TResult2>.Serializer(
+                        facet1.Name,
+                        result1Serializer,
+                        facet2.Name,
+                        result2Serializer);
+                    return new RenderedPipelineStageDefinition<AggregateFacetResult<TResult1, TResult2>>(operatorName, document, resultSerializer);
+                });
+
+            return AppendStage<AggregateFacetResult<TResult1, TResult2>>(stage);
+        }
+
+        public override IAggregateFluent<AggregateFacetResult<TResult1, TResult2, TResult3>> Facet<TResult1, TResult2, TResult3>(
+            AggregateFacet<TResult, TResult1> facet1,
+            AggregateFacet<TResult, TResult2> facet2,
+            AggregateFacet<TResult, TResult3> facet3)
+        {
+            const string operatorName = "$facet";
+            var stage = new DelegatedPipelineStageDefinition<TResult, AggregateFacetResult<TResult1, TResult2, TResult3>>(
+                operatorName,
+                (s, sr) =>
+                {
+                    var renderedPipeline1 = facet1.Pipeline.Render(s, sr);
+                    var renderedPipeline2 = facet2.Pipeline.Render(s, sr);
+                    var renderedPipeline3 = facet3.Pipeline.Render(s, sr);
+                    var document = new BsonDocument
+                    {
+                        { operatorName, new BsonDocument
+                            {
+                                { facet1.Name, new BsonArray(renderedPipeline1.Documents) },
+                                { facet2.Name, new BsonArray(renderedPipeline2.Documents) },
+                                { facet3.Name, new BsonArray(renderedPipeline3.Documents) }
+                            }
+                        }
+                    };
+                    var result1Serializer = sr.GetSerializer<TResult1>();
+                    var result2Serializer = sr.GetSerializer<TResult2>();
+                    var result3Serializer = sr.GetSerializer<TResult3>();
+                    var resultSerializer = new AggregateFacetResult<TResult1, TResult2, TResult3>.Serializer(
+                        facet1.Name,
+                        result1Serializer,
+                        facet2.Name,
+                        result2Serializer,
+                        facet3.Name,
+                        result3Serializer);
+                    return new RenderedPipelineStageDefinition<AggregateFacetResult<TResult1, TResult2, TResult3>>(operatorName, document, resultSerializer);
+                });
+
+            return AppendStage<AggregateFacetResult<TResult1, TResult2, TResult3>>(stage);
+        }
+
         public override IAggregateFluent<TNewResult> Group<TNewResult>(ProjectionDefinition<TResult, TNewResult> group)
         {
             const string operatorName = "$group";

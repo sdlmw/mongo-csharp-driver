@@ -138,6 +138,24 @@ namespace MongoDB.Driver
             AggregateFacet<TResult, TResult3> facet3);
 
         /// <summary>
+        /// Appends a $facet stage to the pipeline.
+        /// </summary>
+        /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
+        /// <typeparam name="TResult2">The result type of facet 2.</typeparam>
+        /// <typeparam name="TResult3">The result type of facet 3.</typeparam>
+        /// <typeparam name="TResult4">The result type of facet 4.</typeparam>
+        /// <param name="facet1">Facet 1.</param>
+        /// <param name="facet2">Facet 2.</param>
+        /// <param name="facet3">Facet 3.</param>
+        /// <param name="facet4">Facet 4.</param>
+        /// <returns>The fluent aggregate interface.</returns>
+        IAggregateFluent<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>> Facet<TResult1, TResult2, TResult3, TResult4>(
+            AggregateFacet<TResult, TResult1> facet1,
+            AggregateFacet<TResult, TResult2> facet2,
+            AggregateFacet<TResult, TResult3> facet3,
+            AggregateFacet<TResult, TResult4> facet4);
+
+        /// <summary>
         /// Appends a group stage to the pipeline.
         /// </summary>
         /// <typeparam name="TNewResult">The type of the result of the stage.</typeparam>

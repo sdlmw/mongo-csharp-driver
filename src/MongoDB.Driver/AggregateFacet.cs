@@ -13,53 +13,90 @@
 * limitations under the License.
 */
 
+using System;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver
 {
     /// <summary>
-    /// Represents static methods related to creating facets.
+    /// Represents static methods for creating facets.
     /// </summary>
     public static class AggregateFacet
     {
         /// <summary>
-        /// Creates a new instance of the <see cref="AggregateFacet{TDocument, TResult}"/> class.
+        /// Creates a new instance of the <see cref="AggregateFacet{TInput, TResult}" /> class.
         /// </summary>
-        /// <param name="name">The name.</param>
-        /// <param name="pipeline">The pipeline.</param>
-        /// <returns>A new instance of the <see cref="AggregateFacet{TDocument, TResult}"/> class</returns>
-        public static AggregateFacet<TDocument, TResult> Create<TDocument, TResult>(string name, PipelineDefinition<TDocument, TResult> pipeline)
+        /// <typeparam name="TInput">The type of the input documents.</typeparam>
+        /// <typeparam name="TResult">The type of the result documents.</typeparam>
+        /// <param name="name">The facet name.</param>
+        /// <param name="pipeline">The facet pipeline.</param>
+        /// <returns>
+        /// A new instance of the <see cref="AggregateFacet{TInput, TResult}" /> class
+        /// </returns>
+        public static AggregateFacet<TInput, TResult> Create<TInput, TResult>(string name, PipelineDefinition<TInput, TResult> pipeline)
         {
-            return new AggregateFacet<TDocument, TResult>(name, pipeline);
+            return new AggregateFacet<TInput, TResult>(name, pipeline);
         }
     }
 
     /// <summary>
     /// Represents a facet to be passed to the Facet method.
     /// </summary>
-    /// <typeparam name="TDocument">The type of the input document.</typeparam>
-    /// <typeparam name="TResult">The type of the facet result.</typeparam>
-    public class AggregateFacet<TDocument, TResult>
+    /// <typeparam name="TInput">The type of the input documents.</typeparam>
+    public abstract class AggregateFacet<TInput>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="AggregateFacet{TDocument, TResult}"/> class.
+        /// Gets the facet name.
         /// </summary>
-        /// <param name="name">The name.</param>
-        /// <param name="pipeline">The pipeline.</param>
-        public AggregateFacet(string name, PipelineDefinition<TDocument, TResult> pipeline)
+        public string Name { get; protected set; }
+
+        /// <summary>
+        /// Gets the type of the result documents.
+        /// </summary>
+        public abstract Type ResultType { get; }
+
+        /// <summary>
+        /// Renders the facet pipeline.
+        /// </summary>
+        /// <param name="inputSerializer">The input serializer.</param>
+        /// <param name="serializerRegistry">The serializer registry.</param>
+        /// <returns>The rendered pipeline.</returns>
+        public abstract BsonArray RenderPipeline(IBsonSerializer<TInput> inputSerializer, IBsonSerializerRegistry serializerRegistry);
+    }
+
+    /// <summary>
+    /// Represents a facet to be passed to the Facet method.
+    /// </summary>
+    /// <typeparam name="TInput">The type of the input documents.</typeparam>
+    /// <typeparam name="TResult">The type of the result documents.</typeparam>
+    public class AggregateFacet<TInput, TResult> : AggregateFacet<TInput>
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AggregateFacet{TInput, TResult}"/> class.
+        /// </summary>
+        /// <param name="name">The facet name.</param>
+        /// <param name="pipeline">The facet pipeline.</param>
+        public AggregateFacet(string name, PipelineDefinition<TInput, TResult> pipeline)
         {
             Name = Ensure.IsNotNull(name, nameof(name));
             Pipeline = Ensure.IsNotNull(pipeline, nameof(pipeline));
         }
 
         /// <summary>
-        /// Gets the name.
+        /// Gets the facet pipeline.
         /// </summary>
-        public string Name { get; private set; }
+        public PipelineDefinition<TInput, TResult> Pipeline { get; private set; }
 
-        /// <summary>
-        /// Gets the pipeline.
-        /// </summary>
-        public PipelineDefinition<TDocument, TResult> Pipeline { get; private set; }
+        /// <inheritdoc/>
+        public override Type ResultType => typeof(TResult);
+
+        /// <inheritdoc/>
+        public override BsonArray RenderPipeline(IBsonSerializer<TInput> inputSerializer, IBsonSerializerRegistry serializerRegistry)
+        {
+            var renderedPipeline = Pipeline.Render(inputSerializer, serializerRegistry);
+            return new BsonArray(renderedPipeline.Documents);
+        }
     }
 }

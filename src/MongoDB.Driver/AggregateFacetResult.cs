@@ -13,7 +13,10 @@
 * limitations under the License.
 */
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
@@ -27,15 +30,28 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
     public class AggregateFacetResult<TResult1>
     {
+        internal static IBsonSerializer<AggregateFacetResult<TResult1>> CreateSerializer(
+            IEnumerable<Tuple<string, IBsonSerializer>> facets)
+        {
+            var materializedFacets = facets.ToList();
+            var setters = new Action<AggregateFacetResult<TResult1>, object>[]
+            {
+                (r, v) => r.Result1 = (IEnumerable<TResult1>)v
+            };
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1>>(
+                () => new AggregateFacetResult<TResult1>(materializedFacets.Select(f => f.Item1)),
+                materializedFacets,
+                setters);
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1}"/> class.
         /// </summary>
-        /// <param name="name1">The name of facet 1.</param>
-        /// <param name="result1">The result of facet 1.</param>
-        public AggregateFacetResult(string name1, IEnumerable<TResult1> result1)
+        /// <param name="names">The names.</param>
+        public AggregateFacetResult(IEnumerable<string> names)
         {
-            Name1 = name1;
-            Result1 = result1;
+            var materializedNames = names.ToList();
+            Name1 = materializedNames[0];
         }
 
         /// <summary>
@@ -47,42 +63,6 @@ namespace MongoDB.Driver
         /// Gets the result of facet 1.
         /// </summary>
         public IEnumerable<TResult1> Result1 { get; private set; }
-
-        // nested types
-        internal class Serializer : SerializerBase<AggregateFacetResult<TResult1>>
-        {
-            private readonly string _name1;
-            private readonly IBsonSerializer<List<TResult1>> _result1Serializer;
-
-            public Serializer(string name1, IBsonSerializer<TResult1> result1Serializer)
-            {
-                _name1 = name1;
-                _result1Serializer = new EnumerableInterfaceImplementerSerializer<List<TResult1>, TResult1>(result1Serializer);
-            }
-
-            public override AggregateFacetResult<TResult1> Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
-            {
-                List<TResult1> result1 = new List<TResult1>();
-
-                var reader = context.Reader;
-                reader.ReadStartDocument();
-                while (reader.ReadBsonType() != 0)
-                {
-                    var name = reader.ReadName();
-                    if (name == _name1)
-                    {
-                        result1 = _result1Serializer.Deserialize(context);
-                    }
-                    else
-                    {
-                        throw new BsonSerializationException($"Unexpected field name '{name}' in $facet result.");
-                    }
-                }
-                reader.ReadEndDocument();
-
-                return new AggregateFacetResult<TResult1>(_name1, result1);
-            }
-        }
     }
 
     /// <summary>
@@ -92,97 +72,51 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult2">The result type of facet 2.</typeparam>
     public class AggregateFacetResult<TResult1, TResult2>
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2}"/> class.
-        /// </summary>
-        /// <param name="name1">The name of facet 1.</param>
-        /// <param name="result1">The result of facet 1.</param>
-        /// <param name="name2">The name of facet 2.</param>
-        /// <param name="result2">The result of facet 2.</param>
-        public AggregateFacetResult(
-            string name1,
-            IEnumerable<TResult1> result1,
-            string name2,
-            IEnumerable<TResult2> result2)
+        internal static IBsonSerializer<AggregateFacetResult<TResult1, TResult2>> CreateSerializer(
+            IEnumerable<Tuple<string, IBsonSerializer>> facets)
         {
-            Name1 = name1;
-            Result1 = result1;
-            Name2 = name2;
-            Result2 = result2;
+            var materializedFacets = facets.ToList();
+            var setters = new Action<AggregateFacetResult<TResult1, TResult2>, object>[]
+            {
+                (r, v) => r.Result1 = (IEnumerable<TResult1>)v,
+                (r, v) => r.Result2 = (IEnumerable<TResult2>)v
+            };
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2>>(
+                () => new AggregateFacetResult<TResult1, TResult2>(materializedFacets.Select(f => f.Item1)),
+                materializedFacets,
+                setters);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2, TResult3}"/> class.
+        /// </summary>
+        /// <param name="names">The names.</param>
+        public AggregateFacetResult(IEnumerable<string> names)
+        {
+            var materializedNames = names.ToList();
+            Name1 = materializedNames[0];
+            Name2 = materializedNames[1];
         }
 
         /// <summary>
         /// Gets the name of facet 1.
         /// </summary>
-        public string Name1 { get; set; }
+        public string Name1 { get; private set; }
 
         /// <summary>
         /// Gets the name of facet 2.
         /// </summary>
-        public string Name2 { get; set; }
+        public string Name2 { get; private set; }
 
         /// <summary>
         /// Gets the result of facet 1.
         /// </summary>
-        public IEnumerable<TResult1> Result1 { get; set; }
+        public IEnumerable<TResult1> Result1 { get; private set; }
 
         /// <summary>
         /// Gets the result of facet 2.
         /// </summary>
-        public IEnumerable<TResult2> Result2 { get; set; }
-
-        // nested types
-        internal class Serializer : SerializerBase<AggregateFacetResult<TResult1, TResult2>>
-        {
-            private readonly string _name1;
-            private readonly string _name2;
-            private readonly IBsonSerializer<List<TResult1>> _result1Serializer;
-            private readonly IBsonSerializer<List<TResult2>> _result2Serializer;
-
-            public Serializer(
-                string name1,
-                IBsonSerializer<TResult1> result1Serializer,
-                string name2,
-                IBsonSerializer<TResult2> result2Serializer)
-            {
-                _name1 = name1;
-                _result1Serializer = new EnumerableInterfaceImplementerSerializer<List<TResult1>, TResult1>(result1Serializer);
-                _name2 = name2;
-                _result2Serializer = new EnumerableInterfaceImplementerSerializer<List<TResult2>, TResult2>(result2Serializer);
-            }
-
-            public override AggregateFacetResult<TResult1, TResult2> Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
-            {
-                List<TResult1> result1 = new List<TResult1>();
-                List<TResult2> result2 = new List<TResult2>();
-
-                var reader = context.Reader;
-                reader.ReadStartDocument();
-                while (reader.ReadBsonType() != 0)
-                {
-                    var name = reader.ReadName();
-                    if (name == _name1)
-                    {
-                        result1 = _result1Serializer.Deserialize(context);
-                    }
-                    else if (name == _name2)
-                    {
-                        result2 = _result2Serializer.Deserialize(context);
-                    }
-                    else
-                    {
-                        throw new BsonSerializationException($"Unexpected field name '{name}' in $facet result.");
-                    }
-                }
-                reader.ReadEndDocument();
-
-                return new AggregateFacetResult<TResult1, TResult2>(
-                    _name1,
-                    result1,
-                    _name2,
-                    result2);
-            }
-        }
+        public IEnumerable<TResult2> Result2 { get; private set; }
     }
 
     /// <summary>
@@ -193,125 +127,189 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult3">The result type of facet 3.</typeparam>
     public class AggregateFacetResult<TResult1, TResult2, TResult3>
     {
+        internal static IBsonSerializer<AggregateFacetResult<TResult1, TResult2, TResult3>> CreateSerializer(
+            IEnumerable<Tuple<string, IBsonSerializer>> facets)
+        {
+            var materializedFacets = facets.ToList();
+            var setters = new Action<AggregateFacetResult<TResult1, TResult2, TResult3>, object>[]
+            {
+                (r, v) => r.Result1 = (IEnumerable<TResult1>)v,
+                (r, v) => r.Result2 = (IEnumerable<TResult2>)v,
+                (r, v) => r.Result3 = (IEnumerable<TResult3>)v
+            };
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2, TResult3>>(
+                () => new AggregateFacetResult<TResult1, TResult2, TResult3>(materializedFacets.Select(f => f.Item1)),
+                materializedFacets,
+                setters);
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2, TResult3}"/> class.
         /// </summary>
-        /// <param name="name1">The name of facet 1.</param>
-        /// <param name="result1">The result of facet 1.</param>
-        /// <param name="name2">The name of facet 2.</param>
-        /// <param name="result2">The result of facet 2.</param>
-        /// <param name="name3">The name of facet 3.</param>
-        /// <param name="result3">The result of facet 3.</param>
-        public AggregateFacetResult(
-            string name1,
-            IEnumerable<TResult1> result1,
-            string name2,
-            IEnumerable<TResult2> result2,
-            string name3,
-            IEnumerable<TResult3> result3)
+        /// <param name="names">The names.</param>
+        public AggregateFacetResult(IEnumerable<string> names)
         {
-            Name1 = name1;
-            Result1 = result1;
-            Name2 = name2;
-            Result2 = result2;
-            Name3 = name3;
-            Result3 = result3;
+            var materializedNames = names.ToList();
+            Name1 = materializedNames[0];
+            Name2 = materializedNames[1];
+            Name3 = materializedNames[2];
         }
 
         /// <summary>
         /// Gets the name of facet 1.
         /// </summary>
-        public string Name1 { get; set; }
+        public string Name1 { get; private set; }
 
         /// <summary>
         /// Gets the name of facet 2.
         /// </summary>
-        public string Name2 { get; set; }
+        public string Name2 { get; private set; }
 
         /// <summary>
         /// Gets the name of facet 3.
         /// </summary>
-        public string Name3 { get; set; }
+        public string Name3 { get; private set; }
 
         /// <summary>
         /// Gets the result of facet 1.
         /// </summary>
-        public IEnumerable<TResult1> Result1 { get; set; }
+        public IEnumerable<TResult1> Result1 { get; private set; }
 
         /// <summary>
         /// Gets the result of facet 2.
         /// </summary>
-        public IEnumerable<TResult2> Result2 { get; set; }
+        public IEnumerable<TResult2> Result2 { get; private set; }
 
         /// <summary>
         /// Gets the result of facet 3.
         /// </summary>
-        public IEnumerable<TResult3> Result3 { get; set; }
+        public IEnumerable<TResult3> Result3 { get; private set; }
+    }
 
-        // nested types
-        internal class Serializer : SerializerBase<AggregateFacetResult<TResult1, TResult2, TResult3>>
+    /// <summary>
+    /// Represents the result of a $facet stage with four facets.
+    /// </summary>
+    /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
+    /// <typeparam name="TResult2">The result type of facet 2.</typeparam>
+    /// <typeparam name="TResult3">The result type of facet 3.</typeparam>
+    /// <typeparam name="TResult4">The result type of facet 4.</typeparam>
+    public class AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>
+    {
+        internal static IBsonSerializer<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>> CreateSerializer(
+            IEnumerable<Tuple<string, IBsonSerializer>> facets)
         {
-            private readonly string _name1;
-            private readonly string _name2;
-            private readonly string _name3;
-            private readonly IBsonSerializer<List<TResult1>> _result1Serializer;
-            private readonly IBsonSerializer<List<TResult2>> _result2Serializer;
-            private readonly IBsonSerializer<List<TResult3>> _result3Serializer;
-
-            public Serializer(
-                string name1,
-                IBsonSerializer<TResult1> result1Serializer,
-                string name2,
-                IBsonSerializer<TResult2> result2Serializer,
-                string name3,
-                IBsonSerializer<TResult3> result3Serializer)
+            var materializedFacets = facets.ToList();
+            var setters = new Action<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>, object>[]
             {
-                _name1 = name1;
-                _result1Serializer = new EnumerableInterfaceImplementerSerializer<List<TResult1>, TResult1>(result1Serializer);
-                _name2 = name2;
-                _result2Serializer = new EnumerableInterfaceImplementerSerializer<List<TResult2>, TResult2>(result2Serializer);
-                _name3 = name3;
-                _result3Serializer = new EnumerableInterfaceImplementerSerializer<List<TResult3>, TResult3>(result3Serializer);
-            }
+                (r, v) => r.Result1 = (IEnumerable<TResult1>)v,
+                (r, v) => r.Result2 = (IEnumerable<TResult2>)v,
+                (r, v) => r.Result3 = (IEnumerable<TResult3>)v,
+                (r, v) => r.Result4 = (IEnumerable<TResult4>)v
+            };
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>>(
+                () => new AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>(materializedFacets.Select(f => f.Item1)),
+                materializedFacets,
+                setters);
+        }
 
-            public override AggregateFacetResult<TResult1, TResult2, TResult3> Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2, TResult3}"/> class.
+        /// </summary>
+        /// <param name="names">The names.</param>
+        public AggregateFacetResult(IEnumerable<string> names)
+        {
+            var materializedNames = names.ToList();
+            Name1 = materializedNames[0];
+            Name2 = materializedNames[1];
+            Name3 = materializedNames[2];
+            Name4 = materializedNames[3];
+        }
+
+        /// <summary>
+        /// Gets the name of facet 1.
+        /// </summary>
+        public string Name1 { get; private set; }
+
+        /// <summary>
+        /// Gets the name of facet 2.
+        /// </summary>
+        public string Name2 { get; private set; }
+
+        /// <summary>
+        /// Gets the name of facet 3.
+        /// </summary>
+        public string Name3 { get; private set; }
+
+        /// <summary>
+        /// Gets the name of facet 4.
+        /// </summary>
+        public string Name4 { get; private set; }
+
+        /// <summary>
+        /// Gets the result of facet 1.
+        /// </summary>
+        public IEnumerable<TResult1> Result1 { get; private set; }
+
+        /// <summary>
+        /// Gets the result of facet 2.
+        /// </summary>
+        public IEnumerable<TResult2> Result2 { get; private set; }
+
+        /// <summary>
+        /// Gets the result of facet 3.
+        /// </summary>
+        public IEnumerable<TResult3> Result3 { get; private set; }
+
+        /// <summary>
+        /// Gets the result of facet 4.
+        /// </summary>
+        public IEnumerable<TResult4> Result4 { get; private set; }
+    }
+
+    internal class AggregateFacetResultSerializer<TAggregateFacetResult> : SerializerBase<TAggregateFacetResult>
+    {
+        private readonly Func<TAggregateFacetResult> _creator;
+        private readonly List<Tuple<string, IBsonSerializer, Action<TAggregateFacetResult, object>>> _facets;
+
+        public AggregateFacetResultSerializer(
+            Func<TAggregateFacetResult> creator,
+            IEnumerable<Tuple<string, IBsonSerializer>> facets,
+            IEnumerable<Action<TAggregateFacetResult, object>> setters)
+        {
+            _creator = creator;
+            _facets = facets.Zip(setters, (f, s) => Tuple.Create(f.Item1, f.Item2, s)).ToList();
+        }
+
+        public override TAggregateFacetResult Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        {
+            var result = _creator();
+
+            var reader = context.Reader;
+            reader.ReadStartDocument();
+            while (reader.ReadBsonType() != 0)
             {
-                List<TResult1> result1 = new List<TResult1>();
-                List<TResult2> result2 = new List<TResult2>();
-                List<TResult3> result3 = new List<TResult3>();
-
-                var reader = context.Reader;
-                reader.ReadStartDocument();
-                while (reader.ReadBsonType() != 0)
+                var name = reader.ReadName();
+                var facet = _facets.Where(s => s.Item1 == name).SingleOrDefault();
+                if (facet != null)
                 {
-                    var name = reader.ReadName();
-                    if (name == _name1)
-                    {
-                        result1 = _result1Serializer.Deserialize(context);
-                    }
-                    else if (name == _name2)
-                    {
-                        result2 = _result2Serializer.Deserialize(context);
-                    }
-                    else if (name == _name3)
-                    {
-                        result3 = _result3Serializer.Deserialize(context);
-                    }
-                    else
-                    {
-                        throw new BsonSerializationException($"Unexpected field name '{name}' in $facet result.");
-                    }
+                    var itemSerializer = facet.Item2;
+                    var itemType = itemSerializer.ValueType;
+                    var itemSerializerType = typeof(IBsonSerializer<>).MakeGenericType(itemType);
+                    var listType = typeof(List<>).MakeGenericType(itemType);
+                    var listSerializerType = typeof(EnumerableInterfaceImplementerSerializer<,>).MakeGenericType(listType, itemType);
+                    var listSerializerConstructor = listSerializerType.GetTypeInfo().GetConstructor(new[] { itemSerializerType });
+                    var listSerializer = (IBsonSerializer)listSerializerConstructor.Invoke(new object[] { itemSerializer });
+                    var value = listSerializer.Deserialize(context);
+                    facet.Item3(result, value);
                 }
-                reader.ReadEndDocument();
-
-                return new AggregateFacetResult<TResult1, TResult2, TResult3>(
-                    _name1,
-                    result1,
-                    _name2,
-                    result2,
-                    _name3,
-                    result3);
+                else
+                {
+                    throw new BsonSerializationException($"Unexpected field name '{name}' in $facet result.");
+                }
             }
+            reader.ReadEndDocument();
+
+            return result;
         }
     }
 }

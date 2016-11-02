@@ -21,6 +21,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver
 {
@@ -30,28 +31,28 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
     public class AggregateFacetResult<TResult1>
     {
+        internal static AggregateFacetResult<TResult1> Create(string[] names, object[] results)
+        {
+            return new AggregateFacetResult<TResult1>(
+                names[0],
+                (IEnumerable<TResult1>)results[0]);
+        }
+
         internal static IBsonSerializer<AggregateFacetResult<TResult1>> CreateSerializer(
             IEnumerable<Tuple<string, IBsonSerializer>> facets)
         {
-            var materializedFacets = facets.ToList();
-            var setters = new Action<AggregateFacetResult<TResult1>, object>[]
-            {
-                (r, v) => r.Result1 = (IEnumerable<TResult1>)v
-            };
-            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1>>(
-                () => new AggregateFacetResult<TResult1>(materializedFacets.Select(f => f.Item1)),
-                materializedFacets,
-                setters);
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1>>(facets, Create);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1}"/> class.
         /// </summary>
-        /// <param name="names">The names.</param>
-        public AggregateFacetResult(IEnumerable<string> names)
+        public AggregateFacetResult(
+            string name1,
+            IEnumerable<TResult1> result1)
         {
-            var materializedNames = names.ToList();
-            Name1 = materializedNames[0];
+            Name1 = Ensure.IsNotNull(name1, nameof(name1));
+            Result1 = Ensure.IsNotNull(result1, nameof(name1));
         }
 
         /// <summary>
@@ -72,30 +73,34 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult2">The result type of facet 2.</typeparam>
     public class AggregateFacetResult<TResult1, TResult2>
     {
+        internal static AggregateFacetResult<TResult1, TResult2> Create(string[] names, object[] results)
+        {
+            return new AggregateFacetResult<TResult1, TResult2>(
+                names[0],
+                names[1],
+                (IEnumerable<TResult1>)results[0],
+                (IEnumerable<TResult2>)results[1]);
+        }
+
         internal static IBsonSerializer<AggregateFacetResult<TResult1, TResult2>> CreateSerializer(
             IEnumerable<Tuple<string, IBsonSerializer>> facets)
         {
-            var materializedFacets = facets.ToList();
-            var setters = new Action<AggregateFacetResult<TResult1, TResult2>, object>[]
-            {
-                (r, v) => r.Result1 = (IEnumerable<TResult1>)v,
-                (r, v) => r.Result2 = (IEnumerable<TResult2>)v
-            };
-            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2>>(
-                () => new AggregateFacetResult<TResult1, TResult2>(materializedFacets.Select(f => f.Item1)),
-                materializedFacets,
-                setters);
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2>>(facets, Create);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2, TResult3}"/> class.
+        /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2}"/> class.
         /// </summary>
-        /// <param name="names">The names.</param>
-        public AggregateFacetResult(IEnumerable<string> names)
+        public AggregateFacetResult(
+            string name1,
+            string name2,
+            IEnumerable<TResult1> result1,
+            IEnumerable<TResult2> result2)
         {
-            var materializedNames = names.ToList();
-            Name1 = materializedNames[0];
-            Name2 = materializedNames[1];
+            Name1 = Ensure.IsNotNull(name1, nameof(name1));
+            Name2 = Ensure.IsNotNull(name2, nameof(name2));
+            Result1 = Ensure.IsNotNull(result1, nameof(name1));
+            Result2 = Ensure.IsNotNull(result2, nameof(name2));
         }
 
         /// <summary>
@@ -107,7 +112,6 @@ namespace MongoDB.Driver
         /// Gets the name of facet 2.
         /// </summary>
         public string Name2 { get; private set; }
-
         /// <summary>
         /// Gets the result of facet 1.
         /// </summary>
@@ -117,6 +121,7 @@ namespace MongoDB.Driver
         /// Gets the result of facet 2.
         /// </summary>
         public IEnumerable<TResult2> Result2 { get; private set; }
+
     }
 
     /// <summary>
@@ -127,32 +132,40 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult3">The result type of facet 3.</typeparam>
     public class AggregateFacetResult<TResult1, TResult2, TResult3>
     {
+        internal static AggregateFacetResult<TResult1, TResult2, TResult3> Create(string[] names, object[] results)
+        {
+            return new AggregateFacetResult<TResult1, TResult2, TResult3>(
+                names[0],
+                names[1],
+                names[2],
+                (IEnumerable<TResult1>)results[0],
+                (IEnumerable<TResult2>)results[1],
+                (IEnumerable<TResult3>)results[2]);
+        }
+
         internal static IBsonSerializer<AggregateFacetResult<TResult1, TResult2, TResult3>> CreateSerializer(
             IEnumerable<Tuple<string, IBsonSerializer>> facets)
         {
-            var materializedFacets = facets.ToList();
-            var setters = new Action<AggregateFacetResult<TResult1, TResult2, TResult3>, object>[]
-            {
-                (r, v) => r.Result1 = (IEnumerable<TResult1>)v,
-                (r, v) => r.Result2 = (IEnumerable<TResult2>)v,
-                (r, v) => r.Result3 = (IEnumerable<TResult3>)v
-            };
-            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2, TResult3>>(
-                () => new AggregateFacetResult<TResult1, TResult2, TResult3>(materializedFacets.Select(f => f.Item1)),
-                materializedFacets,
-                setters);
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2, TResult3>>(facets, Create);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2, TResult3}"/> class.
         /// </summary>
-        /// <param name="names">The names.</param>
-        public AggregateFacetResult(IEnumerable<string> names)
+        public AggregateFacetResult(
+            string name1,
+            string name2,
+            string name3,
+            IEnumerable<TResult1> result1,
+            IEnumerable<TResult2> result2,
+            IEnumerable<TResult3> result3)
         {
-            var materializedNames = names.ToList();
-            Name1 = materializedNames[0];
-            Name2 = materializedNames[1];
-            Name3 = materializedNames[2];
+            Name1 = Ensure.IsNotNull(name1, nameof(name1));
+            Name2 = Ensure.IsNotNull(name2, nameof(name2));
+            Name3 = Ensure.IsNotNull(name3, nameof(name3));
+            Result1 = Ensure.IsNotNull(result1, nameof(name1));
+            Result2 = Ensure.IsNotNull(result2, nameof(name2));
+            Result3 = Ensure.IsNotNull(result3, nameof(name3));
         }
 
         /// <summary>
@@ -195,34 +208,46 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult4">The result type of facet 4.</typeparam>
     public class AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>
     {
+        internal static AggregateFacetResult<TResult1, TResult2, TResult3, TResult4> Create(string[] names, object[] results)
+        {
+            return new AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>(
+                names[0],
+                names[1],
+                names[2],
+                names[3],
+                (IEnumerable<TResult1>)results[0],
+                (IEnumerable<TResult2>)results[1],
+                (IEnumerable<TResult3>)results[2],
+                (IEnumerable<TResult4>)results[3]);
+        }
+
         internal static IBsonSerializer<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>> CreateSerializer(
             IEnumerable<Tuple<string, IBsonSerializer>> facets)
         {
-            var materializedFacets = facets.ToList();
-            var setters = new Action<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>, object>[]
-            {
-                (r, v) => r.Result1 = (IEnumerable<TResult1>)v,
-                (r, v) => r.Result2 = (IEnumerable<TResult2>)v,
-                (r, v) => r.Result3 = (IEnumerable<TResult3>)v,
-                (r, v) => r.Result4 = (IEnumerable<TResult4>)v
-            };
-            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>>(
-                () => new AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>(materializedFacets.Select(f => f.Item1)),
-                materializedFacets,
-                setters);
+            return new AggregateFacetResultSerializer<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>>(facets, Create);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2, TResult3}"/> class.
+        /// Initializes a new instance of the <see cref="AggregateFacetResult{TResult1, TResult2, TResult3, TResult4}"/> class.
         /// </summary>
-        /// <param name="names">The names.</param>
-        public AggregateFacetResult(IEnumerable<string> names)
+        public AggregateFacetResult(
+            string name1,
+            string name2,
+            string name3,
+            string name4,
+            IEnumerable<TResult1> result1,
+            IEnumerable<TResult2> result2,
+            IEnumerable<TResult3> result3,
+            IEnumerable<TResult4> result4)
         {
-            var materializedNames = names.ToList();
-            Name1 = materializedNames[0];
-            Name2 = materializedNames[1];
-            Name3 = materializedNames[2];
-            Name4 = materializedNames[3];
+            Name1 = Ensure.IsNotNull(name1, nameof(name1));
+            Name2 = Ensure.IsNotNull(name2, nameof(name2));
+            Name3 = Ensure.IsNotNull(name3, nameof(name3));
+            Name4 = Ensure.IsNotNull(name4, nameof(name4));
+            Result1 = Ensure.IsNotNull(result1, nameof(name1));
+            Result2 = Ensure.IsNotNull(result2, nameof(name2));
+            Result3 = Ensure.IsNotNull(result3, nameof(name3));
+            Result4 = Ensure.IsNotNull(result4, nameof(name4));
         }
 
         /// <summary>
@@ -268,31 +293,32 @@ namespace MongoDB.Driver
 
     internal class AggregateFacetResultSerializer<TAggregateFacetResult> : SerializerBase<TAggregateFacetResult>
     {
-        private readonly Func<TAggregateFacetResult> _creator;
-        private readonly List<Tuple<string, IBsonSerializer, Action<TAggregateFacetResult, object>>> _facets;
+        private readonly Func<string[], object[], TAggregateFacetResult> _creator;
+        private readonly string[] _names;
+        private readonly IBsonSerializer[] _serializers;
 
         public AggregateFacetResultSerializer(
-            Func<TAggregateFacetResult> creator,
             IEnumerable<Tuple<string, IBsonSerializer>> facets,
-            IEnumerable<Action<TAggregateFacetResult, object>> setters)
+            Func<string[], object[], TAggregateFacetResult> creator)
         {
+            _names = facets.Select(f => f.Item1).ToArray();
+            _serializers = facets.Select(f => f.Item2).ToArray();
             _creator = creator;
-            _facets = facets.Zip(setters, (f, s) => Tuple.Create(f.Item1, f.Item2, s)).ToList();
         }
 
         public override TAggregateFacetResult Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            var result = _creator();
+            var results = new object[_names.Length];
 
             var reader = context.Reader;
             reader.ReadStartDocument();
             while (reader.ReadBsonType() != 0)
             {
                 var name = reader.ReadName();
-                var facet = _facets.Where(s => s.Item1 == name).SingleOrDefault();
-                if (facet != null)
+                var index = Array.IndexOf(_names, name);
+                if (index != -1)
                 {
-                    var itemSerializer = facet.Item2;
+                    var itemSerializer = _serializers[index];
                     var itemType = itemSerializer.ValueType;
                     var itemSerializerType = typeof(IBsonSerializer<>).MakeGenericType(itemType);
                     var listType = typeof(List<>).MakeGenericType(itemType);
@@ -300,7 +326,7 @@ namespace MongoDB.Driver
                     var listSerializerConstructor = listSerializerType.GetTypeInfo().GetConstructor(new[] { itemSerializerType });
                     var listSerializer = (IBsonSerializer)listSerializerConstructor.Invoke(new object[] { itemSerializer });
                     var value = listSerializer.Deserialize(context);
-                    facet.Item3(result, value);
+                    results[index] = value;
                 }
                 else
                 {
@@ -309,7 +335,7 @@ namespace MongoDB.Driver
             }
             reader.ReadEndDocument();
 
-            return result;
+            return _creator(_names, results);
         }
     }
 }

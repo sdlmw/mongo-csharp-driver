@@ -78,10 +78,62 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(aggregate, nameof(aggregate));
             Ensure.IsNotNull(groupBy, nameof(groupBy));
             Ensure.IsNotNull(boundaries, nameof(boundaries));
+            Ensure.IsNotNull(output, nameof(output));
 
             var groupByDefinition = new ExpressionAggregateExpressionDefinition<TResult, TValue>(groupBy, aggregate.Options.TranslationOptions);
             var outputDefinition = new ExpressionBucketOutputProjection<TResult, TValue, TNewResult>(x => default(TValue), output, aggregate.Options.TranslationOptions);
             return aggregate.Bucket(groupByDefinition, boundaries, outputDefinition, defaultBucket);
+        }
+
+        /// <summary>
+        /// Appends a $bucketAuto stage to the pipeline.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="aggregate">The aggregate.</param>
+        /// <param name="groupBy">The expression providing the value to group by.</param>
+        /// <param name="buckets">The number of buckets.</param>
+        /// <param name="granularity">The granularity (optional).</param>
+        /// <returns>The fluent aggregate interface.</returns>
+        public static IAggregateFluent<AggregateBucketAutoResult<TValue>> BucketAuto<TResult, TValue>(
+            this IAggregateFluent<TResult> aggregate,
+            Expression<Func<TResult, TValue>> groupBy,
+            int buckets,
+            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>))
+        {
+            Ensure.IsNotNull(aggregate, nameof(aggregate));
+            Ensure.IsNotNull(groupBy, nameof(groupBy));
+
+            var groupByDefinition = new ExpressionAggregateExpressionDefinition<TResult, TValue>(groupBy, aggregate.Options.TranslationOptions);
+            return aggregate.BucketAuto(groupByDefinition, buckets, granularity);
+        }
+
+        /// <summary>
+        /// Appends a $bucketAuto stage to the pipeline.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <typeparam name="TNewResult">The type of the new result.</typeparam>
+        /// <param name="aggregate">The aggregate.</param>
+        /// <param name="groupBy">The expression providing the value to group by.</param>
+        /// <param name="buckets">The number of buckets.</param>
+        /// <param name="output">The output projection.</param>
+        /// <param name="granularity">The granularity (optional).</param>
+        /// <returns>The fluent aggregate interface.</returns>
+        public static IAggregateFluent<TNewResult> BucketAuto<TResult, TValue, TNewResult>(
+            this IAggregateFluent<TResult> aggregate,
+            Expression<Func<TResult, TValue>> groupBy,
+            int buckets,
+            Expression<Func<IGrouping<TValue, TResult>, TNewResult>> output,
+            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>))
+        {
+            Ensure.IsNotNull(aggregate, nameof(aggregate));
+            Ensure.IsNotNull(groupBy, nameof(groupBy));
+            Ensure.IsNotNull(output, nameof(output));
+
+            var groupByDefinition = new ExpressionAggregateExpressionDefinition<TResult, TValue>(groupBy, aggregate.Options.TranslationOptions);
+            var outputDefinition = new ExpressionBucketOutputProjection<TResult, TValue, TNewResult>(x => default(TValue), output, aggregate.Options.TranslationOptions);
+            return aggregate.BucketAuto(groupByDefinition, buckets, outputDefinition, granularity);
         }
 
         /// <summary>

@@ -88,6 +88,35 @@ namespace MongoDB.Driver
             Optional<TValue> defaultBucket = default(Optional<TValue>));
 
         /// <summary>
+        /// Appends a $bucketAuto stage to the pipeline.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="groupBy">The expression providing the value to group by.</param>
+        /// <param name="buckets">The number of buckets.</param>
+        /// <param name="granularity">The granularity (optional).</param>
+        /// <returns>The fluent aggregate interface.</returns>
+        IAggregateFluent<AggregateBucketAutoResult<TValue>> BucketAuto<TValue>(
+            AggregateExpressionDefinition<TResult, TValue> groupBy,
+            int buckets,
+            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>));
+
+        /// <summary>
+        /// Appends a $bucketAuto stage to the pipeline with a custom projection.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <typeparam name="TNewResult">The type of the new result.</typeparam>
+        /// <param name="groupBy">The expression providing the value to group by.</param>
+        /// <param name="buckets">The number of buckets.</param>
+        /// <param name="output">The output projection.</param>
+        /// <param name="granularity">The granularity (optional).</param>
+        /// <returns>The fluent aggregate interface.</returns>
+        IAggregateFluent<TNewResult> BucketAuto<TValue, TNewResult>(
+            AggregateExpressionDefinition<TResult, TValue> groupBy,
+            int buckets,
+            ProjectionDefinition<TResult, TNewResult> output,
+            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>));
+
+        /// <summary>
         /// Appends a count stage to the pipeline.
         /// </summary>
         /// <returns>The fluent aggregate interface.</returns>

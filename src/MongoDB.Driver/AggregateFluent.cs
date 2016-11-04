@@ -231,6 +231,57 @@ namespace MongoDB.Driver
             return AppendStage<AggregateCountResult>(stage);
         }
 
+        public override IAggregateFluent<TNewResult> GraphLookup<TNewResult, TOutput, TFrom, TConnect>(
+            IMongoCollection<TFrom> from,
+            FieldDefinition<TFrom, TConnect> connectFromField,
+            FieldDefinition<TFrom, TConnect> connectToField,
+            AggregateExpressionDefinition<TResult, TConnect> startWith,
+            FieldDefinition<TNewResult, IEnumerable<TOutput>> @as,
+            AggregateGraphLookupOptions<TNewResult, TOutput, TFrom, TConnect> options = null)
+        {
+            Ensure.IsNotNull(from, nameof(from));
+            Ensure.IsNotNull(connectFromField, nameof(connectFromField));
+            Ensure.IsNotNull(connectToField, nameof(connectToField));
+            Ensure.IsNotNull(startWith, nameof(startWith));
+            Ensure.IsNotNull(@as, nameof(@as));
+            Ensure.That(from.Database.DatabaseNamespace.Equals(_collection.Database.DatabaseNamespace), "From collection must be from the same database.", nameof(from));
+
+            const string operatorName = "$graphLookup";
+            var stage = new DelegatedPipelineStageDefinition<TResult, TNewResult>(
+                operatorName,
+                (s, sr) =>
+                {
+                    var resultSerializer = s;
+                    var newResultSerializer = options?.ResultSerializer ?? sr.GetSerializer<TNewResult>();
+                    var outputSerializer = options?.OutputSerialzier ?? sr.GetSerializer<TOutput>();
+                    var fromSerializer = options?.FromSerializer ?? sr.GetSerializer<TFrom>();
+                    var renderedConnectToField = connectToField.Render(fromSerializer, sr);
+                    var renderedStartWith = startWith.Render(resultSerializer, sr);
+                    var renderedConnectFromField = connectFromField.Render(fromSerializer, sr);
+                    var renderedAs = @as.Render(newResultSerializer, sr);
+                    var renderedDepthField = options?.DepthField?.Render(outputSerializer, sr);
+                    var renderedRestrictSearchWithMatch = options?.RestrictSearchWithMatch?.Render(fromSerializer, sr);
+                    var document = new BsonDocument
+                    {
+                        { operatorName, new BsonDocument
+                            {
+                                { "from", from.CollectionNamespace.CollectionName },
+                                { "connectFromField", renderedConnectFromField.FieldName },
+                                { "connectToField", renderedConnectToField.FieldName },
+                                { "startWith", renderedStartWith },
+                                { "as", renderedAs.FieldName },
+                                { "depthField", () => renderedDepthField.FieldName, renderedDepthField != null },
+                                { "maxDepth", () => options.MaxDepth.Value, options != null && options.MaxDepth.HasValue },
+                                { "restrictSearchWithMatch", renderedRestrictSearchWithMatch, renderedRestrictSearchWithMatch != null }
+                            }
+                        }
+                    };
+                    return new RenderedPipelineStageDefinition<TNewResult>(operatorName, document, newResultSerializer);
+                });
+
+            return AppendStage<TNewResult>(stage);
+        }
+
         public override IAggregateFluent<TNewResult> Group<TNewResult>(ProjectionDefinition<TResult, TNewResult> group)
         {
             const string operatorName = "$group";

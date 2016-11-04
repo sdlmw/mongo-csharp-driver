@@ -84,6 +84,7 @@
     <Compile Include="AggregateCountResult.cs" />
     <Compile Include="AggregateExpressionDefinition.cs" />
     <Compile Include="AggregateFluent.cs" />
+    <Compile Include="AggregateGraphLookupOptions.cs" />
     <Compile Include="AggregateLookupOptions.cs" />
     <Compile Include="AggregateSortByCountResult.cs" />
     <Compile Include="AggregateStringTranslationMode.cs" />

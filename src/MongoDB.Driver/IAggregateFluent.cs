@@ -123,6 +123,28 @@ namespace MongoDB.Driver
         IAggregateFluent<AggregateCountResult> Count();
 
         /// <summary>
+        /// Appends a $graphLookup stage to the pipeline.
+        /// </summary>
+        /// <typeparam name="TNewResult">The type of the new result (same as TResult with a new field containing the output documents).</typeparam>
+        /// <typeparam name="TOutput">The type of the output documents (either same as TFrom or TFrom with a depth field).</typeparam>
+        /// <typeparam name="TFrom">The type of the from documents.</typeparam>
+        /// <typeparam name="TConnect">The type of the connect field.</typeparam>
+        /// <param name="from">The from collection.</param>
+        /// <param name="connectFromField">The connect from field.</param>
+        /// <param name="connectToField">The connect to field.</param>
+        /// <param name="startWith">The start with value.</param>
+        /// <param name="as">The name of the field that will contain the output documents.</param>
+        /// <param name="options">The options.</param>
+        /// <returns></returns>
+        IAggregateFluent<TNewResult> GraphLookup<TNewResult, TOutput, TFrom, TConnect>(
+            IMongoCollection<TFrom> from,
+            FieldDefinition<TFrom, TConnect> connectFromField,
+            FieldDefinition<TFrom, TConnect> connectToField,
+            AggregateExpressionDefinition<TResult, TConnect> startWith,
+            FieldDefinition<TNewResult, IEnumerable<TOutput>> @as,
+            AggregateGraphLookupOptions<TNewResult, TOutput, TFrom, TConnect> options = null);
+
+        /// <summary>
         /// Appends a group stage to the pipeline.
         /// </summary>
         /// <typeparam name="TNewResult">The type of the result of the stage.</typeparam>

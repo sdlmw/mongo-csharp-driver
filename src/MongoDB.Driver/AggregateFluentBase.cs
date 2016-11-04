@@ -85,6 +85,18 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
+        public virtual IAggregateFluent<TNewResult> GraphLookup<TNewResult, TOutput, TFrom, TConnect>(
+            IMongoCollection<TFrom> from,
+            FieldDefinition<TFrom, TConnect> connectFromField,
+            FieldDefinition<TFrom, TConnect> connectToField,
+            AggregateExpressionDefinition<TResult, TConnect> startWith,
+            FieldDefinition<TNewResult, IEnumerable<TOutput>> @as,
+            AggregateGraphLookupOptions<TNewResult, TOutput, TFrom, TConnect> options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
         public abstract IAggregateFluent<TNewResult> Group<TNewResult>(ProjectionDefinition<TResult, TNewResult> group);
 
         /// <inheritdoc />

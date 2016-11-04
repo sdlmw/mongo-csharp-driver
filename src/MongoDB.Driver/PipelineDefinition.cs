@@ -68,6 +68,11 @@ namespace MongoDB.Driver
     public abstract class PipelineDefinition<TInput, TOutput>
     {
         /// <summary>
+        /// Gets the output serializer.
+        /// </summary>
+        public abstract IBsonSerializer<TOutput> OutputSerializer { get; }
+
+        /// <summary>
         /// Renders the pipeline.
         /// </summary>
         /// <param name="inputSerializer">The input serializer.</param>
@@ -225,6 +230,9 @@ namespace MongoDB.Driver
             get { return _first; }
         }
 
+        /// <inheritdoc />
+        public override IBsonSerializer<TOutput> OutputSerializer => _second.OutputSerializer;
+
         /// <summary>
         /// Gets the second pipeline.
         /// </summary>
@@ -266,6 +274,9 @@ namespace MongoDB.Driver
             _outputSerializer = outputSerializer;
         }
 
+        /// <inheritdoc />
+        public override IBsonSerializer<TOutput> OutputSerializer => _outputSerializer;
+
         /// <summary>
         /// Gets the stages.
         /// </summary>
@@ -304,9 +315,13 @@ namespace MongoDB.Driver
             _outputSerializer = outputSerializer;
         }
 
+        /// <inheritdoc />
+        public override IBsonSerializer<TOutput> OutputSerializer => _outputSerializer;
+
         /// <summary>
         /// Gets the serializer.
         /// </summary>
+        [Obsolete("Use OutputSerializer instead.")]
         public IBsonSerializer<TOutput> Serializer
         {
             get { return _outputSerializer; }
@@ -380,6 +395,9 @@ namespace MongoDB.Driver
         {
             _wrapped = wrapped;
         }
+
+        /// <inheritdoc />
+        public override IBsonSerializer<TOutput> OutputSerializer => _wrapped.OutputSerializer;
 
         public override RenderedPipelineDefinition<TOutput> Render(IBsonSerializer<TInput> inputSerializer, IBsonSerializerRegistry serializerRegistry)
         {

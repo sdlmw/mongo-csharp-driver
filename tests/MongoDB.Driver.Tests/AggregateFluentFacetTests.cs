@@ -105,7 +105,7 @@ namespace MongoDB.Driver.Tests
         [SkippableFact]
         public void Facet_with_1_facet_should_return_expected_result()
         {
-            RequireServer.Check().Supports(Feature.AggregateFacet);
+            RequireServer.Check().Supports(Feature.AggregateFacetStage);
             EnsureTestData();
             var collection = __database.GetCollection<BsonDocument>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
@@ -120,20 +120,17 @@ namespace MongoDB.Driver.Tests
 
             var result = subject.Facet(facets).Single();
 
-            result.Should().Be(
-                @"{
-                    categorizedByTags : [
-                        { _id : 'Expressionism', count : 2 },
-                        { _id : 'painting', count : 2 },
-                        { _id : 'ukiyo-e', count : 1 },
-                        { _id : 'woodblock', count : 1 },
-                        { _id : 'Surrealism', count : 1 },
-                        { _id : 'woodcut', count : 1 },
-                        { _id : 'oil', count : 1 },
-                        { _id : 'satire', count : 1 },
-                        { _id : 'caricature', count : 1 }
-                    ]
-                }");
+            result.Facets.Select(f => f.Name).Should().Equal("categorizedByTags");
+            result.GetFacet<BsonDocument>(0).Output.Should().Equal(
+                BsonDocument.Parse("{ _id: 'Expressionism', count: 2 }"),
+                BsonDocument.Parse("{ _id: 'painting', count: 2 }"),
+                BsonDocument.Parse("{ _id: 'ukiyo-e', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'woodblock', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'Surrealism', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'woodcut', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'oil', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'satire', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'caricature', count: 1 }"));
         }
 
         [Fact]
@@ -177,7 +174,7 @@ namespace MongoDB.Driver.Tests
         [SkippableFact]
         public void Facet_with_2_facets_should_return_expected_result()
         {
-            RequireServer.Check().Supports(Feature.AggregateFacet);
+            RequireServer.Check().Supports(Feature.AggregateFacetStage);
             EnsureTestData();
             var collection = __database.GetCollection<BsonDocument>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
@@ -197,24 +194,20 @@ namespace MongoDB.Driver.Tests
 
             var result = subject.Facet(facets).Single();
 
-            result.Should().Be(
-                @"{
-                    categorizedByTags : [
-                        { _id : 'Expressionism', count : 2 },
-                        { _id : 'painting', count : 2 },
-                        { _id : 'ukiyo-e', count : 1 },
-                        { _id : 'woodblock', count : 1 },
-                        { _id : 'Surrealism', count : 1 },
-                        { _id : 'woodcut', count : 1 },
-                        { _id : 'oil', count : 1 },
-                        { _id : 'satire', count : 1 },
-                        { _id : 'caricature', count : 1 }
-                    ],
-                    categorizedByYears : [
-                        { _id : 1900, count : 1 },
-                        { _id : 1920, count : 2 }
-                    ]
-                }");
+            result.Facets.Select(f => f.Name).Should().Equal("categorizedByTags", "categorizedByYears");
+            result.GetFacet<BsonDocument>(0).Output.Should().Equal(
+                BsonDocument.Parse("{ _id: 'Expressionism', count: 2 }"),
+                BsonDocument.Parse("{ _id: 'painting', count: 2 }"),
+                BsonDocument.Parse("{ _id: 'ukiyo-e', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'woodblock', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'Surrealism', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'woodcut', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'oil', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'satire', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'caricature', count: 1 }"));
+            result.GetFacet<BsonDocument>(1).Output.Should().Equal(
+                BsonDocument.Parse("{ _id: 1900, count: 1 }"),
+                BsonDocument.Parse("{ _id: 1920, count: 2 }"));
         }
 
         [Fact]
@@ -265,7 +258,7 @@ namespace MongoDB.Driver.Tests
         [SkippableFact]
         public void Facet_with_3_facets_should_return_expected_result()
         {
-            RequireServer.Check().Supports(Feature.AggregateFacet);
+            RequireServer.Check().Supports(Feature.AggregateFacetStage);
             EnsureTestData();
             var collection = __database.GetCollection<BsonDocument>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
@@ -289,30 +282,25 @@ namespace MongoDB.Driver.Tests
 
             var result = subject.Facet(facets).Single();
 
-            result.Should().Be(
-                @"{
-                    categorizedByTags : [
-                        { _id : 'Expressionism', count : 2 },
-                        { _id : 'painting', count : 2 },
-                        { _id : 'ukiyo-e', count : 1 },
-                        { _id : 'woodblock', count : 1 },
-                        { _id : 'Surrealism', count : 1 },
-                        { _id : 'woodcut', count : 1 },
-                        { _id : 'oil', count : 1 },
-                        { _id : 'satire', count : 1 },
-                        { _id : 'caricature', count : 1 }
-                    ],
-                    categorizedByYears : [
-                        { _id : 1900, count : 1 },
-                        { _id : 1920, count : 2 }
-                    ],
-                    'categorizedByYears(Auto)' : [
-                        { _id : { min : null, max : 1902 }, count : 1 },
-                        { _id : { min : 1902, max : 1925 }, count : 1 },
-                        { _id : { min : 1925, max : 1926 }, count : 1 },
-                        { _id : { min : 1926, max : 1926 }, count : 1 }
-                    ]
-                }");
+            result.Facets.Select(f => f.Name).Should().Equal("categorizedByTags", "categorizedByYears", "categorizedByYears(Auto)");
+            result.GetFacet<BsonDocument>(0).Output.Should().Equal(
+                BsonDocument.Parse("{ _id: 'Expressionism', count: 2 }"),
+                BsonDocument.Parse("{ _id: 'painting', count: 2 }"),
+                BsonDocument.Parse("{ _id: 'ukiyo-e', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'woodblock', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'Surrealism', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'woodcut', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'oil', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'satire', count: 1 }"),
+                BsonDocument.Parse("{ _id: 'caricature', count: 1 }"));
+            result.GetFacet<BsonDocument>(1).Output.Should().Equal(
+                BsonDocument.Parse("{ _id: 1900, count: 1 }"),
+                BsonDocument.Parse("{ _id: 1920, count: 2 }"));
+            result.GetFacet<BsonDocument>(2).Output.Should().Equal(
+                BsonDocument.Parse("{ _id: { min: null, max: 1902 }, count: 1 }"),
+                BsonDocument.Parse("{ _id: { min: 1902, max: 1925 }, count: 1 }"),
+                BsonDocument.Parse("{ _id: { min: 1925, max: 1926 }, count: 1 }"),
+                BsonDocument.Parse("{ _id: { min: 1926, max: 1926 }, count: 1 }"));
         }
 
         [Fact]
@@ -346,7 +334,7 @@ namespace MongoDB.Driver.Tests
         [SkippableFact]
         public void Facet_typed_with_1_facet_should_return_expected_result()
         {
-            RequireServer.Check().Supports(Feature.AggregateFacet);
+            RequireServer.Check().Supports(Feature.AggregateFacetStage);
             EnsureTestData();
             var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
@@ -358,8 +346,8 @@ namespace MongoDB.Driver.Tests
 
             var result = subject.Facet(facet1).Single();
 
-            result.Name1.Should().Be(name1);
-            result.Result1.WithComparer(new CategorizedByTagsEqualityComparer()).Should().Equal(
+            result.Facet1.Name.Should().Be(name1);
+            result.Facet1.Output.WithComparer(new CategorizedByTagsEqualityComparer()).Should().Equal(
                 new CategorizedByTags { Id = "Expressionism", Count = 2 },
                 new CategorizedByTags { Id = "painting", Count = 2 },
                 new CategorizedByTags { Id = "ukiyo-e", Count = 1 },
@@ -411,7 +399,7 @@ namespace MongoDB.Driver.Tests
         [SkippableFact]
         public void Facet_typed_with_2_facets_should_return_expected_result()
         {
-            RequireServer.Check().Supports(Feature.AggregateFacet);
+            RequireServer.Check().Supports(Feature.AggregateFacetStage);
             EnsureTestData();
             var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
@@ -428,8 +416,8 @@ namespace MongoDB.Driver.Tests
 
             var result = subject.Facet(facet1, facet2).Single();
 
-            result.Name1.Should().Be(name1);
-            result.Result1.WithComparer(new CategorizedByTagsEqualityComparer()).Should().Equal(
+            result.Facet1.Name.Should().Be(name1);
+            result.Facet1.Output.WithComparer(new CategorizedByTagsEqualityComparer()).Should().Equal(
                 new CategorizedByTags { Id = "Expressionism", Count = 2 },
                 new CategorizedByTags { Id = "painting", Count = 2 },
                 new CategorizedByTags { Id = "ukiyo-e", Count = 1 },
@@ -439,8 +427,8 @@ namespace MongoDB.Driver.Tests
                 new CategorizedByTags { Id = "oil", Count = 1 },
                 new CategorizedByTags { Id = "satire", Count = 1 },
                 new CategorizedByTags { Id = "caricature", Count = 1 });
-            result.Name2.Should().Be(name2);
-            result.Result2.WithComparer(new CategorizedByYearsEqualityComparer()).Should().Equal(
+            result.Facet2.Name.Should().Be(name2);
+            result.Facet2.Output.WithComparer(new CategorizedByYearsEqualityComparer()).Should().Equal(
                 new CategorizedByYears { Id = 1900, Count = 1 },
                 new CategorizedByYears { Id = 1920, Count = 2 });
        }
@@ -492,7 +480,7 @@ namespace MongoDB.Driver.Tests
         [SkippableFact]
         public void Facet_typed_with_3_facets_should_return_expected_result()
         {
-            RequireServer.Check().Supports(Feature.AggregateFacet);
+            RequireServer.Check().Supports(Feature.AggregateFacetStage);
             EnsureTestData();
             var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
@@ -513,8 +501,8 @@ namespace MongoDB.Driver.Tests
 
             var result = subject.Facet(facet1, facet2, facet3).Single();
 
-            result.Name1.Should().Be(name1);
-            result.Result1.WithComparer(new CategorizedByTagsEqualityComparer()).Should().Equal(
+            result.Facet1.Name.Should().Be(name1);
+            result.Facet1.Output.WithComparer(new CategorizedByTagsEqualityComparer()).Should().Equal(
                 new CategorizedByTags { Id = "Expressionism", Count = 2 },
                 new CategorizedByTags { Id = "painting", Count = 2 },
                 new CategorizedByTags { Id = "ukiyo-e", Count = 1 },
@@ -524,12 +512,103 @@ namespace MongoDB.Driver.Tests
                 new CategorizedByTags { Id = "oil", Count = 1 },
                 new CategorizedByTags { Id = "satire", Count = 1 },
                 new CategorizedByTags { Id = "caricature", Count = 1 });
-            result.Name2.Should().Be(name2);
-            result.Result2.WithComparer(new CategorizedByYearsEqualityComparer()).Should().Equal(
+            result.Facet2.Name.Should().Be(name2);
+            result.Facet2.Output.WithComparer(new CategorizedByYearsEqualityComparer()).Should().Equal(
                 new CategorizedByYears { Id = 1900, Count = 1 },
                 new CategorizedByYears { Id = 1920, Count = 2 });
-            result.Name3.Should().Be(name3);
-            result.Result3.WithComparer(new CategorizedByYearsAutoEqualityComparer()).Should().Equal(
+            result.Facet3.Name.Should().Be(name3);
+            result.Facet3.Output.WithComparer(new CategorizedByYearsAutoEqualityComparer()).Should().Equal(
+                new CategorizedByYearsAuto { Id = new MinMax { Min = null, Max = 1902 }, Count = 1 },
+                new CategorizedByYearsAuto { Id = new MinMax { Min = 1902, Max = 1925 }, Count = 1 },
+                new CategorizedByYearsAuto { Id = new MinMax { Min = 1925, Max = 1926 }, Count = 1 },
+                new CategorizedByYearsAuto { Id = new MinMax { Min = 1926, Max = 1926 }, Count = 1 });
+        }
+
+        [Fact]
+        public void Facet_typed_with_n_facets_should_add_the_expected_stage()
+        {
+            var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
+            var subject = collection.Aggregate();
+            var name1 = "categorizedByTags";
+            var pipeline1 = PipelineDefinition<Exhibit, CategorizedByTags>.Create(
+                "{ $unwind : \"$tags\" }",
+                "{ $sortByCount : \"$tags\" }");
+            var facet1 = AggregateFacet.Create(name1, pipeline1);
+            var name2 = "categorizedByYears";
+            var pipeline2 = PipelineDefinition<Exhibit, CategorizedByYears>.Create(
+                "{ $match : { year : { $exists : 1 } } }",
+                "{ $bucket : { groupBy : \"$year\", boundaries: [ 1900, 1920, 1950 ] } }");
+            var facet2 = AggregateFacet.Create(name2, pipeline2);
+            var name3 = "categorizedByYears(Auto)";
+            var pipeline3 = PipelineDefinition<Exhibit, CategorizedByYearsAuto>.Create(
+                "{ $bucketAuto : { groupBy: '$year', buckets: 4 } }");
+            var facet3 = AggregateFacet.Create(name3, pipeline3);
+            var facets = new AggregateFacet<Exhibit>[] { facet1, facet2, facet3 };
+
+            var result = subject.Facet(facets);
+
+            var stage = result.Stages.Single();
+            var serializerRegistry = BsonSerializer.SerializerRegistry;
+            var inputSerializer = serializerRegistry.GetSerializer<Exhibit>();
+            var renderedStage = stage.Render(inputSerializer, serializerRegistry);
+            renderedStage.Document.Should().Be(
+                @"{
+                    $facet : {
+                        categorizedByTags : [
+                            { $unwind : '$tags' },
+                            { $sortByCount : '$tags' }
+                        ],
+                         categorizedByYears: [
+                            { $match : { year : { $exists : 1 } } },
+                            { $bucket :  { groupBy : '$year', boundaries:  [ 1900, 1920, 1950 ] } }
+                        ],
+                        'categorizedByYears(Auto)': [
+                            { $bucketAuto : { groupBy: '$year', buckets: 4 } }
+                        ]
+                   }
+                }");
+        }
+
+        [SkippableFact]
+        public void Facet_typed_with_n_facets_should_return_expected_result()
+        {
+            RequireServer.Check().Supports(Feature.AggregateFacetStage);
+            EnsureTestData();
+            var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
+            var subject = collection.Aggregate();
+            var name1 = "categorizedByTags";
+            var pipeline1 = PipelineDefinition<Exhibit, CategorizedByTags>.Create(
+                "{ $unwind : \"$tags\" }",
+                "{ $sortByCount : \"$tags\" }");
+            var facet1 = AggregateFacet.Create(name1, pipeline1);
+            var name2 = "categorizedByYears";
+            var pipeline2 = PipelineDefinition<Exhibit, CategorizedByYears>.Create(
+                "{ $match : { year : { $exists : 1 } } }",
+                "{ $bucket : { groupBy : \"$year\", boundaries: [ 1900, 1920, 1950 ] } }");
+            var facet2 = AggregateFacet.Create(name2, pipeline2);
+            var name3 = "categorizedByYears(Auto)";
+            var pipeline3 = PipelineDefinition<Exhibit, CategorizedByYearsAuto>.Create(
+                "{ $bucketAuto : { groupBy: '$year', buckets: 4 } }");
+            var facet3 = AggregateFacet.Create(name3, pipeline3);
+            var facets = new AggregateFacet<Exhibit>[] { facet1, facet2, facet3 };
+
+            var result = subject.Facet(facets).Single();
+
+            result.Facets.Select(f => f.Name).Should().Equal(name1, name2, name3);
+            result.GetFacet<CategorizedByTags>(0).Output.WithComparer(new CategorizedByTagsEqualityComparer()).Should().Equal(
+                new CategorizedByTags { Id = "Expressionism", Count = 2 },
+                new CategorizedByTags { Id = "painting", Count = 2 },
+                new CategorizedByTags { Id = "ukiyo-e", Count = 1 },
+                new CategorizedByTags { Id = "woodblock", Count = 1 },
+                new CategorizedByTags { Id = "Surrealism", Count = 1 },
+                new CategorizedByTags { Id = "woodcut", Count = 1 },
+                new CategorizedByTags { Id = "oil", Count = 1 },
+                new CategorizedByTags { Id = "satire", Count = 1 },
+                new CategorizedByTags { Id = "caricature", Count = 1 });
+            result.GetFacet<CategorizedByYears>(1).Output.WithComparer(new CategorizedByYearsEqualityComparer()).Should().Equal(
+                new CategorizedByYears { Id = 1900, Count = 1 },
+                new CategorizedByYears { Id = 1920, Count = 2 });
+            result.GetFacet<CategorizedByYearsAuto>(2).Output.WithComparer(new CategorizedByYearsAutoEqualityComparer()).Should().Equal(
                 new CategorizedByYearsAuto { Id = new MinMax { Min = null, Max = 1902 }, Count = 1 },
                 new CategorizedByYearsAuto { Id = new MinMax { Min = 1902, Max = 1925 }, Count = 1 },
                 new CategorizedByYearsAuto { Id = new MinMax { Min = 1925, Max = 1926 }, Count = 1 },

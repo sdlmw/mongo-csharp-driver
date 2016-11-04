@@ -66,42 +66,42 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
-        public virtual IAggregateFluent<BsonDocument> Facet(
-            IEnumerable<AggregateFacet<TResult, BsonDocument>> facets)
+        public virtual IAggregateFluent<AggregateFacetResults> Facet(
+            IEnumerable<AggregateFacet<TResult>> facets)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResult<TResult1>> Facet<TResult1>(
-            AggregateFacet<TResult, TResult1> facet1)
+        public virtual IAggregateFluent<AggregateFacetResults<TOutput1>> Facet<TOutput1>(
+            AggregateFacet<TResult, TOutput1> facet1)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResult<TResult1, TResult2>> Facet<TResult1, TResult2>(
-            AggregateFacet<TResult, TResult1> facet1,
-            AggregateFacet<TResult, TResult2> facet2)
+        public virtual IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2>> Facet<TOutput1, TOutput2>(
+            AggregateFacet<TResult, TOutput1> facet1,
+            AggregateFacet<TResult, TOutput2> facet2)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResult<TResult1, TResult2, TResult3>> Facet<TResult1, TResult2, TResult3>(
-            AggregateFacet<TResult, TResult1> facet1,
-            AggregateFacet<TResult, TResult2> facet2,
-            AggregateFacet<TResult, TResult3> facet3)
+        public virtual IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3>> Facet<TOutput1, TOutput2, TOutput3>(
+            AggregateFacet<TResult, TOutput1> facet1,
+            AggregateFacet<TResult, TOutput2> facet2,
+            AggregateFacet<TResult, TOutput3> facet3)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>> Facet<TResult1, TResult2, TResult3, TResult4>(
-            AggregateFacet<TResult, TResult1> facet1,
-            AggregateFacet<TResult, TResult2> facet2,
-            AggregateFacet<TResult, TResult3> facet3,
-            AggregateFacet<TResult, TResult4> facet4)
+        public virtual IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3, TOutput4>> Facet<TOutput1, TOutput2, TOutput3, TOutput4>(
+            AggregateFacet<TResult, TOutput1> facet1,
+            AggregateFacet<TResult, TOutput2> facet2,
+            AggregateFacet<TResult, TOutput3> facet3,
+            AggregateFacet<TResult, TOutput4> facet4)
         {
             throw new NotImplementedException();
         }

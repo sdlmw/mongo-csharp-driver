@@ -98,62 +98,62 @@ namespace MongoDB.Driver
         /// </summary>
         /// <param name="facets">The facets.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<BsonDocument> Facet(
-            IEnumerable<AggregateFacet<TResult, BsonDocument>> facets);
+        IAggregateFluent<AggregateFacetResults> Facet(
+            IEnumerable<AggregateFacet<TResult>> facets);
 
         /// <summary>
         /// Appends a $facet stage to the pipeline.
         /// </summary>
-        /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
+        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
         /// <param name="facet1">Facet 1.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResult<TResult1>> Facet<TResult1>(
-            AggregateFacet<TResult, TResult1> facet1);
+        IAggregateFluent<AggregateFacetResults<TOutput1>> Facet<TOutput1>(
+            AggregateFacet<TResult, TOutput1> facet1);
 
         /// <summary>
         /// Appends a $facet stage to the pipeline.
         /// </summary>
-        /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
-        /// <typeparam name="TResult2">The result type of facet 2.</typeparam>
+        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
+        /// <typeparam name="TOutput2">The result type of facet 2.</typeparam>
         /// <param name="facet1">Facet 1.</param>
         /// <param name="facet2">Facet 2.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResult<TResult1, TResult2>> Facet<TResult1, TResult2>(
-            AggregateFacet<TResult, TResult1> facet1,
-            AggregateFacet<TResult, TResult2> facet2);
+        IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2>> Facet<TOutput1, TOutput2>(
+            AggregateFacet<TResult, TOutput1> facet1,
+            AggregateFacet<TResult, TOutput2> facet2);
 
         /// <summary>
         /// Appends a $facet stage to the pipeline.
         /// </summary>
-        /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
-        /// <typeparam name="TResult2">The result type of facet 2.</typeparam>
-        /// <typeparam name="TResult3">The result type of facet 3.</typeparam>
+        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
+        /// <typeparam name="TOutput2">The result type of facet 2.</typeparam>
+        /// <typeparam name="TOutput3">The result type of facet 3.</typeparam>
         /// <param name="facet1">Facet 1.</param>
         /// <param name="facet2">Facet 2.</param>
         /// <param name="facet3">Facet 3.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResult<TResult1, TResult2, TResult3>> Facet<TResult1, TResult2, TResult3>(
-            AggregateFacet<TResult, TResult1> facet1,
-            AggregateFacet<TResult, TResult2> facet2,
-            AggregateFacet<TResult, TResult3> facet3);
+        IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3>> Facet<TOutput1, TOutput2, TOutput3>(
+            AggregateFacet<TResult, TOutput1> facet1,
+            AggregateFacet<TResult, TOutput2> facet2,
+            AggregateFacet<TResult, TOutput3> facet3);
 
         /// <summary>
         /// Appends a $facet stage to the pipeline.
         /// </summary>
-        /// <typeparam name="TResult1">The result type of facet 1.</typeparam>
-        /// <typeparam name="TResult2">The result type of facet 2.</typeparam>
-        /// <typeparam name="TResult3">The result type of facet 3.</typeparam>
-        /// <typeparam name="TResult4">The result type of facet 4.</typeparam>
+        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
+        /// <typeparam name="TOutput2">The result type of facet 2.</typeparam>
+        /// <typeparam name="TOutput3">The result type of facet 3.</typeparam>
+        /// <typeparam name="TOutput4">The result type of facet 4.</typeparam>
         /// <param name="facet1">Facet 1.</param>
         /// <param name="facet2">Facet 2.</param>
         /// <param name="facet3">Facet 3.</param>
         /// <param name="facet4">Facet 4.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResult<TResult1, TResult2, TResult3, TResult4>> Facet<TResult1, TResult2, TResult3, TResult4>(
-            AggregateFacet<TResult, TResult1> facet1,
-            AggregateFacet<TResult, TResult2> facet2,
-            AggregateFacet<TResult, TResult3> facet3,
-            AggregateFacet<TResult, TResult4> facet4);
+        IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3, TOutput4>> Facet<TOutput1, TOutput2, TOutput3, TOutput4>(
+            AggregateFacet<TResult, TOutput1> facet1,
+            AggregateFacet<TResult, TOutput2> facet2,
+            AggregateFacet<TResult, TOutput3> facet3,
+            AggregateFacet<TResult, TOutput4> facet4);
 
         /// <summary>
         /// Appends a group stage to the pipeline.

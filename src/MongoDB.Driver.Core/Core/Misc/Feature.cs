@@ -29,7 +29,7 @@ namespace MongoDB.Driver.Core.Misc
         private static readonly Feature __aggregateCountStage = new Feature("AggregateCountStage", new SemanticVersion(3, 3, 11));
         private static readonly Feature __aggregateCursorResult = new Feature("AggregateCursorResult", new SemanticVersion(2, 6, 0));
         private static readonly Feature __aggregateExplain = new Feature("AggregateExplain", new SemanticVersion(2, 6, 0));
-        private static readonly Feature __aggregateFacet = new Feature("AggregateFacet", new SemanticVersion(3, 4, 0, "rc0"));
+        private static readonly Feature __aggregateFacetStage = new Feature("AggregateFacetStage", new SemanticVersion(3, 4, 0, "rc0"));
         private static readonly Feature __aggregateOut = new Feature("Aggregate", new SemanticVersion(2, 6, 0));
         private static readonly Feature __bypassDocumentValidation = new Feature("BypassDocumentValidation", new SemanticVersion(3, 2, 0));
         private static readonly CollationFeature __collation = new CollationFeature("Collation", new SemanticVersion(3, 3, 11));
@@ -84,9 +84,9 @@ namespace MongoDB.Driver.Core.Misc
         public static Feature AggregateExplain => __aggregateExplain;
 
         /// <summary>
-        /// Gets the aggregate facet feature.
+        /// Gets the aggregate $facet stage feature.
         /// </summary>
-        public static Feature AggregateFacet => __aggregateFacet;
+        public static Feature AggregateFacetStage => __aggregateFacetStage;
 
         /// <summary>
         /// Gets the aggregate out feature.

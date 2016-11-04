@@ -26,18 +26,18 @@ namespace MongoDB.Driver
     public static class AggregateFacet
     {
         /// <summary>
-        /// Creates a new instance of the <see cref="AggregateFacet{TInput, TResult}" /> class.
+        /// Creates a new instance of the <see cref="AggregateFacet{TInput, TOutput}" /> class.
         /// </summary>
         /// <typeparam name="TInput">The type of the input documents.</typeparam>
-        /// <typeparam name="TResult">The type of the result documents.</typeparam>
+        /// <typeparam name="TOutput">The type of the output documents.</typeparam>
         /// <param name="name">The facet name.</param>
         /// <param name="pipeline">The facet pipeline.</param>
         /// <returns>
-        /// A new instance of the <see cref="AggregateFacet{TInput, TResult}" /> class
+        /// A new instance of the <see cref="AggregateFacet{TInput, TOutput}" /> class
         /// </returns>
-        public static AggregateFacet<TInput, TResult> Create<TInput, TResult>(string name, PipelineDefinition<TInput, TResult> pipeline)
+        public static AggregateFacet<TInput, TOutput> Create<TInput, TOutput>(string name, PipelineDefinition<TInput, TOutput> pipeline)
         {
-            return new AggregateFacet<TInput, TResult>(name, pipeline);
+            return new AggregateFacet<TInput, TOutput>(name, pipeline);
         }
     }
 
@@ -48,14 +48,28 @@ namespace MongoDB.Driver
     public abstract class AggregateFacet<TInput>
     {
         /// <summary>
-        /// Gets the facet name.
+        /// Initializes a new instance of the <see cref="AggregateFacet{TInput}"/> class.
         /// </summary>
-        public string Name { get; protected set; }
+        /// <param name="name">The facet name.</param>
+        protected AggregateFacet(string name)
+        {
+            Name = Ensure.IsNotNull(name, nameof(name));
+        }
 
         /// <summary>
-        /// Gets the type of the result documents.
+        /// Gets the facet name.
         /// </summary>
-        public abstract Type ResultType { get; }
+        public string Name { get; private set; }
+
+        /// <summary>
+        /// Gets the output serializer.
+        /// </summary>
+        public abstract IBsonSerializer OutputSerializer { get; }
+
+        /// <summary>
+        /// Gets the type of the output documents.
+        /// </summary>
+        public abstract Type OutputType { get; }
 
         /// <summary>
         /// Renders the facet pipeline.
@@ -70,27 +84,30 @@ namespace MongoDB.Driver
     /// Represents a facet to be passed to the Facet method.
     /// </summary>
     /// <typeparam name="TInput">The type of the input documents.</typeparam>
-    /// <typeparam name="TResult">The type of the result documents.</typeparam>
-    public class AggregateFacet<TInput, TResult> : AggregateFacet<TInput>
+    /// <typeparam name="TOutput">The type of the otuput documents.</typeparam>
+    public class AggregateFacet<TInput, TOutput> : AggregateFacet<TInput>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="AggregateFacet{TInput, TResult}"/> class.
+        /// Initializes a new instance of the <see cref="AggregateFacet{TInput, TOutput}"/> class.
         /// </summary>
         /// <param name="name">The facet name.</param>
         /// <param name="pipeline">The facet pipeline.</param>
-        public AggregateFacet(string name, PipelineDefinition<TInput, TResult> pipeline)
+        public AggregateFacet(string name, PipelineDefinition<TInput, TOutput> pipeline)
+            : base(name)
         {
-            Name = Ensure.IsNotNull(name, nameof(name));
             Pipeline = Ensure.IsNotNull(pipeline, nameof(pipeline));
         }
+
+        /// <inheritdoc/>
+        public override IBsonSerializer OutputSerializer => Pipeline.OutputSerializer;
+
+        /// <inheritdoc/>
+        public override Type OutputType => typeof(TOutput);
 
         /// <summary>
         /// Gets the facet pipeline.
         /// </summary>
-        public PipelineDefinition<TInput, TResult> Pipeline { get; private set; }
-
-        /// <inheritdoc/>
-        public override Type ResultType => typeof(TResult);
+        public PipelineDefinition<TInput, TOutput> Pipeline { get; private set; }
 
         /// <inheritdoc/>
         public override BsonArray RenderPipeline(IBsonSerializer<TInput> inputSerializer, IBsonSerializerRegistry serializerRegistry)

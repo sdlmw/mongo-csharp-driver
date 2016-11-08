@@ -14,6 +14,7 @@
 */
 
 using System.Collections.Generic;
+using System.Linq;
 using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver
@@ -21,19 +22,15 @@ namespace MongoDB.Driver
     /// <summary>
     /// Represents an abstract AggregateFacetResult with an arbitrary TOutput type.
     /// </summary>
-    public sealed class AggregateFacetResult
+    public abstract class AggregateFacetResult
     {
-        private readonly object _output;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="AggregateFacetResult" /> class.
         /// </summary>
         /// <param name="name">The name of the facet.</param>
-        /// <param name="output">The output.</param>
-        public AggregateFacetResult(string name, object output)
+        protected AggregateFacetResult(string name)
         {
             Name = Ensure.IsNotNull(name, nameof(name));
-            _output = Ensure.IsNotNull(output, nameof(output));
         }
 
         /// <summary>
@@ -46,7 +43,43 @@ namespace MongoDB.Driver
         /// </summary>
         public IReadOnlyList<TOutput> Output<TOutput>()
         {
-            return (IReadOnlyList<TOutput>)_output;
+            return ((AggregateFacetResult<TOutput>)this).Output;
         }
+    }
+
+    /// <summary>
+    /// Represents the result of a single facet.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the output.</typeparam>
+    public sealed class AggregateFacetResult<TOutput> : AggregateFacetResult
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AggregateFacetResult{TOutput}"/> class.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="output">The output.</param>
+        public AggregateFacetResult(string name, IEnumerable<TOutput> output)
+            : base(name)
+        {
+            Ensure.IsNotNull(output, nameof(output));
+
+            var readOnlyList = output as IReadOnlyList<TOutput>;
+            if (readOnlyList != null)
+            {
+                Output = readOnlyList;
+            }
+            else
+            {
+                Output = output.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the output.
+        /// </summary>
+        /// <value>
+        /// The output.
+        /// </value>
+        public IReadOnlyList<TOutput> Output { get; set; }
     }
 }

@@ -75,7 +75,10 @@ namespace MongoDB.Driver
                     var arraySerializerConstructor = arraySerializerType.GetTypeInfo().GetConstructor(new[] { itemSerializerType });
                     var arraySerializer = (IBsonSerializer)arraySerializerConstructor.Invoke(new object[] { itemSerializer });
                     var output = (Array)arraySerializer.Deserialize(context);
-                    var facet = new AggregateFacetResult(name, output);
+                    var facetType = typeof(AggregateFacetResult<>).MakeGenericType(itemType);
+                    var ienumerableItemType = typeof(IEnumerable<>).MakeGenericType(itemType);
+                    var facetConstructor = facetType.GetTypeInfo().GetConstructor(new[] { typeof(string), ienumerableItemType });
+                    var facet = (AggregateFacetResult)facetConstructor.Invoke(new object[] { name, output });
                     facets[index] = facet;
                 }
                 else

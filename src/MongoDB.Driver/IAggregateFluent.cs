@@ -96,64 +96,15 @@ namespace MongoDB.Driver
         /// <summary>
         /// Appends a $facet stage to the pipeline.
         /// </summary>
+        /// <typeparam name="TNewResult">The type of the new result.</typeparam>
         /// <param name="facets">The facets.</param>
-        /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResults> Facet(
-            IEnumerable<AggregateFacet<TResult>> facets);
-
-        /// <summary>
-        /// Appends a $facet stage to the pipeline.
-        /// </summary>
-        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
-        /// <param name="facet1">Facet 1.</param>
-        /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResults<TOutput1>> Facet<TOutput1>(
-            AggregateFacet<TResult, TOutput1> facet1);
-
-        /// <summary>
-        /// Appends a $facet stage to the pipeline.
-        /// </summary>
-        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
-        /// <typeparam name="TOutput2">The result type of facet 2.</typeparam>
-        /// <param name="facet1">Facet 1.</param>
-        /// <param name="facet2">Facet 2.</param>
-        /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2>> Facet<TOutput1, TOutput2>(
-            AggregateFacet<TResult, TOutput1> facet1,
-            AggregateFacet<TResult, TOutput2> facet2);
-
-        /// <summary>
-        /// Appends a $facet stage to the pipeline.
-        /// </summary>
-        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
-        /// <typeparam name="TOutput2">The result type of facet 2.</typeparam>
-        /// <typeparam name="TOutput3">The result type of facet 3.</typeparam>
-        /// <param name="facet1">Facet 1.</param>
-        /// <param name="facet2">Facet 2.</param>
-        /// <param name="facet3">Facet 3.</param>
-        /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3>> Facet<TOutput1, TOutput2, TOutput3>(
-            AggregateFacet<TResult, TOutput1> facet1,
-            AggregateFacet<TResult, TOutput2> facet2,
-            AggregateFacet<TResult, TOutput3> facet3);
-
-        /// <summary>
-        /// Appends a $facet stage to the pipeline.
-        /// </summary>
-        /// <typeparam name="TOutput1">The result type of facet 1.</typeparam>
-        /// <typeparam name="TOutput2">The result type of facet 2.</typeparam>
-        /// <typeparam name="TOutput3">The result type of facet 3.</typeparam>
-        /// <typeparam name="TOutput4">The result type of facet 4.</typeparam>
-        /// <param name="facet1">Facet 1.</param>
-        /// <param name="facet2">Facet 2.</param>
-        /// <param name="facet3">Facet 3.</param>
-        /// <param name="facet4">Facet 4.</param>
-        /// <returns>The fluent aggregate interface.</returns>
-        IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3, TOutput4>> Facet<TOutput1, TOutput2, TOutput3, TOutput4>(
-            AggregateFacet<TResult, TOutput1> facet1,
-            AggregateFacet<TResult, TOutput2> facet2,
-            AggregateFacet<TResult, TOutput3> facet3,
-            AggregateFacet<TResult, TOutput4> facet4);
+        /// <param name="options">The options.</param>
+        /// <returns>
+        /// The fluent aggregate interface.
+        /// </returns>
+        IAggregateFluent<TNewResult> Facet<TNewResult>(
+            IEnumerable<AggregateFacet<TResult>> facets,
+            AggregateFacetOptions<TNewResult> options = null);
 
         /// <summary>
         /// Appends a group stage to the pipeline.
@@ -275,7 +226,6 @@ namespace MongoDB.Driver
         /// <returns>The fluent aggregate interface.</returns>
         IAggregateFluent<TNewResult> Unwind<TNewResult>(FieldDefinition<TResult> field, AggregateUnwindOptions<TNewResult> options = null);
     }
-
 
     /// <summary>
     /// Fluent interface for aggregate.

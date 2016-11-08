@@ -21,44 +21,32 @@ namespace MongoDB.Driver
     /// <summary>
     /// Represents an abstract AggregateFacetResult with an arbitrary TOutput type.
     /// </summary>
-    public abstract class AggregateFacetResult
+    public sealed class AggregateFacetResult
     {
+        private readonly object _output;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AggregateFacetResult" /> class.
         /// </summary>
         /// <param name="name">The name of the facet.</param>
-        protected AggregateFacetResult(string name)
+        /// <param name="output">The output.</param>
+        public AggregateFacetResult(string name, object output)
         {
             Name = Ensure.IsNotNull(name, nameof(name));
+            _output = Ensure.IsNotNull(output, nameof(output));
         }
 
         /// <summary>
         /// Gets the name of the facet.
         /// </summary>
         public string Name { get; private set; }
-    }
-
-    /// <summary>
-    /// Represents the result of one facet of a $facet stage.
-    /// </summary>
-    /// <typeparam name="TOutput">The type of the output.</typeparam>
-    public class AggregateFacetResult<TOutput> : AggregateFacetResult
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AggregateFacetResult{TOutput}"/> class.
-        /// </summary>
-        /// <param name="name">The name of the facet.</param>
-        /// <param name="output">The output of the facet.</param>
-        public AggregateFacetResult(string name, TOutput[] output)
-            : base(name)
-        {
-            Output = Ensure.IsNotNull(output, nameof(output));
-
-        }
 
         /// <summary>
         /// Gets the output of the facet.
         /// </summary>
-        public IReadOnlyList<TOutput> Output { get; private set; }
+        public IReadOnlyList<TOutput> Output<TOutput>()
+        {
+            return (IReadOnlyList<TOutput>)_output;
+        }
     }
 }

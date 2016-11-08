@@ -66,42 +66,9 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResults> Facet(
-            IEnumerable<AggregateFacet<TResult>> facets)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResults<TOutput1>> Facet<TOutput1>(
-            AggregateFacet<TResult, TOutput1> facet1)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2>> Facet<TOutput1, TOutput2>(
-            AggregateFacet<TResult, TOutput1> facet1,
-            AggregateFacet<TResult, TOutput2> facet2)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3>> Facet<TOutput1, TOutput2, TOutput3>(
-            AggregateFacet<TResult, TOutput1> facet1,
-            AggregateFacet<TResult, TOutput2> facet2,
-            AggregateFacet<TResult, TOutput3> facet3)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public virtual IAggregateFluent<AggregateFacetResults<TOutput1, TOutput2, TOutput3, TOutput4>> Facet<TOutput1, TOutput2, TOutput3, TOutput4>(
-            AggregateFacet<TResult, TOutput1> facet1,
-            AggregateFacet<TResult, TOutput2> facet2,
-            AggregateFacet<TResult, TOutput3> facet3,
-            AggregateFacet<TResult, TOutput4> facet4)
+        public virtual IAggregateFluent<TNewResult> Facet<TNewResult>(
+            IEnumerable<AggregateFacet<TResult>> facets,
+            AggregateFacetOptions<TNewResult> options = null)
         {
             throw new NotImplementedException();
         }

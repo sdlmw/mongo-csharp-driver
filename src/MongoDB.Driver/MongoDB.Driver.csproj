@@ -81,6 +81,7 @@
     <Compile Include="AggregateCountResult.cs" />
     <Compile Include="AggregateExpressionDefinition.cs" />
     <Compile Include="AggregateFacet.cs" />
+    <Compile Include="AggregateFacetOptions.cs" />
     <Compile Include="AggregateFacetResult.cs" />
     <Compile Include="AggregateFacetResults.cs" />
     <Compile Include="AggregateFluent.cs" />

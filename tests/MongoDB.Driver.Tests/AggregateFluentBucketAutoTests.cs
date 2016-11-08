@@ -114,9 +114,9 @@ namespace MongoDB.Driver.Tests
             var subject = collection.Aggregate();
             var groupBy = (AggregateExpressionDefinition<BsonDocument, BsonValue>)"$_id";
             var buckets = 4;
-            var granularity = AggregateBucketAutoGranularity.PowersOf2;
+            var options = new AggregateBucketAutoOptions { Granularity = AggregateBucketAutoGranularity.PowersOf2 };
 
-            var result = subject.BucketAuto(groupBy, buckets, granularity);
+            var result = subject.BucketAuto(groupBy, buckets, options);
 
             var stage = result.Stages.Single();
             var renderedStage = stage.Render(BsonDocumentSerializer.Instance, BsonSerializer.SerializerRegistry);
@@ -132,9 +132,9 @@ namespace MongoDB.Driver.Tests
             var subject = collection.Aggregate();
             var groupBy = (AggregateExpressionDefinition<BsonDocument, double>)"$_id";
             var buckets = 4;
-            var granularity = AggregateBucketAutoGranularity.PowersOf2;
+            var options = new AggregateBucketAutoOptions { Granularity = AggregateBucketAutoGranularity.PowersOf2 };
 
-            var result = subject.BucketAuto(groupBy, buckets, granularity).ToList();
+            var result = subject.BucketAuto(groupBy, buckets, options).ToList();
 
             var comparer = AggregateBucketAutoResultEqualityComparer<double>.Instance;
             result.WithComparer(comparer).Should().Equal(

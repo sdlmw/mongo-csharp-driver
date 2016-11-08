@@ -70,7 +70,7 @@ namespace MongoDB.Driver
         public override IAggregateFluent<AggregateBucketResult<TValue>> Bucket<TValue>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             IEnumerable<TValue> boundaries,
-            Optional<TValue> defaultBucket = default(Optional<TValue>))
+            AggregateBucketOptions<TValue> options = null)
         {
             Ensure.IsNotNull(groupBy, nameof(groupBy));
             Ensure.IsNotNull(boundaries, nameof(boundaries));
@@ -83,7 +83,7 @@ namespace MongoDB.Driver
                     var valueSerializer = sr.GetSerializer<TValue>();
                     var renderedGroupBy = groupBy.Render(s, sr);
                     var serializedBoundaries = boundaries.Select(b => valueSerializer.ToBsonValue(b));
-                    var serializedDefaultBucket = defaultBucket.HasValue ? valueSerializer.ToBsonValue(defaultBucket.Value) : null;
+                    var serializedDefaultBucket = options != null && options.DefaultBucket.HasValue ? valueSerializer.ToBsonValue(options.DefaultBucket.Value) : null;
                     var document = new BsonDocument
                     {
                         { operatorName, new BsonDocument
@@ -107,7 +107,7 @@ namespace MongoDB.Driver
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             IEnumerable<TValue> boundaries,
             ProjectionDefinition<TResult, TNewResult> output,
-            Optional<TValue> defaultBucket = default(Optional<TValue>))
+            AggregateBucketOptions<TValue> options = null)
         {
             Ensure.IsNotNull(groupBy, nameof(groupBy));
             Ensure.IsNotNull(boundaries, nameof(boundaries));
@@ -122,7 +122,7 @@ namespace MongoDB.Driver
                     var newResultSerializer = sr.GetSerializer<TNewResult>();
                     var renderedGroupBy = groupBy.Render(s, sr);
                     var serializedBoundaries = boundaries.Select(b => valueSerializer.ToBsonValue(b));
-                    var serializedDefaultBucket = defaultBucket.HasValue ? valueSerializer.ToBsonValue(defaultBucket.Value) : null;
+                    var serializedDefaultBucket = options != null && options.DefaultBucket.HasValue ? valueSerializer.ToBsonValue(options.DefaultBucket.Value) : null;
                     var renderedOutput = output.Render(s, sr);
                     var document = new BsonDocument
                     {
@@ -147,7 +147,7 @@ namespace MongoDB.Driver
         public override IAggregateFluent<AggregateBucketAutoResult<TValue>> BucketAuto<TValue>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             int buckets,
-            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>))
+            AggregateBucketAutoOptions options = null)
         {
             Ensure.IsNotNull(groupBy, nameof(groupBy));
             Ensure.IsGreaterThanZero(buckets, nameof(buckets));
@@ -164,7 +164,7 @@ namespace MongoDB.Driver
                             {
                                 { "groupBy", renderedGroupBy },
                                 { "buckets", buckets },
-                                { "granularity", () => granularity.Value.Value, granularity.HasValue }
+                                { "granularity", () => options.Granularity.Value.Value, options != null && options.Granularity.HasValue }
                             }
                         }
                     };
@@ -181,7 +181,7 @@ namespace MongoDB.Driver
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             int buckets,
             ProjectionDefinition<TResult, TNewResult> output,
-            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>))
+            AggregateBucketAutoOptions options = null)
         {
             Ensure.IsNotNull(groupBy, nameof(groupBy));
             Ensure.IsGreaterThanZero(buckets, nameof(buckets));
@@ -202,7 +202,7 @@ namespace MongoDB.Driver
                                 { "groupBy", renderedGroupBy },
                                 { "buckets", buckets },
                                 { "output", renderedOutput.Document },
-                                { "granularity", () => granularity.Value.Value, granularity.HasValue }
+                                { "granularity", () => options.Granularity.Value.Value, options != null && options.Granularity.HasValue }
                            }
                         }
                     };

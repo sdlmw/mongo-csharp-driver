@@ -44,7 +44,7 @@ namespace MongoDB.Driver
         public virtual IAggregateFluent<AggregateBucketResult<TValue>> Bucket<TValue>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             IEnumerable<TValue> boundaries,
-            Optional<TValue> defaultBucket = default(Optional<TValue>))
+            AggregateBucketOptions<TValue> options = null)
         {
             throw new NotImplementedException();
         }
@@ -54,7 +54,7 @@ namespace MongoDB.Driver
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             IEnumerable<TValue> boundaries,
             ProjectionDefinition<TResult, TNewResult> output,
-            Optional<TValue> defaultBucket = default(Optional<TValue>))
+            AggregateBucketOptions<TValue> options = null)
         {
             throw new NotImplementedException();
         }
@@ -63,7 +63,7 @@ namespace MongoDB.Driver
         public virtual IAggregateFluent<AggregateBucketAutoResult<TValue>> BucketAuto<TValue>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             int buckets,
-            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>))
+            AggregateBucketAutoOptions options = null)
         {
             throw new NotImplementedException();
         }
@@ -73,7 +73,7 @@ namespace MongoDB.Driver
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             int buckets,
             ProjectionDefinition<TResult, TNewResult> output,
-            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>))
+            AggregateBucketAutoOptions options = null)
         {
             throw new NotImplementedException();
         }

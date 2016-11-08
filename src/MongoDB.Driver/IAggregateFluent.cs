@@ -64,12 +64,12 @@ namespace MongoDB.Driver
         /// <typeparam name="TValue">The type of the value.</typeparam>
         /// <param name="groupBy">The expression providing the value to group by.</param>
         /// <param name="boundaries">The bucket boundaries.</param>
-        /// <param name="defaultBucket">The default bucket (optional).</param>
+        /// <param name="options">The options.</param>
         /// <returns>The fluent aggregate interface.</returns>
         IAggregateFluent<AggregateBucketResult<TValue>> Bucket<TValue>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             IEnumerable<TValue> boundaries,
-            Optional<TValue> defaultBucket = default(Optional<TValue>));
+            AggregateBucketOptions<TValue> options = null);
 
         /// <summary>
         /// Appends a $bucket stage to the pipeline with a custom projection.
@@ -79,13 +79,13 @@ namespace MongoDB.Driver
         /// <param name="groupBy">The expression providing the value to group by.</param>
         /// <param name="boundaries">The bucket boundaries.</param>
         /// <param name="output">The output projection.</param>
-        /// <param name="defaultBucket">The default bucket (optional).</param>
+        /// <param name="options">The options.</param>
         /// <returns>The fluent aggregate interface.</returns>
         IAggregateFluent<TNewResult> Bucket<TValue, TNewResult>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             IEnumerable<TValue> boundaries,
             ProjectionDefinition<TResult, TNewResult> output,
-            Optional<TValue> defaultBucket = default(Optional<TValue>));
+            AggregateBucketOptions<TValue> options = null);
 
         /// <summary>
         /// Appends a $bucketAuto stage to the pipeline.
@@ -93,12 +93,12 @@ namespace MongoDB.Driver
         /// <typeparam name="TValue">The type of the value.</typeparam>
         /// <param name="groupBy">The expression providing the value to group by.</param>
         /// <param name="buckets">The number of buckets.</param>
-        /// <param name="granularity">The granularity (optional).</param>
+        /// <param name="options">The options (optional).</param>
         /// <returns>The fluent aggregate interface.</returns>
         IAggregateFluent<AggregateBucketAutoResult<TValue>> BucketAuto<TValue>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             int buckets,
-            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>));
+            AggregateBucketAutoOptions options = null);
 
         /// <summary>
         /// Appends a $bucketAuto stage to the pipeline with a custom projection.
@@ -108,13 +108,13 @@ namespace MongoDB.Driver
         /// <param name="groupBy">The expression providing the value to group by.</param>
         /// <param name="buckets">The number of buckets.</param>
         /// <param name="output">The output projection.</param>
-        /// <param name="granularity">The granularity (optional).</param>
+        /// <param name="options">The options (optional).</param>
         /// <returns>The fluent aggregate interface.</returns>
         IAggregateFluent<TNewResult> BucketAuto<TValue, TNewResult>(
             AggregateExpressionDefinition<TResult, TValue> groupBy,
             int buckets,
             ProjectionDefinition<TResult, TNewResult> output,
-            Optional<AggregateBucketAutoGranularity> granularity = default(Optional<AggregateBucketAutoGranularity>));
+            AggregateBucketAutoOptions options = null);
 
         /// <summary>
         /// Appends a count stage to the pipeline.

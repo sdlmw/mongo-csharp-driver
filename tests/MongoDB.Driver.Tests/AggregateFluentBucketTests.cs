@@ -79,9 +79,9 @@ namespace MongoDB.Driver.Tests
             var subject = collection.Aggregate();
             var groupBy = (AggregateExpressionDefinition<BsonDocument, BsonValue>)"$year";
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
-            var result = subject.Bucket(groupBy, boundaries, defaultBucket);
+            var result = subject.Bucket(groupBy, boundaries, options);
 
             var stage = result.Stages.Single();
             var renderedStage = stage.Render(BsonDocumentSerializer.Instance, BsonSerializer.SerializerRegistry);
@@ -97,9 +97,9 @@ namespace MongoDB.Driver.Tests
             var subject = collection.Aggregate();
             var groupBy = (AggregateExpressionDefinition<BsonDocument, BsonValue>)"$year";
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
-            var result = subject.Bucket(groupBy, boundaries, defaultBucket).ToList();
+            var result = subject.Bucket(groupBy, boundaries, options).ToList();
 
             var comparer = AggregateBucketResultEqualityComparer<BsonValue>.Instance;
             result.WithComparer(comparer).Should().Equal(
@@ -116,9 +116,9 @@ namespace MongoDB.Driver.Tests
             var groupBy = (AggregateExpressionDefinition<BsonDocument, BsonValue>)"$year";
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
             var output = (ProjectionDefinition<BsonDocument, BsonDocument>)"{ years : { $push : \"$year\" }, count : { $sum : 1 } }";
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
-            var result = subject.Bucket(groupBy, boundaries, output, defaultBucket);
+            var result = subject.Bucket(groupBy, boundaries, output, options);
 
             var stage = result.Stages.Single();
             var renderedStage = stage.Render(BsonDocumentSerializer.Instance, BsonSerializer.SerializerRegistry);
@@ -135,9 +135,9 @@ namespace MongoDB.Driver.Tests
             var groupBy = (AggregateExpressionDefinition<BsonDocument, BsonValue>)"$year";
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
             var output = (ProjectionDefinition<BsonDocument, BsonDocument>)"{ years : { $push : \"$year\" }, count : { $sum : 1 } }";
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
-            var result = subject.Bucket(groupBy, boundaries, output, defaultBucket).ToList();
+            var result = subject.Bucket(groupBy, boundaries, output, options).ToList();
 
             result.Should().Equal(
                 BsonDocument.Parse("{ _id : 1900, years : [ 1902 ], count : 1 }"),
@@ -151,9 +151,9 @@ namespace MongoDB.Driver.Tests
             var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
-            var result = subject.Bucket(x => x.Year, boundaries, defaultBucket);
+            var result = subject.Bucket(x => x.Year, boundaries, options);
 
             var stage = result.Stages.Single();
             var serializerRegistry = BsonSerializer.SerializerRegistry;
@@ -170,9 +170,9 @@ namespace MongoDB.Driver.Tests
             var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
-            var result = subject.Bucket(x => x.Year, boundaries, defaultBucket).ToList();
+            var result = subject.Bucket(x => x.Year, boundaries, options).ToList();
 
             var comparer = AggregateBucketResultEqualityComparer<BsonValue>.Instance;
             result.WithComparer(comparer).Should().Equal(
@@ -187,13 +187,13 @@ namespace MongoDB.Driver.Tests
             var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
             var result = subject.Bucket(
                 e => e.Year,
                 boundaries,
                 g => new { _id = default(BsonValue), Years = g.Select(e => e.Year), Count = g.Count() },
-                defaultBucket);
+                options);
 
             var stage = result.Stages.Single();
             var serializerRegistry = BsonSerializer.SerializerRegistry;
@@ -210,14 +210,14 @@ namespace MongoDB.Driver.Tests
             var collection = __database.GetCollection<Exhibit>(__collectionNamespace.CollectionName);
             var subject = collection.Aggregate();
             var boundaries = new BsonValue[] { 1900, 1920, 1950 };
-            var defaultBucket = (BsonValue)"Unknown";
+            var options = new AggregateBucketOptions<BsonValue> { DefaultBucket = (BsonValue)"Unknown" };
 
             var result = subject
                 .Bucket(
                     e => e.Year,
                     boundaries,
                     g => new { _id = default(BsonValue), Years = g.Select(e => e.Year), Count = g.Count() },
-                    defaultBucket)
+                    options)
                 .ToList();
 
             result.Select(b => b._id).Should().Equal(1900, 1920, "Unknown");

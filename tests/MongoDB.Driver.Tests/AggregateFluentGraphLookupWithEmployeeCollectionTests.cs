@@ -183,7 +183,7 @@ namespace MongoDB.Driver.Tests
         }
 
         [Fact]
-        public void GraphLookup_typed_should_add_expected_stage()
+        public void GraphLookup_with_expressions_should_add_expected_stage()
         {
             var subject = __employeesCollection.Aggregate();
 
@@ -209,7 +209,7 @@ namespace MongoDB.Driver.Tests
         }
 
         [SkippableFact]
-        public void GraphLookup_typed_should_return_expected_result()
+        public void GraphLookup_with_expressions_should_return_expected_result()
         {
             RequireServer.Check().Supports(Feature.AggregateGraphLookupStage);
             EnsureTestData();
@@ -234,6 +234,89 @@ namespace MongoDB.Driver.Tests
                 new EmployeeWithReportingHierarchy(__dan, new[] { __dev, __eliot, __andrew }));
         }
 
+        [Fact]
+        public void GraphLookup_untyped_based_should_add_expected_stage()
+        {
+            var subject = __employeesCollection.Aggregate();
+
+            var result = subject.GraphLookup(__employeesCollection, "reportsTo", "name", "$reportsTo", "reportingHierarchy");
+
+            var stage = result.Stages.Single();
+            var renderedStage = stage.Render(__employeesCollection.DocumentSerializer, BsonSerializer.SerializerRegistry);
+            renderedStage.Document.Should().Be(
+                @"{
+                    $graphLookup : {
+                        from : 'employees',
+                        connectFromField : 'reportsTo',
+                        connectToField : 'name',
+                        startWith : '$reportsTo',
+                        as : 'reportingHierarchy'
+                    }
+                }");
+        }
+
+        [SkippableFact]
+        public void GraphLookup_untyped_based_should_return_expected_result()
+        {
+            RequireServer.Check().Supports(Feature.AggregateGraphLookupStage);
+            EnsureTestData();
+            var subject = __employeesCollection.Aggregate();
+
+            var result = subject
+                .GraphLookup(__employeesCollection, "reportsTo", "name", "$reportsTo", "reportingHierarchy")
+                .ToList();
+
+            var comparer = new EmployeeWithReportingHierarchyBsonDocumentEqualityComparer();
+            result.WithComparer(comparer).Should().Equal(
+                BsonDocument.Parse(@"{ _id : 1, name : 'Dev', reportingHierarchy : [ ] }"),
+                BsonDocument.Parse(@"{
+                   _id : 2,
+                   name : 'Eliot',
+                   reportsTo : 'Dev',
+                   reportingHierarchy : [
+                      { _id : 1, name : 'Dev' }
+                   ]
+                }"),
+                BsonDocument.Parse(@"{
+                   _id : 3,
+                   name : 'Ron',
+                   reportsTo : 'Eliot',
+                   reportingHierarchy : [
+                      { _id : 1, name : 'Dev' },
+                      { _id : 2, name : 'Eliot', reportsTo : 'Dev' }
+                   ]
+                }"),
+                BsonDocument.Parse(@"{
+                   _id : 4,
+                   name : 'Andrew',
+                   reportsTo : 'Eliot',
+                   reportingHierarchy : [
+                      { _id : 1, name : 'Dev' },
+                      { _id : 2, name : 'Eliot', reportsTo : 'Dev' }
+                   ]
+                }"),
+                BsonDocument.Parse(@"{
+                   _id : 5,
+                   name : 'Asya',
+                   reportsTo : 'Ron',
+                   reportingHierarchy : [
+                      { _id : 1, name : 'Dev' },
+                      { _id : 2, name : 'Eliot', reportsTo : 'Dev' },
+                      { _id : 3, name : 'Ron', reportsTo : 'Eliot' }
+                   ]
+                }"),
+                BsonDocument.Parse(@"{
+                   _id : 6,
+                   name : 'Dan',
+                   reportsTo : 'Andrew',
+                   reportingHierarchy : [
+                      { _id : 1, name : 'Dev' },
+                      { _id : 2, name : 'Eliot', reportsTo : 'Dev' },
+                      { _id : 4, name : 'Andrew', reportsTo : 'Eliot' }
+                   ]
+                }"));
+        }
+
         // nested types
         private class Employee
         {
@@ -241,6 +324,7 @@ namespace MongoDB.Driver.Tests
             public int Id { get; set; }
             [BsonElement("name")]
             public string Name { get; set; }
+            [BsonIgnoreIfNull]
             [BsonElement("reportsTo")]
             public string ReportsTo { get; set; }
         }
@@ -259,6 +343,7 @@ namespace MongoDB.Driver.Tests
             public int Id { get; set; }
             [BsonElement("name")]
             public string Name { get; set; }
+            [BsonIgnoreIfNull]
             [BsonElement("reportsTo")]
             public string ReportsTo { get; set; }
             [BsonElement("reportingHierarchy")]
@@ -295,6 +380,30 @@ namespace MongoDB.Driver.Tests
             }
 
             public int GetHashCode(EmployeeWithReportingHierarchy obj)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private class EmployeeWithReportingHierarchyBsonDocumentEqualityComparer : IEqualityComparer<BsonDocument>
+        {
+            private readonly IEqualityComparer<IEnumerable<BsonDocument>> _reportingHierarchyComparer = new EnumerableSetEqualityComparer<BsonDocument>(new EqualsEqualityComparer<BsonDocument>());
+
+            public bool Equals(BsonDocument x, BsonDocument y)
+            {
+                if (!x.Names.SequenceEqual(y.Names))
+                {
+                    return false;
+                }
+
+                return
+                    x["_id"].Equals(y["_id"]) &&
+                    x["name"].Equals(y["name"]) &&
+                    object.Equals(x.GetValue("reportsTo", null), y.GetValue("reportsTo", null)) &&
+                    _reportingHierarchyComparer.Equals(x["reportingHierarchy"].AsBsonArray.Cast<BsonDocument>(), y["reportingHierarchy"].AsBsonArray.Cast<BsonDocument>());
+            }
+
+            public int GetHashCode(BsonDocument obj)
             {
                 throw new NotImplementedException();
             }

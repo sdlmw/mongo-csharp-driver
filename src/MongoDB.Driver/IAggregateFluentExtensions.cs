@@ -227,6 +227,32 @@ namespace MongoDB.Driver
         /// Appends a $graphLookup stage to the pipeline.
         /// </summary>
         /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <typeparam name="TFrom">The type of the from documents.</typeparam>
+        /// <param name="aggregate">The aggregate.</param>
+        /// <param name="from">The from collection.</param>
+        /// <param name="connectFromField">The connect from field.</param>
+        /// <param name="connectToField">The connect to field.</param>
+        /// <param name="startWith">The start with value.</param>
+        /// <param name="as">The as field.</param>
+        /// <param name="depthField">The depth field.</param>
+        /// <returns>The fluent aggregate interface.</returns>
+        public static IAggregateFluent<BsonDocument> GraphLookup<TResult, TFrom>(
+            this IAggregateFluent<TResult> aggregate,
+            IMongoCollection<TFrom> from,
+            FieldDefinition<TFrom, BsonValue> connectFromField,
+            FieldDefinition<TFrom, BsonValue> connectToField,
+            AggregateExpressionDefinition<TResult, BsonValue> startWith,
+            FieldDefinition<BsonDocument, IEnumerable<BsonDocument>> @as,
+            FieldDefinition<BsonDocument, int> depthField = null)
+        {
+            return aggregate.GraphLookup<BsonDocument, TFrom, BsonValue, BsonValue, BsonValue, BsonDocument, IEnumerable<BsonDocument>>(
+                from, connectFromField, connectToField, startWith, @as, depthField, null);
+        }
+
+        /// <summary>
+        /// Appends a $graphLookup stage to the pipeline.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <typeparam name="TNewResult">The type of the new result (must be same as TResult with an additional as field).</typeparam>
         /// <typeparam name="TFrom">The type of the from documents.</typeparam>
         /// <typeparam name="TConnect">The type of the connect field.</typeparam>

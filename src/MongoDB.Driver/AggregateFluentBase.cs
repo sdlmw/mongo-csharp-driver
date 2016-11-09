@@ -92,6 +92,7 @@ namespace MongoDB.Driver
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public virtual IAggregateFluent<TNewResult> GraphLookup<TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TAs, TAsEnumerable>(
             IMongoCollection<TFrom> from,
             FieldDefinition<TFrom, TConnectFrom> connectFromField,

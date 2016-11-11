@@ -565,7 +565,7 @@ namespace MongoDB.Driver.Tests
         private IAggregateFluent<Person> CreateSubject(CancellationToken cancellationToken = default(CancellationToken))
         {
             var collection = CreateCollection<Person>();
-            return new AggregateFluent<Person, Person>(collection, Enumerable.Empty<IPipelineStageDefinition>(), new AggregateOptions());
+            return new AggregateFluent<Person, Person>(collection, new EmptyPipelineDefinition<Person>(), new AggregateOptions());
         }
 
         private IMongoCollection<T> CreateCollection<T>()

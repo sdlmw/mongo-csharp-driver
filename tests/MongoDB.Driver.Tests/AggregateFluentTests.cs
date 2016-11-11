@@ -379,7 +379,7 @@ namespace MongoDB.Driver.Tests
             _mockCollection.SetupGet(c => c.DocumentSerializer).Returns(BsonSerializer.SerializerRegistry.GetSerializer<C>());
             _mockCollection.SetupGet(c => c.Settings).Returns(settings);
             var options = new AggregateOptions();
-            var subject = new AggregateFluent<C, C>(_mockCollection.Object, Enumerable.Empty<IPipelineStageDefinition>(), options);
+            var subject = new AggregateFluent<C, C>(_mockCollection.Object, new EmptyPipelineDefinition<C>(), options);
 
             return subject;
         }

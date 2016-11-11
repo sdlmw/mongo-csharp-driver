@@ -290,5 +290,11 @@ namespace MongoDB.Driver
     /// <typeparam name="TResult">The type of the result.</typeparam>
     public interface IOrderedAggregateFluent<TResult> : IAggregateFluent<TResult>
     {
+        /// <summary>
+        /// Combines the current sort definition with an additional sort definition.
+        /// </summary>
+        /// <param name="newSort">The new sort.</param>
+        /// The fluent aggregate interface.
+        IOrderedAggregateFluent<TResult> ThenBy(SortDefinition<TResult> newSort);
     }
 }

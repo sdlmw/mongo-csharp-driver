@@ -15,10 +15,8 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver.Core.Misc;
 
@@ -40,6 +38,11 @@ namespace MongoDB.Driver
         }
 
         // properties
+        public override IMongoDatabase Database
+        {
+            get { return _collection.Database; }
+        }
+
         public override AggregateOptions Options
         {
             get { return _options; }
@@ -107,58 +110,16 @@ namespace MongoDB.Driver
             return WithPipeline(_pipeline.Facet(facets, options));
         }
 
-        public override IAggregateFluent<TNewResult> GraphLookup<TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TAs, TAsEnumerable>(
+        public override IAggregateFluent<TNewResult> GraphLookup<TFrom, TConnectFrom, TConnectTo, TStartWith, TAsElement, TAs, TNewResult>(
             IMongoCollection<TFrom> from,
             FieldDefinition<TFrom, TConnectFrom> connectFromField,
-            FieldDefinition<TFrom, TConnect> connectToField,
+            FieldDefinition<TFrom, TConnectTo> connectToField,
             AggregateExpressionDefinition<TResult, TStartWith> startWith,
-            FieldDefinition<TNewResult, TAsEnumerable> @as,
-            FieldDefinition<TAs, int> depthField,
-            AggregateGraphLookupOptions<TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TAs, TAsEnumerable> options = null)
+            FieldDefinition<TNewResult, TAs> @as,
+            FieldDefinition<TAsElement, int> depthField,
+            AggregateGraphLookupOptions<TFrom, TAsElement, TNewResult> options = null)
         {
-            Ensure.IsNotNull(from, nameof(from));
-            Ensure.IsNotNull(connectFromField, nameof(connectFromField));
-            Ensure.IsNotNull(connectToField, nameof(connectToField));
-            Ensure.IsNotNull(startWith, nameof(startWith));
-            Ensure.IsNotNull(@as, nameof(@as));
-            Ensure.That(from.Database.DatabaseNamespace.Equals(_collection.Database.DatabaseNamespace), "From collection must be from the same database.", nameof(from));
-            Ensure.That(IsTConnectOrEnumerableTConnect<TConnectFrom, TConnect>(), "TConnectFrom must be either TConnect or a type that implements IEnumerable<TConnect>.", nameof(TConnectFrom));
-            Ensure.That(IsTConnectOrEnumerableTConnect<TStartWith, TConnect>(), "TStartWith must be either TConnect or a type that implements IEnumerable<TConnect>.", nameof(TStartWith));
-
-            const string operatorName = "$graphLookup";
-            var stage = new DelegatedPipelineStageDefinition<TResult, TNewResult>(
-                operatorName,
-                (s, sr) =>
-                {
-                    var resultSerializer = s;
-                    var newResultSerializer = options?.NewResultSerializer ?? sr.GetSerializer<TNewResult>();
-                    var fromSerializer = options?.FromSerializer ?? sr.GetSerializer<TFrom>();
-                    var asSerializer = options?.AsSerializer ?? sr.GetSerializer<TAs>();
-                    var renderedConnectToField = connectToField.Render(fromSerializer, sr);
-                    var renderedStartWith = startWith.Render(resultSerializer, sr);
-                    var renderedConnectFromField = connectFromField.Render(fromSerializer, sr);
-                    var renderedAs = @as.Render(newResultSerializer, sr);
-                    var renderedDepthField = depthField?.Render(asSerializer, sr);
-                    var renderedRestrictSearchWithMatch = options?.RestrictSearchWithMatch?.Render(fromSerializer, sr);
-                    var document = new BsonDocument
-                    {
-                        { operatorName, new BsonDocument
-                            {
-                                { "from", from.CollectionNamespace.CollectionName },
-                                { "connectFromField", renderedConnectFromField.FieldName },
-                                { "connectToField", renderedConnectToField.FieldName },
-                                { "startWith", renderedStartWith },
-                                { "as", renderedAs.FieldName },
-                                { "depthField", () => renderedDepthField.FieldName, renderedDepthField != null },
-                                { "maxDepth", () => options.MaxDepth.Value, options != null && options.MaxDepth.HasValue },
-                                { "restrictSearchWithMatch", renderedRestrictSearchWithMatch, renderedRestrictSearchWithMatch != null }
-                            }
-                        }
-                    };
-                    return new RenderedPipelineStageDefinition<TNewResult>(operatorName, document, newResultSerializer);
-                });
-
-            return AppendStage<TNewResult>(stage);
+            return WithPipeline(_pipeline.GraphLookup(from, connectFromField, connectToField, startWith, @as, depthField, options));
         }
 
         public override IAggregateFluent<TNewResult> Group<TNewResult>(ProjectionDefinition<TResult, TNewResult> group)
@@ -171,9 +132,11 @@ namespace MongoDB.Driver
             return WithPipeline(_pipeline.Limit(limit));
         }
 
-        public override IAggregateFluent<TNewResult> Lookup<TForeignDocument, TNewResult>(string foreignCollectionName, FieldDefinition<TResult> localField, FieldDefinition<TForeignDocument> foreignField, FieldDefinition<TNewResult> @as, AggregateLookupOptions<TForeignDocument, TNewResult> options = null)
+        public override IAggregateFluent<TNewResult> Lookup<TForeignDocument, TNewResult>(string foreignCollectionName, FieldDefinition<TResult> localField, FieldDefinition<TForeignDocument> foreignField, FieldDefinition<TNewResult> @as, AggregateLookupOptions<TForeignDocument, TNewResult> options)
         {
-            return WithPipeline(_pipeline.Lookup(foreignCollectionName, localField, foreignField, @as, options));
+            Ensure.IsNotNull(foreignCollectionName, nameof(foreignCollectionName));
+            var foreignCollection = _collection.Database.GetCollection<TForeignDocument>(foreignCollectionName);
+            return WithPipeline(_pipeline.Lookup(foreignCollection, localField, foreignField, @as, options));
         }
 
         public override IAggregateFluent<TResult> Match(FilterDefinition<TResult> filter)
@@ -188,13 +151,17 @@ namespace MongoDB.Driver
 
         public override IAsyncCursor<TResult> Out(string collectionName, CancellationToken cancellationToken)
         {
-            var aggregate = WithPipeline(_pipeline.Out(collectionName));
+            Ensure.IsNotNull(collectionName, nameof(collectionName));
+            var outputCollection = Database.GetCollection<TResult>(collectionName);
+            var aggregate = WithPipeline(_pipeline.Out(outputCollection));
             return aggregate.ToCursor(cancellationToken);
         }
 
         public override Task<IAsyncCursor<TResult>> OutAsync(string collectionName, CancellationToken cancellationToken)
         {
-            var aggregate = WithPipeline(_pipeline.Out(collectionName));
+            Ensure.IsNotNull(collectionName, nameof(collectionName));
+            var outputCollection = Database.GetCollection<TResult>(collectionName);
+            var aggregate = WithPipeline(_pipeline.Out(outputCollection));
             return aggregate.ToCursorAsync(cancellationToken);
         }
 
@@ -225,6 +192,7 @@ namespace MongoDB.Driver
 
         public override IOrderedAggregateFluent<TResult> ThenBy(SortDefinition<TResult> newSort)
         {
+            Ensure.IsNotNull(newSort, nameof(newSort));
             var stages = _pipeline.Stages.ToList();
             var oldSortStage = (SortPipelineStageDefinition<TResult>)stages[stages.Count - 1];
             var oldSort = oldSortStage.Sort;
@@ -263,23 +231,6 @@ namespace MongoDB.Driver
         public IAggregateFluent<TNewResult> WithPipeline<TNewResult>(PipelineDefinition<TDocument, TNewResult> pipeline)
         {
             return new AggregateFluent<TDocument, TNewResult>(_collection, pipeline, _options);
-        }
-
-        // private methods
-        private bool IsTConnectOrEnumerableTConnect<TConnectFrom, TConnect>()
-        {
-            if (typeof(TConnect) == typeof(TConnectFrom))
-            {
-                return true;
-            }
-
-            var ienumerableTConnect = typeof(IEnumerable<>).MakeGenericType(typeof(TConnect));
-            if (typeof(TConnectFrom).GetTypeInfo().GetInterfaces().Contains(ienumerableTConnect))
-            {
-                return true;
-            }
-
-            return false;
         }
     }
 }

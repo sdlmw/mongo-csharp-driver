@@ -570,12 +570,28 @@ namespace MongoDB.Driver.Tests
 
         private IMongoCollection<T> CreateCollection<T>()
         {
+            var mockDatabase = new Mock<IMongoDatabase>();
+            SetupDatabaseGetCollectionMethod<BsonDocument>(mockDatabase);
+
             var settings = new MongoCollectionSettings();
             var mockCollection = new Mock<IMongoCollection<T>>();
             mockCollection.SetupGet(c => c.CollectionNamespace).Returns(new CollectionNamespace(new DatabaseNamespace("test"), typeof(T).Name));
+            mockCollection.SetupGet(c => c.Database).Returns(mockDatabase.Object);
             mockCollection.SetupGet(c => c.DocumentSerializer).Returns(settings.SerializerRegistry.GetSerializer<T>());
             mockCollection.SetupGet(c => c.Settings).Returns(settings);
             return mockCollection.Object;
+        }
+
+        private void SetupDatabaseGetCollectionMethod<TDocument>(Mock<IMongoDatabase> mockDatabase)
+        {
+            mockDatabase
+                .Setup(d => d.GetCollection<TDocument>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>()))
+                .Returns((string collectionName, MongoCollectionSettings settings) =>
+                {
+                    var mockCollection = new Mock<IMongoCollection<TDocument>>();
+                    mockCollection.SetupGet(c => c.CollectionNamespace).Returns(new CollectionNamespace(new DatabaseNamespace("test"), collectionName));
+                    return mockCollection.Object;
+                });
         }
 
         private IAsyncCursor<Person> CreateCursor(params Person[] persons)

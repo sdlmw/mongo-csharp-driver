@@ -22,7 +22,6 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver.Core.Misc;
-using MongoDB.Driver.Linq.Translators;
 
 namespace MongoDB.Driver
 {
@@ -164,17 +163,17 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(aggregate, nameof(aggregate));
             return aggregate.AppendStage(PipelineStageDefinitionBuilder.Facet<TResult, TNewResult>(facets));
         }
-        
+
         /// <summary>
         /// Appends a $graphLookup stage to the pipeline.
         /// </summary>
         /// <typeparam name="TResult">The type of the result.</typeparam>
-        /// <typeparam name="TNewResult">The type of the new result (must be same as TResult with an additional as field).</typeparam>
         /// <typeparam name="TFrom">The type of the from documents.</typeparam>
-        /// <typeparam name="TConnect">The type of the connect field.</typeparam>
-        /// <typeparam name="TConnectFrom">The type of the connect from field (must be either TConnect or a type that implements IEnumerable{TConnect}).</typeparam>
-        /// <typeparam name="TStartWith">The type of the start with expression (must be either TConnect or a type that implements IEnumerable{TConnect}).</typeparam>
-        /// <typeparam name="TAsEnumerable">The type of the enumerable as field.</typeparam>
+        /// <typeparam name="TConnectFrom">The type of the connect from field (must be either TConnectTo or a type that implements IEnumerable{TConnectTo}).</typeparam>
+        /// <typeparam name="TConnectTo">The type of the connect to field.</typeparam>
+        /// <typeparam name="TStartWith">The type of the start with expression (must be either TConnectTo or a type that implements IEnumerable{TConnectTo}).</typeparam>
+        /// <typeparam name="TAs">The type of the as field.</typeparam>
+        /// <typeparam name="TNewResult">The type of the new result (must be same as TResult with an additional as field).</typeparam>
         /// <param name="aggregate">The aggregate.</param>
         /// <param name="from">The from collection.</param>
         /// <param name="connectFromField">The connect from field.</param>
@@ -183,24 +182,18 @@ namespace MongoDB.Driver
         /// <param name="as">The as field.</param>
         /// <param name="options">The options.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        public static IAggregateFluent<TNewResult> GraphLookup<TResult, TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TAsEnumerable>(
+        public static IAggregateFluent<TNewResult> GraphLookup<TResult, TFrom, TConnectFrom, TConnectTo, TStartWith, TAs, TNewResult>(
             this IAggregateFluent<TResult> aggregate,
             IMongoCollection<TFrom> from,
             FieldDefinition<TFrom, TConnectFrom> connectFromField,
-            FieldDefinition<TFrom, TConnect> connectToField,
+            FieldDefinition<TFrom, TConnectTo> connectToField,
             AggregateExpressionDefinition<TResult, TStartWith> startWith,
-            FieldDefinition<TNewResult, TAsEnumerable> @as,
-            AggregateGraphLookupOptions<TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TFrom, TAsEnumerable> options = null)
-                where TAsEnumerable : IEnumerable<TFrom>
+            FieldDefinition<TNewResult, TAs> @as,
+            AggregateGraphLookupOptions<TFrom, TFrom, TNewResult> options = null)
+                where TAs : IEnumerable<TFrom>
         {
             Ensure.IsNotNull(aggregate, nameof(aggregate));
-            Ensure.IsNotNull(from, nameof(from));
-            Ensure.IsNotNull(connectFromField, nameof(connectFromField));
-            Ensure.IsNotNull(connectToField, nameof(connectToField));
-            Ensure.IsNotNull(startWith, nameof(startWith));
-            Ensure.IsNotNull(@as, nameof(@as));
-            var depthField = (FieldDefinition<TFrom, int>)null;
-            return aggregate.GraphLookup(from, connectFromField, connectToField, startWith, @as, depthField, options);
+            return aggregate.AppendStage(PipelineStageDefinitionBuilder.GraphLookup(from, connectFromField, connectToField, startWith, @as, options));
         }
 
         /// <summary>
@@ -225,8 +218,8 @@ namespace MongoDB.Driver
             FieldDefinition<BsonDocument, IEnumerable<BsonDocument>> @as,
             FieldDefinition<BsonDocument, int> depthField = null)
         {
-            return aggregate.GraphLookup<BsonDocument, TFrom, BsonValue, BsonValue, BsonValue, BsonDocument, IEnumerable<BsonDocument>>(
-                from, connectFromField, connectToField, startWith, @as, depthField, null);
+            Ensure.IsNotNull(aggregate, nameof(aggregate));
+            return aggregate.AppendStage(PipelineStageDefinitionBuilder.GraphLookup(from, connectFromField, connectToField, startWith, @as, depthField));
         }
 
         /// <summary>
@@ -235,10 +228,10 @@ namespace MongoDB.Driver
         /// <typeparam name="TResult">The type of the result.</typeparam>
         /// <typeparam name="TNewResult">The type of the new result (must be same as TResult with an additional as field).</typeparam>
         /// <typeparam name="TFrom">The type of the from documents.</typeparam>
-        /// <typeparam name="TConnect">The type of the connect field.</typeparam>
-        /// <typeparam name="TConnectFrom">The type of the connect from field (must be either TConnect or a type that implements IEnumerable{TConnect}).</typeparam>
-        /// <typeparam name="TStartWith">The type of the start with expression (must be either TConnect or a type that implements IEnumerable{TConnect}).</typeparam>
-        /// <typeparam name="TAsEnumerable">The type of the enumerable as field.</typeparam>
+        /// <typeparam name="TConnectFrom">The type of the connect from field (must be either TConnectTo or a type that implements IEnumerable{TConnectTo}).</typeparam>
+        /// <typeparam name="TConnectTo">The type of the connect to field.</typeparam>
+        /// <typeparam name="TStartWith">The type of the start with expression (must be either TConnectTo or a type that implements IEnumerable{TConnectTo}).</typeparam>
+        /// <typeparam name="TAs">The type of the as field.</typeparam>
         /// <param name="aggregate">The aggregate.</param>
         /// <param name="from">The from collection.</param>
         /// <param name="connectFromField">The connect from field.</param>
@@ -247,40 +240,31 @@ namespace MongoDB.Driver
         /// <param name="as">The as field.</param>
         /// <param name="options">The options.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        public static IAggregateFluent<TNewResult> GraphLookup<TResult, TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TAsEnumerable>(
+        public static IAggregateFluent<TNewResult> GraphLookup<TResult, TFrom, TConnectFrom, TConnectTo, TStartWith, TAs, TNewResult>(
             this IAggregateFluent<TResult> aggregate,
             IMongoCollection<TFrom> from,
             Expression<Func<TFrom, TConnectFrom>> connectFromField,
-            Expression<Func<TFrom, TConnect>> connectToField,
+            Expression<Func<TFrom, TConnectTo>> connectToField,
             Expression<Func<TResult, TStartWith>> startWith,
-            Expression<Func<TNewResult, TAsEnumerable>> @as,
-            AggregateGraphLookupOptions<TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TFrom, TAsEnumerable> options = null)
-                where TAsEnumerable : IEnumerable<TFrom>
+            Expression<Func<TNewResult, TAs>> @as,
+            AggregateGraphLookupOptions<TFrom, TFrom, TNewResult> options = null)
+                where TAs : IEnumerable<TFrom>
         {
             Ensure.IsNotNull(aggregate, nameof(aggregate));
-            Ensure.IsNotNull(from, nameof(from));
-            Ensure.IsNotNull(connectFromField, nameof(connectFromField));
-            Ensure.IsNotNull(connectToField, nameof(connectToField));
-            Ensure.IsNotNull(startWith, nameof(startWith));
-            Ensure.IsNotNull(@as, nameof(@as));
-            var connectFromFieldDefinition = new ExpressionFieldDefinition<TFrom, TConnectFrom>(connectFromField);
-            var connectToFieldDefinition = new ExpressionFieldDefinition<TFrom, TConnect>(connectToField);
-            var startWithDefinition = new ExpressionAggregateExpressionDefinition<TResult, TStartWith>(startWith, aggregate.Options.TranslationOptions);
-            var asDefinition = new ExpressionFieldDefinition<TNewResult, TAsEnumerable>(@as);
-            return aggregate.GraphLookup(from, connectFromFieldDefinition, connectToFieldDefinition, startWithDefinition, asDefinition, options);
+            return aggregate.AppendStage(PipelineStageDefinitionBuilder.GraphLookup(from, connectFromField, connectToField, startWith, @as, options, aggregate.Options?.TranslationOptions));
         }
 
         /// <summary>
         /// Appends a $graphLookup stage to the pipeline.
         /// </summary>
         /// <typeparam name="TResult">The type of the result.</typeparam>
-        /// <typeparam name="TNewResult">The type of the new result (must be same as TResult with an additional as field).</typeparam>
         /// <typeparam name="TFrom">The type of the from documents.</typeparam>
-        /// <typeparam name="TConnect">The type of the connect field.</typeparam>
-        /// <typeparam name="TConnectFrom">The type of the connect from field (must be either TConnect or a type that implements IEnumerable{TConnect}).</typeparam>
-        /// <typeparam name="TStartWith">The type of the start with expression (must be either TConnect or a type that implements IEnumerable{TConnect}).</typeparam>
-        /// <typeparam name="TAs">The type of the documents in the as field.</typeparam>
-        /// <typeparam name="TAsEnumerable">The type of the enumerable as field.</typeparam>
+        /// <typeparam name="TConnectFrom">The type of the connect from field (must be either TConnectTo or a type that implements IEnumerable{TConnectTo}).</typeparam>
+        /// <typeparam name="TConnectTo">The type of the connect to field.</typeparam>
+        /// <typeparam name="TStartWith">The type of the start with expression (must be either TConnectTo or a type that implements IEnumerable{TConnectTo}).</typeparam>
+        /// <typeparam name="TAsElement">The type of the as field elements.</typeparam>
+        /// <typeparam name="TAs">The type of the as field.</typeparam>
+        /// <typeparam name="TNewResult">The type of the new result (must be same as TResult with an additional as field).</typeparam>
         /// <param name="aggregate">The aggregate.</param>
         /// <param name="from">The from collection.</param>
         /// <param name="connectFromField">The connect from field.</param>
@@ -290,28 +274,19 @@ namespace MongoDB.Driver
         /// <param name="depthField">The depth field.</param>
         /// <param name="options">The options.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        public static IAggregateFluent<TNewResult> GraphLookup<TResult, TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TAs, TAsEnumerable>(
+        public static IAggregateFluent<TNewResult> GraphLookup<TResult, TFrom, TConnectFrom, TConnectTo, TStartWith, TAsElement, TAs, TNewResult>(
             this IAggregateFluent<TResult> aggregate,
             IMongoCollection<TFrom> from,
             Expression<Func<TFrom, TConnectFrom>> connectFromField,
-            Expression<Func<TFrom, TConnect>> connectToField,
+            Expression<Func<TFrom, TConnectTo>> connectToField,
             Expression<Func<TResult, TStartWith>> startWith,
-            Expression<Func<TNewResult, TAsEnumerable>> @as,
-            Expression<Func<TAs, int>> depthField,
-            AggregateGraphLookupOptions<TNewResult, TFrom, TConnect, TConnectFrom, TStartWith, TAs, TAsEnumerable> options = null)
-                where TAsEnumerable : IEnumerable<TAs>
+            Expression<Func<TNewResult, TAs>> @as,
+            Expression<Func<TAsElement, int>> depthField,
+            AggregateGraphLookupOptions<TFrom, TAsElement, TNewResult> options = null)
+                where TAs : IEnumerable<TAsElement>
         {
             Ensure.IsNotNull(aggregate, nameof(aggregate));
-            Ensure.IsNotNull(from, nameof(from));
-            Ensure.IsNotNull(connectFromField, nameof(connectFromField));
-            Ensure.IsNotNull(connectToField, nameof(connectToField));
-            Ensure.IsNotNull(@as, nameof(@as));
-            var connectFromFieldDefinition = new ExpressionFieldDefinition<TFrom, TConnectFrom>(connectFromField);
-            var connectToFieldDefinition = new ExpressionFieldDefinition<TFrom, TConnect>(connectToField);
-            var startWithDefinition = new ExpressionAggregateExpressionDefinition<TResult, TStartWith>(startWith, aggregate.Options.TranslationOptions);
-            var asDefinition = new ExpressionFieldDefinition<TNewResult, TAsEnumerable>(@as);
-            var depthFieldDefinition = depthField == null ? null : new ExpressionFieldDefinition<TAs, int>(depthField);
-            return aggregate.GraphLookup(from, connectFromFieldDefinition, connectToFieldDefinition, startWithDefinition, asDefinition, depthFieldDefinition, options);
+            return aggregate.AppendStage(PipelineStageDefinitionBuilder.GraphLookup(from, connectFromField, connectToField, startWith, @as, depthField, options, aggregate.Options?.TranslationOptions));
         }
 
         /// <summary>
@@ -357,14 +332,17 @@ namespace MongoDB.Driver
         /// <param name="foreignField">The foreign field.</param>
         /// <param name="as">The field in the result to place the foreign matches.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        public static IAggregateFluent<BsonDocument> Lookup<TResult>(this IAggregateFluent<TResult> aggregate,
+        public static IAggregateFluent<BsonDocument> Lookup<TResult>(
+            this IAggregateFluent<TResult> aggregate,
             string foreignCollectionName,
             FieldDefinition<TResult> localField,
             FieldDefinition<BsonDocument> foreignField,
             FieldDefinition<BsonDocument> @as)
         {
             Ensure.IsNotNull(aggregate, nameof(aggregate));
-            return aggregate.AppendStage(PipelineStageDefinitionBuilder.Lookup(foreignCollectionName, localField, foreignField, @as));
+            Ensure.IsNotNull(foreignCollectionName, nameof(foreignCollectionName));
+            var foreignCollection = aggregate.Database.GetCollection<BsonDocument>(foreignCollectionName);
+            return aggregate.AppendStage(PipelineStageDefinitionBuilder.Lookup(foreignCollection, localField, foreignField, @as));
         }
 
         /// <summary>
@@ -380,7 +358,8 @@ namespace MongoDB.Driver
         /// <param name="as">The field in the result to place the foreign matches.</param>
         /// <param name="options">The options.</param>
         /// <returns>The fluent aggregate interface.</returns>
-        public static IAggregateFluent<TNewResult> Lookup<TResult, TForeignDocument, TNewResult>(this IAggregateFluent<TResult> aggregate,
+        public static IAggregateFluent<TNewResult> Lookup<TResult, TForeignDocument, TNewResult>(
+            this IAggregateFluent<TResult> aggregate,
             IMongoCollection<TForeignDocument> foreignCollection,
             Expression<Func<TResult, object>> localField,
             Expression<Func<TForeignDocument, object>> foreignField,
@@ -388,7 +367,7 @@ namespace MongoDB.Driver
             AggregateLookupOptions<TForeignDocument, TNewResult> options = null)
         {
             Ensure.IsNotNull(aggregate, nameof(aggregate));
-            return aggregate.AppendStage(PipelineStageDefinitionBuilder.Lookup(foreignCollection.CollectionNamespace.CollectionName, localField, foreignField, @as, options));
+            return aggregate.AppendStage(PipelineStageDefinitionBuilder.Lookup(foreignCollection, localField, foreignField, @as, options));
         }
 
         /// <summary>

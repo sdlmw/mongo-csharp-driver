@@ -286,7 +286,12 @@ namespace MongoDB.Driver.Core.Clusters.ServerSelectors
 
                 if (_maxStaleness.Value < heartbeatInterval + idleWritePeriod)
                 {
-                    throw new Exception("Max staleness must greater than or equal to heartbeat interval plus idle write period.");
+                    var message = string.Format(
+                        "Max staleness ({0} ms) must greater than or equal to heartbeat interval ({1} ms) plus idle write period ({2} ms).",
+                        (int)_maxStaleness.Value.TotalMilliseconds,
+                        (int)heartbeatInterval.TotalMilliseconds,
+                        (int)idleWritePeriod.TotalMilliseconds);
+                    throw new Exception(message);
                 }
             }
         }

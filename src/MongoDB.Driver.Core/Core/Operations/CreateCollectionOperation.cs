@@ -265,12 +265,21 @@ namespace MongoDB.Driver.Core.Operations
         {
             if (_usePowerOf2Sizes.HasValue || _noPadding.HasValue)
             {
-                return
-                    ((_usePowerOf2Sizes ?? false) ? CreateCollectionFlags.UsePowerOf2Sizes : 0) |
-                    ((_noPadding ?? false) ? CreateCollectionFlags.NoPadding : 0);
+                var flags = CreateCollectionFlags.None;
+                if (_usePowerOf2Sizes.HasValue && _usePowerOf2Sizes.Value)
+                {
+                    flags |= CreateCollectionFlags.UsePowerOf2Sizes;
+                }
+                if (_noPadding.HasValue && _noPadding.Value)
+                {
+                    flags |= CreateCollectionFlags.NoPadding;
+                }
+                return flags;
             }
-
-            return null;
+            else
+            {
+                return null;
+            }
         }
 
         /// <inheritdoc/>
@@ -314,6 +323,7 @@ namespace MongoDB.Driver.Core.Operations
         [Flags]
         private enum CreateCollectionFlags
         {
+            None = 0,
             UsePowerOf2Sizes = 1,
             NoPadding = 2
         }

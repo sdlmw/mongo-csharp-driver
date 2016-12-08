@@ -25,7 +25,6 @@ namespace MongoDB.Bson.Serialization.Conventions
     public class EnumRepresentationConvention : ConventionBase, IMemberMapConvention
     {
         // private fields
-        private readonly bool _applyToNullableEnums;
         private readonly BsonType _representation;
 
         // constructors
@@ -34,18 +33,11 @@ namespace MongoDB.Bson.Serialization.Conventions
         /// </summary>
         /// <param name="representation">The serialization representation. 0 is used to detect representation
         /// from the enum itself.</param>
-        /// <param name="applyToNullableEnums">Whether to apply the convention to nullable enums (default is false for backward compatibility).</param>
-        public EnumRepresentationConvention(BsonType representation, bool applyToNullableEnums = false)
+        public EnumRepresentationConvention(BsonType representation)
         {
             EnsureRepresentationIsValidForEnums(representation);
             _representation = representation;
-            _applyToNullableEnums = applyToNullableEnums;
         }
-
-        /// <summary>
-        /// Gets a value indicating whether to apply the convention to nullable enums.
-        /// </summary>
-        public bool ApplyToNullableEnums => _applyToNullableEnums;
 
         /// <summary>
         /// Gets the representation.
@@ -75,20 +67,17 @@ namespace MongoDB.Bson.Serialization.Conventions
 
             if (IsNullableEnum(memberType))
             {
-                if (_applyToNullableEnums)
+                var serializer = memberMap.GetSerializer();
+                var childSerializerConfigurableSerializer = serializer as IChildSerializerConfigurable;
+                if (childSerializerConfigurableSerializer != null)
                 {
-                    var serializer = memberMap.GetSerializer();
-                    var childSerializerConfigurableSerializer = serializer as IChildSerializerConfigurable;
-                    if (childSerializerConfigurableSerializer != null)
+                    var childSerializer = childSerializerConfigurableSerializer.ChildSerializer;
+                    var representationConfigurableChildSerializer = childSerializer as IRepresentationConfigurable;
+                    if (representationConfigurableChildSerializer != null)
                     {
-                        var childSerializer = childSerializerConfigurableSerializer.ChildSerializer;
-                        var representationConfigurableChildSerializer = childSerializer as IRepresentationConfigurable;
-                        if (representationConfigurableChildSerializer != null)
-                        {
-                            var reconfiguredChildSerializer = representationConfigurableChildSerializer.WithRepresentation(_representation);
-                            var reconfiguredSerializer = childSerializerConfigurableSerializer.WithChildSerializer(reconfiguredChildSerializer);
-                            memberMap.SetSerializer(reconfiguredSerializer);
-                        }
+                        var reconfiguredChildSerializer = representationConfigurableChildSerializer.WithRepresentation(_representation);
+                        var reconfiguredSerializer = childSerializerConfigurableSerializer.WithChildSerializer(reconfiguredChildSerializer);
+                        memberMap.SetSerializer(reconfiguredSerializer);
                     }
                 }
                 return;

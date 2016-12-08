@@ -52,9 +52,9 @@ namespace MongoDB.Bson.Tests.Serialization.Conventions
         [Theory]
         [InlineData(BsonType.Int32)]
         [InlineData(BsonType.Int64)]
-        public void Apply_should_configure_serializer_when_member_is_a_nullable_enum_and_applyToNullableEnums_is_true(BsonType representation)
+        public void Apply_should_configure_serializer_when_member_is_a_nullable_enum(BsonType representation)
         {
-            var subject = new EnumRepresentationConvention(representation, applyToNullableEnums: true);
+            var subject = new EnumRepresentationConvention(representation);
             var memberMap = CreateMemberMap(c => c.NE);
 
             subject.Apply(memberMap);
@@ -62,18 +62,6 @@ namespace MongoDB.Bson.Tests.Serialization.Conventions
             var serializer = (IChildSerializerConfigurable)memberMap.GetSerializer();
             var childSerializer = (EnumSerializer<E>)serializer.ChildSerializer;
             childSerializer.Representation.Should().Be(representation);
-        }
-
-        [Fact]
-        public void Apply_should_do_nothing_when_member_is_a_nullable_enum_and_applyToNullableEnums_is_false()
-        {
-            var subject = new EnumRepresentationConvention(BsonType.String, applyToNullableEnums: false);
-            var memberMap = CreateMemberMap(c => c.NE);
-            var serializer = memberMap.GetSerializer();
-
-            subject.Apply(memberMap);
-
-            memberMap.GetSerializer().Should().BeSameAs(serializer);
         }
 
         [Fact]
@@ -89,16 +77,6 @@ namespace MongoDB.Bson.Tests.Serialization.Conventions
         }
 
         [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void constructor_should_initialize_instance_when_applyToNullableEnums_is_valid(bool applyToNullableEnums)
-        {
-            var subject = new EnumRepresentationConvention(0, applyToNullableEnums);
-
-            subject.ApplyToNullableEnums.Should().Be(applyToNullableEnums);
-        }
-
-        [Theory]
         [InlineData(0)]
         [InlineData(BsonType.Int32)]
         [InlineData(BsonType.Int64)]
@@ -108,14 +86,6 @@ namespace MongoDB.Bson.Tests.Serialization.Conventions
             var subject = new EnumRepresentationConvention(representation);
 
             subject.Representation.Should().Be(representation);
-        }
-
-        [Fact]
-        public void constructor_should_default_applyToNullableEnums_to_false()
-        {
-            var subject = new EnumRepresentationConvention(0);
-
-            subject.ApplyToNullableEnums.Should().BeFalse();
         }
 
         [Theory]

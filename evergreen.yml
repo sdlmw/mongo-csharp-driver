@@ -5,9 +5,9 @@ tasks:
     params: 
       directory: mongo-csharp-driver
   - command: shell.exec
+    working_dir: mongo-csharp-driver
     params: 
       script: |
-        cd mongo-csharp-driver
         powershell.exe .\\build.ps1 -target BuildNet45
 
 buildvariants:

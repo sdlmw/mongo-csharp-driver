@@ -34,33 +34,49 @@ namespace MongoDB.Bson.Serialization.Conventions
                 return;
             }
 
-            if (typeInfo.GetConstructor(Type.EmptyTypes) != null)
+            var properties = typeInfo.GetProperties();
+            if (properties.Any(p => p.CanWrite))
             {
-                return;
+                return; // a type that has any writable properties is not immutable
             }
 
+            var mappedConstructor = false;
             foreach (var ctor in typeInfo.GetConstructors())
             {
                 var parameters = ctor.GetParameters();
-                var properties = typeInfo.GetProperties();
+                if (parameters.Length == 0)
+                {
+                    return; // for backward compatibility this convention will not map any type that has a default constructor (immutable types normally don't)
+                }
                 if (parameters.Length != properties.Length)
                 {
-                    continue;
+                    continue; // only consider constructors that have sufficient parameters to initialize all properties
                 }
 
                 var matches = parameters
                     .GroupJoin(properties,
                         parameter => parameter.Name,
                         property => property.Name,
-                        (parameter, props) => new { parameter, properties = props },
+                        (parameter, props) => new { Parameter = parameter, Properties = props },
                         StringComparer.OrdinalIgnoreCase);
 
-                if (matches.Any(m => m.properties.Count() != 1 || m.properties.ElementAt(0).CanWrite))
+                if (matches.Any(m => m.Properties.Count() != 1))
                 {
                     continue;
                 }
 
                 classMap.MapConstructor(ctor);
+
+                mappedConstructor = true;
+            }
+
+            if (mappedConstructor)
+            {
+                // if this convention mapped a constructor then map all the properties also
+                foreach (var property in properties)
+                {
+                    classMap.MapMember(property);
+                }
             }
         }
     }

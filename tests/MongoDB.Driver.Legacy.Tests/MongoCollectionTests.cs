@@ -489,10 +489,13 @@ namespace MongoDB.Driver.Tests
             var all = LegacyTestConfiguration.Server.Secondaries.Length + 1;
             if (all > 1)
             {
+                Console.WriteLine("Executing Drop");
                 _collection.Drop();
+                Console.WriteLine("Executing Inserts");
                 var options = new MongoInsertOptions { WriteConcern = new WriteConcern(w: all) };
                 _collection.Insert(new BsonDocument("x", 1), options);
                 _collection.Insert(new BsonDocument("x", 2), options);
+                Console.WriteLine("Executing Count");
                 var count = _collection.Find(Query.EQ("x", 1)).SetReadPreference(ReadPreference.Secondary).Count();
                 Assert.Equal(1, count);
             }

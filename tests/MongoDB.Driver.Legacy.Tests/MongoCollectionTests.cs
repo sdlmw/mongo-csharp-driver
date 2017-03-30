@@ -31,6 +31,8 @@ using MongoDB.Bson.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Misc;
+using Xunit.Abstractions;
+using System.Reflection;
 
 namespace MongoDB.Driver.Tests
 {
@@ -47,12 +49,17 @@ namespace MongoDB.Driver.Tests
         private MongoDatabase _database;
         private MongoCollection<BsonDocument> _collection;
 
-        public MongoCollectionTests()
+        public MongoCollectionTests(ITestOutputHelper helper)
         {
             _server = LegacyTestConfiguration.Server;
             _primary = _server.Instances.First(x => x.IsPrimary);
             _database = LegacyTestConfiguration.Database;
             _collection = LegacyTestConfiguration.Collection;
+
+            var testInfo = helper.GetType().GetField("test", BindingFlags.NonPublic | BindingFlags.Instance);
+            var test = (ITest)testInfo.GetValue(helper);
+            var methodName = test.TestCase.TestMethod.Method.Name;
+            Console.WriteLine($"Running: MongoCollectionTests.{methodName}");
         }
 
         // TODO: more tests for MongoCollection

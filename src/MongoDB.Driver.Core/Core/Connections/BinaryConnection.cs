@@ -152,7 +152,7 @@ namespace MongoDB.Driver.Core.Connections
         // methods
         private void ConnectionFailed(Exception exception)
         {
-            if (!_state.TryChange(State.Open, State.Failed))
+            if (!_state.TryChange(State.Open, State.Failed) && !_state.TryChange(State.Initializing, State.Failed))
             {
                 var currentState = _state.Value;
                 if (currentState != State.Failed && currentState != State.Disposed)

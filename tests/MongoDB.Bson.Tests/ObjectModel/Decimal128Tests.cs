@@ -44,19 +44,20 @@ namespace MongoDB.Bson.Tests
         [InlineData("1.01", "1.01")]
         [InlineData("79228162514264337593543950335", "79228162514264337593543950335")]
         [InlineData("-79228162514264337593543950335", "-79228162514264337593543950335")]
-        public void Decimal(string valueString, string s)
+        [InlineData("10000.0000000000000000000000001", "10000")]
+        public void Decimal(string decimal128ValueString, string decimalValueString)
         {
-            var value = decimal.Parse(valueString);
-            var subject = new Decimal128(value);
+            var subject = Decimal128.Parse(decimal128ValueString);
+            var decimalValue = decimal.Parse(decimalValueString);
 
-            subject.ToString().Should().Be(s);
+            subject.ToString().Should().Be(decimal128ValueString);
             AssertSpecialProperties(subject);
 
             var result = Decimal128.ToDecimal(subject);
-            result.Should().Be(value);
+            result.Should().Be(decimalValue);
 
             result = (decimal)subject;
-            result.Should().Be(value);
+            result.Should().Be(decimalValue);
         }
 
         [Theory]

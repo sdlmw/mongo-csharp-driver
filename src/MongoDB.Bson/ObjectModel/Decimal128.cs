@@ -728,22 +728,18 @@ namespace MongoDB.Bson
                     exponent = Decimal128.GetExponent(d);
                 }
 
-                // try to get the significand to have zeros for the high order 32 bits
+                // get the significand to have zeros for the high order 32 bits
                 var significand = Decimal128.GetSignificand(d);
                 while ((significand.High >> 32) != 0)
                 {
                     uint remainder;
                     var significandDividedBy10 = UInt128.Divide(significand, (uint)10, out remainder);
-                    if (remainder != 0)
-                    {
-                        break;
-                    }
                     exponent += 1;
                     significand = significandDividedBy10;
                 }
 
 
-                if (exponent < -28 || exponent > 0 || (significand.High >> 32) != 0)
+                if (exponent < -28 || exponent > 0)
                 {
                     throw new OverflowException("Value is too large or too small to be converted to a Decimal.");
                 }

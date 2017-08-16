@@ -1,4 +1,4 @@
-/* Copyright 2010-2016 MongoDB Inc.
+/* Copyright 2010-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -480,6 +480,24 @@ namespace MongoDB.Driver
             {
                 throw MongoWriteException.FromBulkWriteException(ex);
             }
+        }
+
+        /// <inheritdoc />
+        public virtual ChangeStream<TResult> Watch<TResult>(
+            PipelineDefinition<ChangeStreamOutput<TDocument>, TResult> pipeline,
+            ChangeStreamOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual Task<ChangeStream<TResult>> WatchAsync<TResult>(
+            PipelineDefinition<ChangeStreamOutput<TDocument>, TResult> pipeline,
+            ChangeStreamOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />

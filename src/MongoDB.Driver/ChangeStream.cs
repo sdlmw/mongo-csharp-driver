@@ -34,11 +34,11 @@ namespace MongoDB.Driver
         private readonly ChangeStreamOptions _options;
         private readonly IReadOnlyList<BsonDocument> _pipeline;
         private readonly ReadPreference _readPreference;
-        private BsonDocument _resumeToken;
+        //private BsonDocument _resumeToken;
 
         // public properties
         /// <inheritdoc/>
-        public IEnumerable<TOutput> Current => null;
+        public IEnumerable<TOutput> Current => _cursor.Current;
 
         // constructors
         internal ChangeStream(
@@ -62,13 +62,43 @@ namespace MongoDB.Driver
         /// <inheritdoc/>
         public bool MoveNext(CancellationToken cancellationToken = default(CancellationToken))
         {
+            try
+            {
+                return _cursor.MoveNext();
+            }
+            catch (Exception ex)
+            {
+                if (!ShouldResume(ex))
+                {
+                    throw;
+                }
+            }
+
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<bool> MoveNextAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<bool> MoveNextAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            try
+            {
+                return await _cursor.MoveNextAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                if (!ShouldResume(ex))
+                {
+                    throw;
+                }
+            }
+
             throw new NotImplementedException();
+        }
+
+        // private methods
+        private bool ShouldResume(Exception ex)
+        {
+            return true;
         }
     }
 }

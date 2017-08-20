@@ -770,6 +770,10 @@ namespace MongoDB.Driver
             {
                 resultSerializer = (IBsonSerializer<TResult>)_documentSerializer;
             }
+            else if (typeof(TResult) == typeof(ChangeStreamOutput<TDocument>))
+            {
+                resultSerializer = (IBsonSerializer<TResult>)new ChangeStreamOutputSerializer<TDocument>(_documentSerializer, options);
+            }
             else
             {
                 resultSerializer = serializerRegistry.GetSerializer<TResult>();

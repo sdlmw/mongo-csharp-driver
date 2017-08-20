@@ -29,12 +29,14 @@ namespace MongoDB.Driver
         private readonly TDocument _fullDocument;
         private readonly BsonDocument _id;
         private readonly ChangeStreamOperationType _operationType;
+        private readonly BsonDocument _rawDocument;
         private readonly ChangeStreamUpdateDescription _updateDescription;
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="ChangeStreamOutput{TDocument}"/> class.
+        /// Initializes a new instance of the <see cref="ChangeStreamOutput{TDocument}" /> class.
         /// </summary>
+        /// <param name="rawDocument">The raw document.</param>
         /// <param name="id">The identifier.</param>
         /// <param name="operationType">Type of the operation.</param>
         /// <param name="collectionNamespace">Namespace of the collection.</param>
@@ -42,6 +44,7 @@ namespace MongoDB.Driver
         /// <param name="updateDescription">The update description.</param>
         /// <param name="fullDocument">The full document.</param>
         public ChangeStreamOutput(
+            BsonDocument rawDocument,
             BsonDocument id,
             ChangeStreamOperationType operationType,
             CollectionNamespace collectionNamespace,
@@ -49,9 +52,10 @@ namespace MongoDB.Driver
             ChangeStreamUpdateDescription updateDescription,
             TDocument fullDocument)
         {
+            _rawDocument = Ensure.IsNotNull(rawDocument, nameof(rawDocument));
             _id = Ensure.IsNotNull(id, nameof(id));
             _operationType = operationType;
-            _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
+            _collectionNamespace = collectionNamespace; // can be null
             _documentKey = documentKey; // can be null
             _updateDescription = updateDescription; // can be null
             _fullDocument = fullDocument; // can be null
@@ -97,6 +101,14 @@ namespace MongoDB.Driver
         /// The type of the operation.
         /// </value>
         public ChangeStreamOperationType OperationType => _operationType;
+
+        /// <summary>
+        /// Gets the raw document.
+        /// </summary>
+        /// <value>
+        /// The raw document.
+        /// </value>
+        public BsonDocument RawDocument => _rawDocument;
 
         /// <summary>
         /// Gets the update description.

@@ -56,7 +56,9 @@ namespace MongoDB.Driver
         /// <inheritdoc />
         public override ChangeStreamOutput<TDocument> Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            var reader = context.Reader;
+            var rawDocument = BsonDocumentSerializer.Instance.Deserialize(context);
+            var reader = new BsonDocumentReader(rawDocument);
+            context = BsonDeserializationContext.CreateRoot(reader);
 
             CollectionNamespace collectionNamespace = null;
             BsonDocument documentKey = null;
@@ -65,7 +67,9 @@ namespace MongoDB.Driver
             ChangeStreamOperationType? operationType = null;
             ChangeStreamUpdateDescription updateDescription = null;
 
-            while (reader.ReadBsonType() != 0)
+            reader.ReadStartDocument();
+            BsonType type;
+            while ((type = reader.ReadBsonType()) != 0)
             {
                 var fieldName = reader.ReadName();
                 switch (fieldName)
@@ -83,7 +87,14 @@ namespace MongoDB.Driver
                         break;
 
                     case "fullDocument":
-                        fullDocument = _documentSerializer.Deserialize(context);
+                        if (type == BsonType.Null)
+                        {
+                            reader.ReadNull();
+                        }
+                        else
+                        {
+                            fullDocument = _documentSerializer.Deserialize(context);
+                        }
                         break;
 
                     case "operationType":
@@ -98,8 +109,10 @@ namespace MongoDB.Driver
                         throw new FormatException($"Invalid field name: \"{fieldName}\".");
                 }
             }
+            reader.ReadEndDocument();
 
             return new ChangeStreamOutput<TDocument>(
+                rawDocument,
                 id,
                 operationType.Value,
                 collectionNamespace,
@@ -169,12 +182,19 @@ namespace MongoDB.Driver
 
         private void SerializeCollectionNamespace(IBsonWriter writer, CollectionNamespace value)
         {
-            writer.WriteStartDocument();
-            writer.WriteName("db");
-            writer.WriteString(value.DatabaseNamespace.DatabaseName);
-            writer.WriteName("coll");
-            writer.WriteString(value.CollectionName);
-            writer.WriteEndDocument();
+            if (value == null)
+            {
+                writer.WriteNull();
+            }
+            else
+            {
+                writer.WriteStartDocument();
+                writer.WriteName("db");
+                writer.WriteString(value.DatabaseNamespace.DatabaseName);
+                writer.WriteName("coll");
+                writer.WriteString(value.CollectionName);
+                writer.WriteEndDocument();
+            }
         }
 
         private bool ShouldSerializeFullDocument(ChangeStreamOutput<TDocument> value)

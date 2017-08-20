@@ -329,7 +329,7 @@ namespace MongoDB.Driver
         public static PipelineStageDefinition<TInput, ChangeStreamOutput<TInput>> ChangeStream<TInput>(
             ChangeStreamOptions options = null)
         {
-            const string operatorName = "$changeStream";
+            const string operatorName = "$changeNotification"; // TODO: "$changeStream";
             var stage = new DelegatedPipelineStageDefinition<TInput, ChangeStreamOutput<TInput>>(
                 operatorName,
                 (s, sr) =>

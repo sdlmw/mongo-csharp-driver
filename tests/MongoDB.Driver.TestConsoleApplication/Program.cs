@@ -17,6 +17,9 @@ using System;
 using System.IO;
 using MongoDB.Driver.Core.Configuration;
 using MongoDB.Driver.Core.Events.Diagnostics;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace MongoDB.Driver.TestConsoleApplication
 {
@@ -24,21 +27,17 @@ namespace MongoDB.Driver.TestConsoleApplication
     {
         static void Main(string[] args)
         {
-            //FilterMeasuring.TestAsync().GetAwaiter().GetResult();
-            int numConcurrentWorkers = 50;
-            //new CoreApi().Run(numConcurrentWorkers, ConfigureCluster);
-            new CoreApiSync().Run(numConcurrentWorkers, ConfigureCluster);
+            var client = new MongoClient();
+            var database = client.GetDatabase("test");
+            var collection = database.GetCollection<BsonDocument>("test");
+            database.DropCollection("test");
 
-            new Api().Run(numConcurrentWorkers, ConfigureCluster);
-
-            //new LegacyApi().Run(numConcurrentWorkers, ConfigureCluster);
-        }
-
-        private static void ConfigureCluster(ClusterBuilder cb)
-        {
-#if NET45
-            cb.UsePerformanceCounters("test", true);
-#endif
+            var changeSerializer = new ChangeStreamOutputSerializer<BsonDocument>(BsonDocumentSerializer.Instance, null);
+            foreach (var change in collection.Watch().ToEnumerable())
+            {
+                var writerSettings = new JsonWriterSettings { Indent = true };
+                Console.WriteLine(change.RawDocument.ToJson(writerSettings));
+            }
         }
     }
 }

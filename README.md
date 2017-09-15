@@ -114,6 +114,7 @@ Please see our [guidelines](CONTRIBUTING.md) for contributing to the driver.
 * Rich Quackenbush          rich.quackenbush@captiveaire.com
 * Andrew Rondeau            github@andrewrondeau.com
 * Ed Rooth                  edward.rooth@wallstreetjapan.com
+* Sergey Shushlyapin        https://github.com/sergeyshushlyapin
 * Alexey Skalozub           pieceofsummer@gmail.com
 * Pete Smith                roysvork@gmail.com
 * staywellandy              https://github.com/staywellandy

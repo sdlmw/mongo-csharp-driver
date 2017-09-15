@@ -88,6 +88,7 @@ Please see our [guidelines](CONTRIBUTING.md) for contributing to the driver.
 * Alexander Aramov          https://github.com/alex687
 * Bar Arnon                 https://github.com/I3arnon
 * Bit Diffusion Limited     code@bitdiff.com
+* Oscar Bralo               https://github.com/Oscarbralo
 * Alex Brown                https://github.com/alexjamesbrown
 * Alex Dawes                https://github.com/alexdawes
 * Justin Dearing            zippy1981@gmail.com

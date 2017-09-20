@@ -1,4 +1,4 @@
-﻿/* Copyright 2016 MongoDB Inc.
+﻿/* Copyright 2016-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -714,40 +714,69 @@ namespace MongoDB.Bson
         {
             if (Flags.IsFirstForm(d._highBits))
             {
-                var exponent = Decimal128.GetExponent(d);
+                if (Decimal128.IsZero(d))
+                {
+                    return decimal.Zero;
+                }
 
-                // try to get the exponent within the range of 0 to -28
+                var isNegative = Decimal128.IsNegative(d);
+                var exponent = Decimal128.GetExponent(d);
+                var significand = Decimal128.GetSignificand(d);
+
+                // decimal significand must fit in 96 bits
+                while ((significand.High >> 32) != 0)
+                {
+                    uint remainder; // ignored
+                    significand = UInt128.Divide(significand, 10, out remainder);
+                    exponent += 1;
+                }
+
+                // decimal exponents must be between 0 and -28
                 if (exponent > 0)
                 {
-                    d = Decimal128.DecreaseExponent(d, 0);
-                    exponent = Decimal128.GetExponent(d);
+                    // check if exponent is too far out of range to possibly be brought within range
+                    if (exponent > 28)
+                    {
+                        throw new OverflowException("Value is too large or too small to be converted to a Decimal.");
+                    }
+
+                    // try to bring exponent within range
+                    while (exponent > 0)
+                    {
+                        significand = UInt128.Multiply(significand, (uint)10);
+                        exponent -= 1;
+
+                        if ((significand.High >> 32) != 0)
+                        {
+                            throw new OverflowException("Value is too large or too small to be converted to a Decimal.");
+                        }
+                    }
                 }
                 else if (exponent < -28)
                 {
-                    d = Decimal128.IncreaseExponent(d, -28);
-                    exponent = Decimal128.GetExponent(d);
-                }
+                    // check if exponent is too far out of range to possibly be brought within range
+                    if (exponent < -56)
+                    {
+                        return decimal.Zero;
+                    }
 
-                // get the significand to have zeros for the high order 32 bits
-                var significand = Decimal128.GetSignificand(d);
-                while ((significand.High >> 32) != 0)
-                {
-                    uint remainder;
-                    var significandDividedBy10 = UInt128.Divide(significand, (uint)10, out remainder);
-                    exponent += 1;
-                    significand = significandDividedBy10;
-                }
+                    // try to bring exponent within range
+                    while (exponent < -28)
+                    {
+                        uint remainder; // ignored
+                        significand = UInt128.Divide(significand, (uint)10, out remainder);
+                        exponent += 1;
 
-
-                if (exponent < -28 || exponent > 0)
-                {
-                    throw new OverflowException("Value is too large or too small to be converted to a Decimal.");
+                        if (significand.Equals(UInt128.Zero))
+                        {
+                            return decimal.Zero;
+                        }
+                    }
                 }
 
                 var lo = (int)significand.Low;
                 var mid = (int)(significand.Low >> 32);
                 var hi = (int)significand.High;
-                var isNegative = Decimal128.IsNegative(d);
                 var scale = (byte)(-exponent);
 
                 return new decimal(lo, mid, hi, isNegative, scale);
@@ -1189,7 +1218,7 @@ namespace MongoDB.Bson
             return significandString;
         }
 
-        private static Decimal128 DecreaseExponent(Decimal128 x, short goal)
+        private static Decimal128 TryDecreaseExponent(Decimal128 x, short goal)
         {
             if (Decimal128.IsZero(x))
             {
@@ -1239,7 +1268,7 @@ namespace MongoDB.Bson
             return new UInt128(GetSignificandHighBits(d), GetSignificandLowBits(d));
         }
 
-        private static Decimal128 IncreaseExponent(Decimal128 x, short goal)
+        private static Decimal128 TryIncreaseExponent(Decimal128 x, short goal)
         {
             if (Decimal128.IsZero(x))
             {
@@ -1887,13 +1916,13 @@ namespace MongoDB.Bson
                     // but we do know we can't eliminate an exponent difference larger than 66
                     if (xExponent < yExponent)
                     {
-                        x = IncreaseExponent(x, yExponent);
-                        y = DecreaseExponent(y, xExponent);
+                        x = TryIncreaseExponent(x, yExponent);
+                        y = TryDecreaseExponent(y, xExponent);
                     }
                     else if (xExponent > yExponent)
                     {
-                        x = DecreaseExponent(x, yExponent);
-                        y = IncreaseExponent(y, xExponent);
+                        x = TryDecreaseExponent(x, yExponent);
+                        y = TryIncreaseExponent(y, xExponent);
                     }
                 }
 

@@ -1,4 +1,4 @@
-﻿/* Copyright 2016 MongoDB Inc.
+﻿/* Copyright 2016-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -44,20 +44,19 @@ namespace MongoDB.Bson.Tests
         [InlineData("1.01", "1.01")]
         [InlineData("79228162514264337593543950335", "79228162514264337593543950335")]
         [InlineData("-79228162514264337593543950335", "-79228162514264337593543950335")]
-        [InlineData("10000.0000000000000000000000001", "10000")]
-        public void Decimal(string decimal128ValueString, string decimalValueString)
+        public void Decimal(string valueString, string s)
         {
-            var subject = Decimal128.Parse(decimal128ValueString);
-            var decimalValue = decimal.Parse(decimalValueString);
+            var value = decimal.Parse(valueString);
+            var subject = new Decimal128(value);
 
-            subject.ToString().Should().Be(decimal128ValueString);
+            subject.ToString().Should().Be(s);
             AssertSpecialProperties(subject);
 
             var result = Decimal128.ToDecimal(subject);
-            result.Should().Be(decimalValue);
+            result.Should().Be(value);
 
             result = (decimal)subject;
-            result.Should().Be(decimalValue);
+            result.Should().Be(value);
         }
 
         [Theory]

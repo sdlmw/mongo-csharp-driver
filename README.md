@@ -91,6 +91,7 @@ Please see our [guidelines](CONTRIBUTING.md) for contributing to the driver.
 * Nima Boscarino            https://github.com/NimaBoscarino
 * Oscar Bralo               https://github.com/Oscarbralo
 * Alex Brown                https://github.com/alexjamesbrown
+* Fabrizio Chimienti        https://github.com/kimiko88
 * Adam Avery Cole           https://github.com/adamaverycole
 * Alex Dawes                https://github.com/alexdawes
 * Justin Dearing            zippy1981@gmail.com

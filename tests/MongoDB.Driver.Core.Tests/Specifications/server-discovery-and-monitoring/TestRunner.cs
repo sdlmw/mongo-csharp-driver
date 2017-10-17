@@ -23,7 +23,6 @@ using System.Threading;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.TestHelpers;
-using MongoDB.Bson.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Configuration;
 using MongoDB.Driver.Core.Connections;
@@ -136,7 +135,7 @@ namespace MongoDB.Driver.Specifications.server_discovery_and_monitoring
                     cluster.Description.Type.Should().Be(ClusterType.Unknown);
                     break;
                 default:
-                    throw new AssertionException($"Invalid topology type {expectedType}.");
+                    throw new FormatException($"Invalid topology type: \"{expectedType}\".");
             }
         }
 

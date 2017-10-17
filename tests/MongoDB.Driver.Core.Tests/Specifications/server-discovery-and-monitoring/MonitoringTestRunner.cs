@@ -124,7 +124,7 @@ namespace MongoDB.Driver.Specifications.sdam_monitoring
             while (_eventSubscriber.Any())
             {
                 var extraEvent = _eventSubscriber.Next();
-                throw new AssertionException($"Found an extra event of type: {extraEvent.GetType()}.");
+                throw new AssertionException($"Found an extra event of type: {extraEvent.GetType().FullName}.");
             }
         }
 
@@ -253,7 +253,7 @@ namespace MongoDB.Driver.Specifications.sdam_monitoring
                     actualDescription.Type.Should().Be(ClusterType.Unknown);
                     break;
                 default:
-                    throw new AssertionException($"Invalid topology type: \"{expectedType}\".");
+                    throw new FormatException($"Invalid topology type: \"{expectedType}\".");
             }
         }
 

@@ -248,17 +248,14 @@ namespace MongoDB.Driver.Core.Clusters
 
             foreach (var server in servers)
             {
-                if (server.State == ServerState.Connected && server.Type != ServerType.Unknown)
+                if (server.LogicalSessionTimeout == null)
                 {
-                    if (server.LogicalSessionTimeout == null)
-                    {
-                        return null;
-                    }
+                    return null;
+                }
 
-                    if (logicalSessionTimeout == null || logicalSessionTimeout.Value > server.LogicalSessionTimeout.Value)
-                    {
-                        logicalSessionTimeout = server.LogicalSessionTimeout;
-                    }
+                if (logicalSessionTimeout == null || server.LogicalSessionTimeout.Value < logicalSessionTimeout.Value)
+                {
+                    logicalSessionTimeout = server.LogicalSessionTimeout;
                 }
             }
 

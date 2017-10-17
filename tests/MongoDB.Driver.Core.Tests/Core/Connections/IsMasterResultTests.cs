@@ -90,8 +90,10 @@ namespace MongoDB.Driver.Core.Connections
 
         [Theory]
         [InlineData("{ }", null)]
-        [InlineData("{ logicalSessionTimeoutMinutes : 1 }", 1)]
-        [InlineData("{ logicalSessionTimeoutMinutes : 2.0 }", 2)]
+        [InlineData("{ logicalSessionTimeoutMinutes : null }", null)]
+        [InlineData("{ logicalSessionTimeoutMinutes : NumberInt(1) }", 1)]
+        [InlineData("{ logicalSessionTimeoutMinutes : NumberLong(2) }", 2)]
+        [InlineData("{ logicalSessionTimeoutMinutes : 3.0 }", 3)]
         public void LogicalSessionTimeout_should_parse_document_correctly(string json, int? expectedResultMinutes)
         {
             var subject = new IsMasterResult(BsonDocument.Parse(json));

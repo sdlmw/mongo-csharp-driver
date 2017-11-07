@@ -159,6 +159,7 @@
     <Compile Include="ProjectionDefinitionBuilderTests.cs" />
     <Compile Include="IndexKeysDefinitionBuilderTests.cs" />
     <Compile Include="ReferenceCountedClientSessionTests.cs" />
+    <Compile Include="ServerSessionTests.cs" />
     <Compile Include="SortDefinitionBuilderTests.cs" />
     <Compile Include="Specifications\command-monitoring\CountTest.cs" />
     <Compile Include="Specifications\command-monitoring\BulkWriteTest.cs" />

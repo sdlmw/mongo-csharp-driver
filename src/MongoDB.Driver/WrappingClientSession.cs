@@ -157,7 +157,7 @@ namespace MongoDB.Driver
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(GetType().Name);
+                throw new ObjectDisposedException(GetType().FullName);
             }
         }
     }

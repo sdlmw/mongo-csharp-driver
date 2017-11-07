@@ -107,6 +107,7 @@
     <Compile Include="AggregateFluentGraphLookupWithAirportsCollectionTests.cs" />
     <Compile Include="AsyncCursorHelperTests.cs" />
     <Compile Include="BulkWriteErrorTests.cs" />
+    <Compile Include="ClientSessionHandleTests.cs" />
     <Compile Include="ClientSessionTests.cs" />
     <Compile Include="CreateViewOptionsTests.cs" />
     <Compile Include="FieldDefinitionTests.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="PipelineStageDefinitionBuilderTests.cs" />
     <Compile Include="ProjectionDefinitionBuilderTests.cs" />
     <Compile Include="IndexKeysDefinitionBuilderTests.cs" />
+    <Compile Include="ReferenceCountedClientSessionTests.cs" />
     <Compile Include="SortDefinitionBuilderTests.cs" />
     <Compile Include="Specifications\command-monitoring\CountTest.cs" />
     <Compile Include="Specifications\command-monitoring\BulkWriteTest.cs" />
@@ -195,6 +197,7 @@
     <Compile Include="Specifications\crud\CountTest.cs" />
     <Compile Include="Specifications\crud\AggregateTest.cs" />
     <Compile Include="Specifications\crud\ICrudOperationTest.cs" />
+    <Compile Include="WrappingClientSessionTests.cs" />
     <Compile Include="WriteModelTests.cs" />
     <Compile Include="BulkWriteResultTests.cs" />
     <Compile Include="ClusterKeyTests.cs" />

@@ -51,22 +51,64 @@ namespace MongoDB.Driver
 
         // public properties
         /// <inheritdoc />
-        public IMongoClient Client => _client;
+        public IMongoClient Client
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _client;
+            }
+        }
 
         /// <inheritdoc />
-        public BsonDocument ClusterTime => _clusterClock.ClusterTime;
+        public BsonDocument ClusterTime
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _clusterClock.ClusterTime;
+            }
+        }
 
         /// <inheritdoc />
-        public bool IsImplicit => _isImplicit;
+        public bool IsImplicit
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _isImplicit;
+            }
+        }
 
         /// <inheritdoc />
-        public BsonTimestamp OperationTime => _operationClock.OperationTime;
+        public BsonTimestamp OperationTime
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _operationClock.OperationTime; ;
+            }
+        }
 
         /// <inheritdoc />
-        public ClientSessionOptions Options => _options;
+        public ClientSessionOptions Options
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _options;
+            }
+        }
 
         /// <inheritdoc />
-        public IServerSession ServerSession => _serverSession;
+        public IServerSession ServerSession
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _serverSession;
+            }
+        }
 
         // public methods
         /// <inheritdoc />

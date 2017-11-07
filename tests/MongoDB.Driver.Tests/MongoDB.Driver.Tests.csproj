@@ -107,6 +107,7 @@
     <Compile Include="AggregateFluentGraphLookupWithAirportsCollectionTests.cs" />
     <Compile Include="AsyncCursorHelperTests.cs" />
     <Compile Include="BulkWriteErrorTests.cs" />
+    <Compile Include="ClientSessionTests.cs" />
     <Compile Include="CreateViewOptionsTests.cs" />
     <Compile Include="FieldDefinitionTests.cs" />
     <Compile Include="FilterDefinitionBuilderEnumComparedToEnumWithStringRepresentationTests.cs" />

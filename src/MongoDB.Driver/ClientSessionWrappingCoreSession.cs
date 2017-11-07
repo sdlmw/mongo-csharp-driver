@@ -16,7 +16,7 @@
 using System;
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Bindings;
-using MongoDB.Driver.Core.Clusters;
+using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver
 {
@@ -29,7 +29,7 @@ namespace MongoDB.Driver
         // constructors
         public ClientSessionWrappingCoreSession(IClientSession clientSession)
         {
-            _clientSession = clientSession;
+            _clientSession = Ensure.IsNotNull(clientSession, nameof(clientSession));
         }
 
         // public properties
@@ -83,7 +83,10 @@ namespace MongoDB.Driver
 
         public void Dispose()
         {
-            _clientSession.Dispose();
+            if (!_disposed)
+            {
+                _clientSession.Dispose();
+            }
             _disposed = true;
         }
 

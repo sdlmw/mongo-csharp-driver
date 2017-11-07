@@ -109,6 +109,7 @@
     <Compile Include="BulkWriteErrorTests.cs" />
     <Compile Include="ClientSessionHandleTests.cs" />
     <Compile Include="ClientSessionTests.cs" />
+    <Compile Include="ClientSessionWrappingCoreSessionTests.cs" />
     <Compile Include="CreateViewOptionsTests.cs" />
     <Compile Include="FieldDefinitionTests.cs" />
     <Compile Include="FilterDefinitionBuilderEnumComparedToEnumWithStringRepresentationTests.cs" />

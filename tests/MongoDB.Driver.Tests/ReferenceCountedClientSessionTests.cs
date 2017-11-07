@@ -14,14 +14,143 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using FluentAssertions;
+using Moq;
+using Xunit;
 
 namespace MongoDB.Driver.Tests
 {
+    public class ReferenceCountedClientSessionTests
+    {
+        [Fact]
+        public void constructor_should_initialize_instance()
+        {
+            var wrapped = new Mock<IClientSession>().Object;
+
+            var result = new ReferenceCountedClientSession(wrapped);
+
+            result.Wrapped.Should().BeSameAs(wrapped);
+            result._referenceCount().Should().Be(1);
+        }
+
+        [Fact]
+        public void DecrementReferenceCount_should_decrement_reference_count()
+        {
+            var subject = CreateSubject();
+            var originalReferenceCount = subject._referenceCount();
+
+            subject.DecrementReferenceCount();
+
+            subject._referenceCount().Should().Be(originalReferenceCount - 1);
+        }
+
+        [Fact]
+        public void DecrementReferenceCount_should_call_Dispose_when_reference_count_reaches_zero()
+        {
+            var subject = CreateSubject();
+
+            subject.DecrementReferenceCount();
+
+            subject.IsDisposed().Should().BeTrue();
+        }
+
+        [Fact]
+        public void DecrementReferenceCount_should_not_call_Dispose_when_reference_is_not_zero()
+        {
+            var subject = CreateSubject();
+            subject.IncrementReferenceCount();
+
+            subject.DecrementReferenceCount();
+
+            subject.IsDisposed().Should().BeFalse();
+        }
+
+        [Fact]
+        public void DecrementReferenceCount_should_throw_when_disposed()
+        {
+            var subject = CreateDisposedSubject();
+
+            var exception = Record.Exception(() => subject.DecrementReferenceCount());
+
+            var e = exception.Should().BeOfType<ObjectDisposedException>().Subject;
+            e.ObjectName.Should().Be(subject.GetType().FullName);
+        }
+
+        [Fact]
+        public void IncrementReferenceCount_should_increment_reference_count()
+        {
+            var subject = CreateSubject();
+            var originalReferenceCount = subject._referenceCount();
+
+            subject.IncrementReferenceCount();
+
+            subject._referenceCount().Should().Be(originalReferenceCount + 1);
+        }
+
+        [Fact]
+        public void IncrementReferenceCount_should_throw_when_disposed()
+        {
+            var subject = CreateDisposedSubject();
+
+            var exception = Record.Exception(() => subject.IncrementReferenceCount());
+
+            var e = exception.Should().BeOfType<ObjectDisposedException>().Subject;
+            e.ObjectName.Should().Be(subject.GetType().FullName);
+        }
+
+        [Fact]
+        public void Dispose_should_set_disposed_flag()
+        {
+            var subject = CreateSubject();
+
+            subject.Dispose();
+
+            subject.IsDisposed().Should().BeTrue();
+        }
+
+        [Fact]
+        public void Dispose_should_call_wrapped_Dispose()
+        {
+            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+
+            subject.Dispose();
+
+            mockWrapped.Verify(m => m.Dispose(), Times.Once);
+        }
+
+        [Fact]
+        public void Dispose_can_be_called_more_than_once()
+        {
+            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+
+            subject.Dispose();
+            subject.Dispose();
+
+            mockWrapped.Verify(m => m.Dispose(), Times.Once);
+        }
+
+        // private methods
+        private ReferenceCountedClientSession CreateDisposedSubject()
+        {
+            var subject = CreateSubject();
+            subject.Dispose();
+            return subject;
+        }
+
+        private ReferenceCountedClientSession CreateSubject()
+        {
+            var wrapped = new Mock<IClientSession>().Object;
+            return new ReferenceCountedClientSession(wrapped);
+        }
+
+        private ReferenceCountedClientSession CreateSubject(out Mock<IClientSession> mockWrapped)
+        {
+            mockWrapped = new Mock<IClientSession>();
+            return new ReferenceCountedClientSession(mockWrapped.Object);
+        }
+    }
+
     internal static class ReferenceCountedClientSessionReflector
     {
         public static object _lock(this ReferenceCountedClientSession obj)

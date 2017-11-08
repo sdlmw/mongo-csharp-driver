@@ -122,7 +122,7 @@ namespace MongoDB.Driver
 
             // constructors
             public ReleaseOnDisposeServerSession(IServerSession wrapped, IServerSessionPool pool)
-                : base(wrapped)
+                : base(wrapped, ownsWrapped: false)
             {
                 _pool = Ensure.IsNotNull(pool, nameof(pool));
             }

@@ -297,6 +297,7 @@ namespace MongoDB.Driver.Tests
             result.Wrapped.Should().BeSameAs(wrapped);
             result._pool().Should().BeSameAs(pool);
             result._disposed().Should().BeFalse();
+            result._ownsWrapped().Should().BeFalse();
         }
 
         [Fact]

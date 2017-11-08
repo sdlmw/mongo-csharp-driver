@@ -23,12 +23,14 @@ namespace MongoDB.Driver
     {
         // private fields
         protected bool _disposed;
+        private readonly bool _ownsWrapped;
         private readonly IServerSession _wrapped;
 
         // constructors
-        public WrappingServerSession(IServerSession wrapped)
+        public WrappingServerSession(IServerSession wrapped, bool ownsWrapped)
         {
             _wrapped = Ensure.IsNotNull(wrapped, nameof(wrapped));
+            _ownsWrapped = ownsWrapped;
         }
 
         // public properties
@@ -75,8 +77,17 @@ namespace MongoDB.Driver
         // protected methods
         protected virtual void Dispose(bool disposing)
         {
-            // subclasses decide whether to Dispose _wrapped or not
-            _disposed = true;
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    if (_ownsWrapped)
+                    {
+                        _wrapped.Dispose();
+                    }
+                }
+                _disposed = true;
+            }
         }
 
         protected void ThrowIfDisposed()

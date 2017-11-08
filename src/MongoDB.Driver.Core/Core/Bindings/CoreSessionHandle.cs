@@ -41,7 +41,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// </summary>
         /// <param name="wrapped">The wrapped.</param>
         public CoreSessionHandle(ReferenceCountedCoreSession wrapped)
-            : base(Ensure.IsNotNull(wrapped, nameof(wrapped)))
+            : base(Ensure.IsNotNull(wrapped, nameof(wrapped)), ownsWrapped: false)
         {
             _wrapped = wrapped;
         }

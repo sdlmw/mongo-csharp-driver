@@ -27,16 +27,19 @@ namespace MongoDB.Driver.Core.Bindings
     {
         // private fields
         private bool _disposed;
+        private readonly bool _ownsWrapped;
         private readonly ICoreSession _wrapped;
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="WrappingCoreSession"/> class.
+        /// Initializes a new instance of the <see cref="WrappingCoreSession" /> class.
         /// </summary>
         /// <param name="wrapped">The wrapped.</param>
-        public WrappingCoreSession(ICoreSession wrapped)
+        /// <param name="ownsWrapped">if set to <c>true</c> [owns wrapped].</param>
+        public WrappingCoreSession(ICoreSession wrapped, bool ownsWrapped)
         {
             _wrapped = Ensure.IsNotNull(wrapped, nameof(wrapped));
+            _ownsWrapped = ownsWrapped;
         }
 
         // public properties
@@ -121,8 +124,17 @@ namespace MongoDB.Driver.Core.Bindings
         /// <inheritdoc />
         protected virtual void Dispose(bool disposing)
         {
-            // the subclass decides what to do with the wrapped session
-            _disposed = true;
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    if (_ownsWrapped)
+                    {
+                        _wrapped.Dispose();
+                    }
+                }
+                _disposed = true;
+            }
         }
 
         /// <summary>
@@ -141,7 +153,7 @@ namespace MongoDB.Driver.Core.Bindings
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(GetType().Name);
+                throw new ObjectDisposedException(GetType().FullName);
             }
         }
     }

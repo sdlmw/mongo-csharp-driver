@@ -31,7 +31,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// </summary>
         /// <param name="wrapped">The wrapped.</param>
         public ReferenceCountedCoreSession(ICoreSession wrapped)
-            : base(wrapped)
+            : base(wrapped, ownsWrapped: false)
         {
             _referenceCount = 1;
         }

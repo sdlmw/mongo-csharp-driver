@@ -24,7 +24,7 @@ namespace MongoDB.Driver.Core.Servers
         private readonly IClusterClock _clusterClock;
 
         public ClusterClockAdvancingCoreSession(ICoreSession wrapped, IClusterClock clusterClock)
-            : base(wrapped)
+            : base(wrapped, ownsWrapped: false)
         {
             _clusterClock = clusterClock;
         }
@@ -33,12 +33,6 @@ namespace MongoDB.Driver.Core.Servers
         {
             base.AdvanceClusterTime(newClusterTime);
             _clusterClock.AdvanceClusterTime(newClusterTime);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            // do NOT call Dispose on wrapped session
-            base.Dispose(disposing);
         }
     }
 }

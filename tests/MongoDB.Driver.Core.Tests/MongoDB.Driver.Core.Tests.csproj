@@ -68,6 +68,9 @@
     <Compile Include="ChangeStreamDocumentSerializerTests.cs" />
     <Compile Include="ChangeStreamUpdateDescriptionSerializerTests.cs" />
     <Compile Include="CollationTests.cs" />
+    <Compile Include="Core\Bindings\CoreSessionHandleTests.cs" />
+    <Compile Include="Core\Bindings\ReferenceCountedCoreSessionTests.cs" />
+    <Compile Include="Core\Bindings\WrappingCoreSessionTests.cs" />
     <Compile Include="Core\Clusters\ElectionIdTests.cs" />
     <Compile Include="Core\Clusters\ReplicaSetConfigTests.cs" />
     <Compile Include="Core\Configuration\ClusterSettingsTests.cs" />

@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using MongoDB.Bson;
 using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver
@@ -48,105 +47,97 @@ namespace MongoDB.Driver
             {
                 for (var i = _pool.Count - 1; i >= 0; i--)
                 {
-                    var serverSession = _pool[i];
-                    if (!IsAboutToExpire(serverSession))
+                    var pooledSession = _pool[i];
+                    if (IsAboutToExpire(pooledSession))
+                    {
+                        pooledSession.Dispose();
+                    }
+                    else
                     {
                         var removeCount = _pool.Count - i; // the one we're about to return and any about to expire ones we skipped over
                         _pool.RemoveRange(i, removeCount);
-                        return new ReleaseOnDisposeServerSession(this, serverSession);
+                        return new ReleaseOnDisposeServerSession(pooledSession, this);
                     }
                 }
 
                 _pool.Clear(); // they're all about to expire
             }
 
-            return new ReleaseOnDisposeServerSession(this, new ServerSession());
+            return new ReleaseOnDisposeServerSession(new ServerSession(), this);
         }
 
         /// <inheritdoc />
-        public void ReleaseSession(IServerSession serverSession)
+        public void ReleaseSession(IServerSession session)
         {
             lock (_lock)
             {
-                var aboutToExpireCount = 0;
+                var removeCount = 0;
                 for (var i = 0; i < _pool.Count; i++)
                 {
-                    if (IsAboutToExpire(_pool[i]))
+                    var pooledSession = _pool[i];
+                    if (IsAboutToExpire(pooledSession))
                     {
-                        aboutToExpireCount++;
+                        pooledSession.Dispose();
+                        removeCount++;
                     }
                     else
                     {
                         break;
                     }
                 }
-                _pool.RemoveRange(0, aboutToExpireCount);
+                _pool.RemoveRange(0, removeCount);
 
-                if (!IsAboutToExpire(serverSession))
+                if (IsAboutToExpire(session))
                 {
-                    _pool.Add(serverSession);
+                    session.Dispose();
+                }
+                else
+                {
+                    _pool.Add(session);
                 }
             }
         }
 
         // private methods
-        private bool IsAboutToExpire(IServerSession serverSession)
+        private bool IsAboutToExpire(IServerSession session)
         {
             var logicalSessionTimeout = _client.Cluster.Description.LogicalSessionTimeout;
-            if (!serverSession.LastUsedAt.HasValue || !logicalSessionTimeout.HasValue)
+            if (!session.LastUsedAt.HasValue || !logicalSessionTimeout.HasValue)
             {
                 return true;
             }
             else
             {
-                var expiresAt = serverSession.LastUsedAt.Value + logicalSessionTimeout.Value;
+                var expiresAt = session.LastUsedAt.Value + logicalSessionTimeout.Value;
                 var timeRemaining = expiresAt - DateTime.UtcNow;
                 return timeRemaining < TimeSpan.FromMinutes(1);
             }
         }
 
         // nested types
-        private sealed class ReleaseOnDisposeServerSession : IServerSession
+        internal sealed class ReleaseOnDisposeServerSession : WrappingServerSession
         {
             // private fields
-            private bool _disposed;
             private readonly IServerSessionPool _pool;
-            private readonly IServerSession _serverSession;
 
             // constructors
-            /// <summary>
-            /// Initializes a new instance of the <see cref="ReleaseOnDisposeServerSession"/> class.
-            /// </summary>
-            /// <param name="pool">The pool.</param>
-            /// <param name="serverSession">The server session.</param>
-            public ReleaseOnDisposeServerSession(IServerSessionPool pool, IServerSession serverSession)
+            public ReleaseOnDisposeServerSession(IServerSession wrapped, IServerSessionPool pool)
+                : base(wrapped)
             {
                 _pool = Ensure.IsNotNull(pool, nameof(pool));
-                _serverSession = Ensure.IsNotNull(serverSession, nameof(serverSession));
             }
 
-            // public properties
-            /// <inheritdoc />
-            public BsonDocument Id => _serverSession.Id;
-
-            /// <inheritdoc />
-            public DateTime? LastUsedAt => _serverSession.LastUsedAt;
-
-            /// <inheritdoc />
-            public void WasUsed()
-            {
-                _serverSession.WasUsed();
-            }
-
-            // public methods
-            /// <inheritdoc />
-            public void Dispose()
+            // protected methods
+            protected override void Dispose(bool disposing)
             {
                 if (!_disposed)
                 {
-                    _disposed = true;
-                    _pool.ReleaseSession(_serverSession);
+                    if (disposing)
+                    {
+                        _pool.ReleaseSession(Wrapped);
+                    }
                 }
+                base.Dispose(disposing);
             }
         }
     }

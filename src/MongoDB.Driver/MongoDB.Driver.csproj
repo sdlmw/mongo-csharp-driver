@@ -369,6 +369,7 @@
     <Compile Include="ReplaceOneResult.cs" />
     <Compile Include="UpdateResult.cs" />
     <Compile Include="WrappingClientSession.cs" />
+    <Compile Include="WrappingServerSession.cs" />
     <Compile Include="WriteConcernError.cs" />
     <Compile Include="BulkWriteResult.cs" />
     <Compile Include="BulkWriteUpsert.cs" />

@@ -294,6 +294,7 @@
     <Compile Include="PipelineStageDefinitionBuilder.cs" />
     <Compile Include="ProjectionDefinitionBuilder.cs" />
     <Compile Include="IndexKeysDefinitionBuilder.cs" />
+    <Compile Include="ReplaceOptions.cs" />
     <Compile Include="SortDefinitionBuilder.cs" />
     <Compile Include="FilterDefinitionBuilder.cs" />
     <Compile Include="IAggregateFluentExtensions.cs" />

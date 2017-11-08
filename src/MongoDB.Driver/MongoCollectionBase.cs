@@ -315,16 +315,12 @@ namespace MongoDB.Driver
         public abstract IFilteredMongoCollection<TDerivedDocument> OfType<TDerivedDocument>() where TDerivedDocument : TDocument;
 
         /// <inheritdoc />
-        public virtual ReplaceOneResult ReplaceOne(FilterDefinition<TDocument> filter, TDocument replacement, UpdateOptions options = null, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual ReplaceOneResult ReplaceOne(FilterDefinition<TDocument> filter, TDocument replacement, ReplaceOptions options = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(filter, nameof(filter));
             Ensure.IsNotNull((object)replacement, "replacement");
-            if (options?.ArrayFilters != null)
-            {
-                throw new ArgumentException("ArrayFilters cannot be used with ReplaceOne.", nameof(options));
-            }
 
-            options = options ?? new UpdateOptions();
+            options = options ?? new ReplaceOptions();
             var model = new ReplaceOneModel<TDocument>(filter, replacement)
             {
                 Collation = options.Collation,
@@ -344,6 +340,12 @@ namespace MongoDB.Driver
             {
                 throw MongoWriteException.FromBulkWriteException(ex);
             }
+        }
+
+        /// <inheritdoc />
+        public virtual ReplaceOneResult ReplaceOne(FilterDefinition<TDocument> filter, TDocument replacement, UpdateOptions options = null, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return ReplaceOne(filter, replacement, ReplaceOptions.From(options), cancellationToken);
         }
 
         /// <inheritdoc />

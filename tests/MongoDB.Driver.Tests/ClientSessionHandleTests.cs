@@ -29,8 +29,12 @@ namespace MongoDB.Driver.Tests
 
             var subject = new ClientSessionHandle(session);
 
+            subject.IsDisposed().Should().BeFalse();
+            subject._ownsWrapped().Should().BeFalse();
             var referenceCounted = subject.Wrapped.Should().BeOfType<ReferenceCountedClientSession>().Subject;
             referenceCounted.Wrapped.Should().BeSameAs(session);
+            referenceCounted._referenceCount().Should().Be(1);
+            referenceCounted._ownsWrapped().Should().BeFalse();
         }
 
         [Fact]

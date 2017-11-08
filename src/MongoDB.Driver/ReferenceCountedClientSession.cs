@@ -31,7 +31,7 @@ namespace MongoDB.Driver
         /// </summary>
         /// <param name="wrapped">The wrapped session.</param>
         public ReferenceCountedClientSession(IClientSession wrapped)
-            : base(wrapped, ownsWrapped: true)
+            : base(wrapped, ownsWrapped: false)
         {
             _referenceCount = 1;
         }

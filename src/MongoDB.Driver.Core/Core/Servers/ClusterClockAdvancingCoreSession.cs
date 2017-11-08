@@ -16,6 +16,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Clusters;
+using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver.Core.Servers
 {
@@ -26,7 +27,7 @@ namespace MongoDB.Driver.Core.Servers
         public ClusterClockAdvancingCoreSession(ICoreSession wrapped, IClusterClock clusterClock)
             : base(wrapped, ownsWrapped: false)
         {
-            _clusterClock = clusterClock;
+            _clusterClock = Ensure.IsNotNull(clusterClock, nameof(clusterClock));
         }
 
         public override void AdvanceClusterTime(BsonDocument newClusterTime)

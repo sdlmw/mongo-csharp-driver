@@ -41,7 +41,7 @@ namespace MongoDB.Driver
         /// </summary>
         /// <param name="wrapped">The wrapped session.</param>
         public ClientSessionHandle(ReferenceCountedClientSession wrapped)
-            : base(Ensure.IsNotNull(wrapped, nameof(wrapped)))
+            : base(Ensure.IsNotNull(wrapped, nameof(wrapped)), ownsWrapped: false)
         {
             _wrapped = wrapped;
         }

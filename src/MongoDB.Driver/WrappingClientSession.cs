@@ -27,16 +27,14 @@ namespace MongoDB.Driver
     {
         // private fields
         private bool _disposed;
+        private readonly bool _ownsWrapped;
         private readonly IClientSession _wrapped;
 
         // constructors
-        /// <summary>
-        /// Initializes a new instance of the <see cref="WrappingClientSession"/> class.
-        /// </summary>
-        /// <param name="wrapped">The wrapped session.</param>
-        public WrappingClientSession(IClientSession wrapped)
+        public WrappingClientSession(IClientSession wrapped, bool ownsWrapped)
         {
             _wrapped = Ensure.IsNotNull(wrapped, nameof(wrapped));
+            _ownsWrapped = ownsWrapped;
         }
 
         // public properties
@@ -106,7 +104,14 @@ namespace MongoDB.Driver
         /// <value>
         /// The wrapped session.
         /// </value>
-        public IClientSession Wrapped => _wrapped;
+        public IClientSession Wrapped
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _wrapped;
+            }
+        }
 
         // public methods
         /// <inheritdoc />
@@ -137,8 +142,17 @@ namespace MongoDB.Driver
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            // the subclass decides what to do with the wrapped session
-            _disposed = true;
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    if (_ownsWrapped)
+                    {
+                        _wrapped.Dispose();
+                    }
+                }
+                _disposed = true;
+            }
         }
 
         /// <summary>

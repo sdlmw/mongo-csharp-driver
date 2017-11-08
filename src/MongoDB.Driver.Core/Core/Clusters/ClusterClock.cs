@@ -31,7 +31,7 @@ namespace MongoDB.Driver.Core.Clusters
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
-        /// <returns>The greater of two cluster times.</returns>
+        /// <returns>The greater cluster time.</returns>
         public static BsonDocument GreaterClusterTime(BsonDocument x, BsonDocument y)
         {
             if (x == null)

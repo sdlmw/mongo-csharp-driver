@@ -25,8 +25,14 @@ namespace MongoDB.Driver.Core.Operations
     public class OperationClock : IOperationClock
     {
         #region static
-        // private methods
-        private static BsonTimestamp GreaterOperationTime(BsonTimestamp x, BsonTimestamp y)
+        // public static methods
+        /// <summary>
+        /// Returns the greater of two operation times.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <returns>The greater operation time.</returns>
+        public static BsonTimestamp GreaterOperationTime(BsonTimestamp x, BsonTimestamp y)
         {
             if (x == null)
             {

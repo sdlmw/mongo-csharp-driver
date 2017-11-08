@@ -13,6 +13,7 @@
 * limitations under the License.
 */
 
+using System;
 using FluentAssertions;
 using MongoDB.Bson;
 using Xunit;
@@ -32,10 +33,11 @@ namespace MongoDB.Driver.Core.Clusters
         {
             var x = CreateClusterTime(timestamp1);
             var y = CreateClusterTime(timestamp2);
+            var expectedResult = CreateClusterTime(expectedTimestamp);
 
             var result = ClusterClock.GreaterClusterTime(x, y);
 
-            result.Should().Be(CreateClusterTime(expectedTimestamp));
+            result.Should().Be(expectedResult);
         }
 
         [Fact]
@@ -47,13 +49,17 @@ namespace MongoDB.Driver.Core.Clusters
         }
 
         [Theory]
+        [InlineData(null)]
         [InlineData(1L)]
         [InlineData(2L)]
-        public void ClusterTime_should_return_expected_result(long timestamp)
+        public void ClusterTime_should_return_expected_result(long? timestamp)
         {
             var subject = CreateSubject();
             var clusterTime = CreateClusterTime(timestamp);
-            subject.AdvanceClusterTime(clusterTime);
+            if (clusterTime != null)
+            {
+                subject.AdvanceClusterTime(clusterTime);
+            }
 
             var result = subject.ClusterTime;
 
@@ -67,16 +73,29 @@ namespace MongoDB.Driver.Core.Clusters
         [InlineData(2L, 1L, 2L)]
         public void AdvanceClusterTime_should_only_advance_cluster_time_when_new_cluster_time_is_greater(long? timestamp1, long? timestamp2, long? expectedTimestamp)
         {
+            var clusterTime1 = CreateClusterTime(timestamp1);
+            var clusterTime2 = CreateClusterTime(timestamp2);
+            var expectedResult = CreateClusterTime(expectedTimestamp);
             var subject = CreateSubject();
-            if (timestamp1.HasValue)
+            if (clusterTime1 != null)
             {
-                subject.AdvanceClusterTime(CreateClusterTime(timestamp1.Value));
+                subject.AdvanceClusterTime(clusterTime1);
             }
-            var newClusterTime = CreateClusterTime(timestamp2);
 
-            subject.AdvanceClusterTime(newClusterTime);
+            subject.AdvanceClusterTime(clusterTime2);
 
-            subject.ClusterTime.Should().Be(CreateClusterTime(expectedTimestamp));
+            subject.ClusterTime.Should().Be(expectedResult);
+        }
+
+        [Fact]
+        public void AdvanceClusterTime_should_throw_when_newClusterTime_is_null()
+        {
+            var subject = CreateSubject();
+
+            var exception = Record.Exception(() => subject.AdvanceClusterTime(null));
+
+            var e = exception.Should().BeOfType<ArgumentNullException>().Subject;
+            e.ParamName.Should().Be("newClusterTime");
         }
 
         // private methods
@@ -110,21 +129,15 @@ namespace MongoDB.Driver.Core.Clusters
             result.ClusterTime.Should().BeNull();
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData(1L)]
-        public void AdvanceClusterTime_should_do_nothing(long? timestamp)
+        [Fact]
+        public void AdvanceClusterTime_should_do_nothing()
         {
             var subject = new NoClusterClock();
-            BsonDocument newClusterTime = null;
-            if (timestamp.HasValue)
+            var newClusterTime = new BsonDocument
             {
-                newClusterTime = new BsonDocument
-                {
-                    { "xyz", 1 },
-                    { "clusterTime", new BsonTimestamp(timestamp.Value) }
-                };
-            }
+                { "xyz", 1 },
+                { "clusterTime", new BsonTimestamp(1L) }
+            };
 
             subject.AdvanceClusterTime(newClusterTime);
 

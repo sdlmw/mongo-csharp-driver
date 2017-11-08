@@ -31,7 +31,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// </summary>
         /// <param name="wrapped">The wrapped.</param>
         public ReferenceCountedCoreSession(ICoreSession wrapped)
-            : base(wrapped, ownsWrapped: false)
+            : base(wrapped, ownsWrapped: true)
         {
             _referenceCount = 1;
         }
@@ -62,20 +62,6 @@ namespace MongoDB.Driver.Core.Bindings
                 ThrowIfDisposed();
                 _referenceCount++;
             }
-        }
-
-        // protected methods
-        /// <inheritdoc />
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (!IsDisposed())
-                {
-                    Wrapped.Dispose();
-                }
-            }
-            base.Dispose(disposing);
         }
     }
 }

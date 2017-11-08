@@ -89,7 +89,14 @@ namespace MongoDB.Driver.Core.Bindings
         /// <value>
         /// The wrapped session.
         /// </value>
-        public ICoreSession Wrapped => _wrapped;
+        public ICoreSession Wrapped
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _wrapped;
+            }
+        }
 
         // public methods
         /// <inheritdoc />

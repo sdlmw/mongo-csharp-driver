@@ -31,7 +31,7 @@ namespace MongoDB.Driver.Core.Bindings
             var result = new ReferenceCountedCoreSession(wrapped);
 
             result.Wrapped.Should().BeSameAs(wrapped);
-            result._disposed().Should().BeFalse();
+            result.IsDisposed().Should().BeFalse();
             result._ownsWrapped().Should().BeTrue();
             result._referenceCount().Should().Be(1);
         }
@@ -63,7 +63,7 @@ namespace MongoDB.Driver.Core.Bindings
 
             subject.DecrementReferenceCount();
 
-            subject._disposed().Should().BeTrue();
+            subject.IsDisposed().Should().BeTrue();
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace MongoDB.Driver.Core.Bindings
 
             subject.DecrementReferenceCount();
 
-            subject._disposed().Should().BeFalse();
+            subject.IsDisposed().Should().BeFalse();
         }
 
         [Fact]

@@ -18,7 +18,7 @@ namespace MongoDB.Driver
     /// <summary>
     /// A server session pool.
     /// </summary>
-    public interface IServerSessionPool
+    internal interface IServerSessionPool
     {
         // methods
         /// <summary>

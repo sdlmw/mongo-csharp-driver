@@ -71,7 +71,7 @@ namespace MongoDB.Driver.Core.Clusters
     /// An object that represents no cluster clock.
     /// </summary>
     /// <seealso cref="MongoDB.Driver.Core.Clusters.IClusterClock" />
-    public sealed class NoClusterClock : IClusterClock
+    internal sealed class NoClusterClock : IClusterClock
     {
         /// <inheritdoc />
         public BsonDocument ClusterTime => null;

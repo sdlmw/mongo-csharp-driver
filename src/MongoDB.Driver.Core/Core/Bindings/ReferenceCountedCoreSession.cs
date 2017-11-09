@@ -19,7 +19,7 @@ namespace MongoDB.Driver.Core.Bindings
     /// A reference counted core session.
     /// </summary>
     /// <seealso cref="MongoDB.Driver.Core.Bindings.WrappingCoreSession" />
-    public sealed class ReferenceCountedCoreSession : WrappingCoreSession
+    internal sealed class ReferenceCountedCoreSession : WrappingCoreSession
     {
         // private fields
         private readonly object _lock = new object();

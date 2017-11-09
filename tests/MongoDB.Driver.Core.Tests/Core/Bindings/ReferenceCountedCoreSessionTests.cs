@@ -125,7 +125,7 @@ namespace MongoDB.Driver.Core.Bindings
         }
     }
 
-    public static class ReferenceCountedCoreSessionReflector
+    internal static class ReferenceCountedCoreSessionReflector
     {
         public static int _referenceCount(this ReferenceCountedCoreSession obj)
         {

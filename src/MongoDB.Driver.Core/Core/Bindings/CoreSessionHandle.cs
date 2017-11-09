@@ -40,7 +40,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// Initializes a new instance of the <see cref="CoreSessionHandle"/> class.
         /// </summary>
         /// <param name="wrapped">The wrapped.</param>
-        public CoreSessionHandle(ReferenceCountedCoreSession wrapped)
+        internal CoreSessionHandle(ReferenceCountedCoreSession wrapped)
             : base(Ensure.IsNotNull(wrapped, nameof(wrapped)), ownsWrapped: false)
         {
             _wrapped = wrapped;

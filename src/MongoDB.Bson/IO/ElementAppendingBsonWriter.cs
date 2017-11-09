@@ -25,7 +25,7 @@ namespace MongoDB.Bson.IO
     /// A BsonWriter that appends elements to the end of a document.
     /// </summary>
     /// <seealso cref="MongoDB.Bson.IO.IBsonWriter" />
-    public sealed class ElementAppendingBsonWriter : WrappingBsonWriter
+    internal sealed class ElementAppendingBsonWriter : WrappingBsonWriter
     {
         // private fields
         private int _depth;

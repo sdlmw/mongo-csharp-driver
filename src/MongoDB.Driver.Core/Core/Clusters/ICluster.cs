@@ -40,14 +40,6 @@ namespace MongoDB.Driver.Core.Clusters
 
         // properties
         /// <summary>
-        /// Gets the cluster clock.
-        /// </summary>
-        /// <value>
-        /// The cluster clock.
-        /// </value>
-        IClusterClock ClusterClock { get; }
-
-        /// <summary>
         /// Gets the cluster identifier.
         /// </summary>
         /// <value>

@@ -93,8 +93,6 @@ namespace MongoDB.Driver.Core.Clusters
         public event EventHandler<ClusterDescriptionChangedEventArgs> DescriptionChanged;
 
         // properties
-        public IClusterClock ClusterClock => _clusterClock;
-
         public ClusterId ClusterId
         {
             get { return _clusterId; }

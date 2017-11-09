@@ -175,7 +175,7 @@ namespace MongoDB.Bson.Tests.IO
         }
     }
 
-    public static class ElementAppendingBsonWriterReflector
+    internal static class ElementAppendingBsonWriterReflector
     {
         public static int _depth(this ElementAppendingBsonWriter obj)
         {

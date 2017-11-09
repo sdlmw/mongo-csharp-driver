@@ -22,8 +22,7 @@ namespace MongoDB.Driver
         public static ICoreSessionHandle ToCoreSession(this IClientSessionHandle clientSession)
         {
             var coreSession = new ClientSessionWrappingCoreSession(clientSession.Fork());
-            var referenceCounted = new ReferenceCountedCoreSession(coreSession);
-            return new CoreSessionHandle(referenceCounted);
+            return new CoreSessionHandle(coreSession);
         }
     }
 }

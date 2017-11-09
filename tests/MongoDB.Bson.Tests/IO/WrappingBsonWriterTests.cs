@@ -934,7 +934,7 @@ namespace MongoDB.Bson.Tests.IO
         }
     }
 
-    public static class WrappingBsonWriterReflector
+    internal static class WrappingBsonWriterReflector
     {
         public static bool _disposed(this WrappingBsonWriter instance)
         {

@@ -22,7 +22,7 @@ namespace MongoDB.Driver
     /// A class that represents no server session.
     /// </summary>
     /// <seealso cref="MongoDB.Driver.IServerSession" />
-    public sealed class NoServerSession : IServerSession
+    internal sealed class NoServerSession : IServerSession
     {
         #region static
         // private static fields

@@ -148,7 +148,7 @@ namespace MongoDB.Driver.Core.Bindings
         }
     }
 
-    public static class CoreSessionHandleReflector
+    internal static class CoreSessionHandleReflector
     {
         public static void Dispose(this CoreSessionHandle obj, bool disposing)
         {

@@ -1,4 +1,4 @@
-/* Copyright 2010-2015 MongoDB Inc.
+/* Copyright 2010-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ namespace MongoDB.Driver.Tests
             _mockCollection.SetupGet(c => c.DocumentSerializer).Returns(BsonSerializer.SerializerRegistry.GetSerializer<Person>());
             _mockCollection.SetupGet(c => c.Settings).Returns(settings);
             options = options ?? new FindOptions<Person, Person>();
-            var subject = new FindFluent<Person, Person>(_mockCollection.Object, new BsonDocument(), options);
+            var subject = new FindFluent<Person, Person>(session: null, collection: _mockCollection.Object, filter: new BsonDocument(), options: options);
 
             return subject;
         }

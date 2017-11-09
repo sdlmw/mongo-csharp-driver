@@ -40,7 +40,24 @@ namespace MongoDB.Driver
         public static IAggregateFluent<TDocument> Aggregate<TDocument>(this IMongoCollection<TDocument> collection, AggregateOptions options = null)
         {
             var emptyPipeline = new EmptyPipelineDefinition<TDocument>(collection.DocumentSerializer);
-            return new AggregateFluent<TDocument, TDocument>(collection, emptyPipeline, options ?? new AggregateOptions());
+            return new AggregateFluent<TDocument, TDocument>(null, collection, emptyPipeline, options ?? new AggregateOptions());
+        }
+
+        /// <summary>
+        /// Begins a fluent aggregation interface.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="options">The options.</param>
+        /// <returns>
+        /// A fluent aggregate interface.
+        /// </returns>
+        public static IAggregateFluent<TDocument> Aggregate<TDocument>(this IMongoCollection<TDocument> collection, IClientSessionHandle session, AggregateOptions options = null)
+        {
+            Ensure.IsNotNull(session, nameof(session));
+            var emptyPipeline = new EmptyPipelineDefinition<TDocument>(collection.DocumentSerializer);
+            return new AggregateFluent<TDocument, TDocument>(session, collection, emptyPipeline, options ?? new AggregateOptions());
         }
 
         /// <summary>
@@ -701,6 +718,28 @@ namespace MongoDB.Driver
         /// </returns>
         public static IFindFluent<TDocument, TDocument> Find<TDocument>(this IMongoCollection<TDocument> collection, FilterDefinition<TDocument> filter, FindOptions options = null)
         {
+            return FindHelper(null, collection, filter, options);
+        }
+
+        /// <summary>
+        /// Begins a fluent find interface.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="filter">The filter.</param>
+        /// <param name="options">The options.</param>
+        /// <returns>
+        /// A fluent find interface.
+        /// </returns>
+        public static IFindFluent<TDocument, TDocument> Find<TDocument>(this IMongoCollection<TDocument> collection, IClientSessionHandle session, FilterDefinition<TDocument> filter, FindOptions options = null)
+        {
+            Ensure.IsNotNull(session, nameof(session));
+            return FindHelper(session, collection, filter, options);
+        }
+
+        private static IFindFluent<TDocument, TDocument> FindHelper<TDocument>(IClientSessionHandle session, IMongoCollection<TDocument> collection, FilterDefinition<TDocument> filter, FindOptions options)
+        {
             FindOptions<TDocument, TDocument> genericOptions;
             if (options == null)
             {
@@ -723,7 +762,7 @@ namespace MongoDB.Driver
                 };
             }
 
-            return new FindFluent<TDocument, TDocument>(collection, filter, genericOptions);
+            return new FindFluent<TDocument, TDocument>(session, collection, filter, genericOptions);
         }
 
         /// <summary>
@@ -742,6 +781,26 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(filter, nameof(filter));
 
             return collection.Find(new ExpressionFilterDefinition<TDocument>(filter), options);
+        }
+
+        /// <summary>
+        /// Begins a fluent find interface.
+        /// </summary>
+        /// <typeparam name="TDocument">The type of the document.</typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="filter">The filter.</param>
+        /// <param name="options">The options.</param>
+        /// <returns>
+        /// A fluent interface.
+        /// </returns>
+        public static IFindFluent<TDocument, TDocument> Find<TDocument>(this IMongoCollection<TDocument> collection, IClientSessionHandle session, Expression<Func<TDocument, bool>> filter, FindOptions options = null)
+        {
+            Ensure.IsNotNull(collection, nameof(collection));
+            Ensure.IsNotNull(session, nameof(session));
+            Ensure.IsNotNull(filter, nameof(filter));
+
+            return collection.Find(session, new ExpressionFilterDefinition<TDocument>(filter), options);
         }
 
         /// <summary>

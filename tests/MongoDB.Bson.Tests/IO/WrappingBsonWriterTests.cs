@@ -48,7 +48,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void Position_should_call_wrapped_Position()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Position;
 
@@ -69,7 +70,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void SerializationDepth_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.SerializationDepth;
 
@@ -90,7 +92,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void Settings_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Settings;
 
@@ -111,7 +114,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void State_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.State;
 
@@ -132,7 +136,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void Wrapped_should_return_expected_result()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Wrapped;
 
@@ -155,7 +160,8 @@ namespace MongoDB.Bson.Tests.IO
         [InlineData(true)]
         public void Close_should_call_wrapped(bool disposed)
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             if (disposed)
             {
                 subject.Dispose();
@@ -179,7 +185,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void Dispose_can_be_called_multiple_times()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Dispose();
             subject.Dispose();
@@ -190,7 +197,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void Flush_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Flush();
 
@@ -211,7 +219,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void PopElementNameValidator_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.PopElementNameValidator();
 
@@ -232,7 +241,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void PopSettings_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.PopSettings();
 
@@ -253,7 +263,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void PushElementNameValidator_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var validator = new Mock<IElementNameValidator>().Object;
 
             subject.PushElementNameValidator(validator);
@@ -276,7 +287,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void PushSettings_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             Action<BsonWriterSettings> configurator = s => { };
 
             subject.PushSettings(configurator);
@@ -299,7 +311,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteBinaryData_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = new BsonBinaryData(new byte[0]);
 
             subject.WriteBinaryData(value);
@@ -322,7 +335,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteBooelan_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = true;
 
             subject.WriteBoolean(value);
@@ -345,7 +359,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteBytes_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = new byte[0];
 
             subject.WriteBytes(value);
@@ -368,7 +383,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteDateTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = 123L;
 
             subject.WriteDateTime(value);
@@ -391,7 +407,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteDecimal128_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = Decimal128.Parse("123");
 
             subject.WriteDecimal128(value);
@@ -414,7 +431,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteDouble_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = 123.0;
 
             subject.WriteDouble(value);
@@ -437,7 +455,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteEndArray_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteEndArray();
 
@@ -458,7 +477,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteEndDocument_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteEndDocument();
 
@@ -479,7 +499,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteInt32_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = 123;
 
             subject.WriteInt32(value);
@@ -502,7 +523,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteInt64_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = 123L;
 
             subject.WriteInt64(value);
@@ -525,7 +547,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteJavaScript_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = "code";
 
             subject.WriteJavaScript(value);
@@ -548,7 +571,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteJavaScriptWithScope_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = "code";
 
             subject.WriteJavaScriptWithScope(value);
@@ -571,7 +595,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteMaxKey_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteMaxKey();
 
@@ -592,7 +617,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteMinKey_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteMinKey();
 
@@ -613,7 +639,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteName_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var name = "name";
 
             subject.WriteName(name);
@@ -636,7 +663,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteNull_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteNull();
 
@@ -657,7 +685,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteObjectId_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = ObjectId.GenerateNewId(); ;
 
             subject.WriteObjectId(value);
@@ -680,7 +709,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteRawBsonArray_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = new Mock<IByteBuffer>().Object;
 
             subject.WriteRawBsonArray(value);
@@ -703,7 +733,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteRawBsonDocument_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = new Mock<IByteBuffer>().Object;
 
             subject.WriteRawBsonDocument(value);
@@ -726,7 +757,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteRegularExpression_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = new BsonRegularExpression("pattern", "options");
 
             subject.WriteRegularExpression(value);
@@ -749,7 +781,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteStartArray_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteStartArray();
 
@@ -770,7 +803,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteStartDocument_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteStartDocument();
 
@@ -791,7 +825,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteString_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = "abc";
 
             subject.WriteString(value);
@@ -814,7 +849,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteSymbol_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = "abc";
 
             subject.WriteSymbol(value);
@@ -837,7 +873,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteTimestamp_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var value = 123L;
 
             subject.WriteTimestamp(value);
@@ -860,7 +897,8 @@ namespace MongoDB.Bson.Tests.IO
         [Fact]
         public void WriteUndefined_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WriteUndefined();
 
@@ -883,7 +921,8 @@ namespace MongoDB.Bson.Tests.IO
         [InlineData(true)]
         public void Dispose_bool_should_have_expected_result(bool disposing)
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Dispose(disposing);
 
@@ -894,14 +933,16 @@ namespace MongoDB.Bson.Tests.IO
         // private methods
         private WrappingBsonWriter CreateDisposedSubject()
         {
-            var subject = CreateSubject(out Mock<IBsonWriter> mockWrapped);
+            Mock<IBsonWriter> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             subject.Dispose();
             return subject;
         }
 
         private WrappingBsonWriter CreateSubject()
         {
-            return CreateSubject(out Mock<IBsonWriter> mockWriter);
+            Mock<IBsonWriter> mockWriter;
+            return CreateSubject(out mockWriter);
         }
 
         private WrappingBsonWriter CreateSubject(out Mock<IBsonWriter> mockWrapped)

@@ -50,7 +50,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void ClusterTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.ClusterTime;
 
@@ -71,7 +72,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void Id_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Id;
 
@@ -92,7 +94,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void IsImplicit_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.IsImplicit;
 
@@ -113,7 +116,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void OperationTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.OperationTime;
 
@@ -134,7 +138,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void Wrapped_should_return_expected_result()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Wrapped;
 
@@ -155,7 +160,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void AdvanceClusterTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var newClusterTime = CreateClusterTime();
 
             subject.AdvanceClusterTime(newClusterTime);
@@ -178,7 +184,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void AdvanceOperationTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var newOperationTime = CreateOperationTime();
 
             subject.AdvanceOperationTime(newOperationTime);
@@ -211,7 +218,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void Dispose_can_be_called_more_than_once()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Dispose();
             subject.Dispose();
@@ -222,7 +230,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void WasUsed_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WasUsed();
 
@@ -257,7 +266,8 @@ namespace MongoDB.Driver.Core.Bindings
         [InlineData(true, true, true)]
         public void Dispose_bool_should_call_wrapped_when_expected(bool ownsWrapped, bool disposing, bool disposeExpected)
         {
-            var subject = CreateSubject(ownsWrapped, out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(ownsWrapped, out mockWrapped);
 
             subject.Dispose(disposing);
 
@@ -328,7 +338,8 @@ namespace MongoDB.Driver.Core.Bindings
 
         private WrappingCoreSession CreateSubject()
         {
-            return CreateSubject(out Mock<ICoreSession> mockWrapped);
+            Mock<ICoreSession> mockWrapped;
+            return CreateSubject(out mockWrapped);
         }
 
         private WrappingCoreSession CreateSubject(out Mock<ICoreSession> mockWrapped)

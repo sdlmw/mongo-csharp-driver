@@ -50,7 +50,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Client_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Client;
 
@@ -71,7 +72,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void ClusterTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.ClusterTime;
 
@@ -92,7 +94,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void IsImplicit_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.IsImplicit;
 
@@ -113,7 +116,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void OperationTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.OperationTime;
 
@@ -134,7 +138,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Options_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Options;
 
@@ -155,7 +160,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void ServerSession_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.ServerSession;
 
@@ -176,7 +182,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Wrapped_should_return_expected_result()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Wrapped;
 
@@ -197,7 +204,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void AdvanceClusterTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var newClusterTime = CreateClusterTime();
 
             subject.AdvanceClusterTime(newClusterTime);
@@ -220,7 +228,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void AdvanceOperationTime_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
             var newOperationTime = CreateOperationTime();
 
             subject.AdvanceOperationTime(newOperationTime);
@@ -253,7 +262,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_can_be_called_more_than_once()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Dispose();
             subject.Dispose();

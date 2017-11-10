@@ -112,7 +112,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_should_call_wrapped_Dispose()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Dispose();
 
@@ -122,7 +123,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_can_be_called_more_than_once()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockWrapped);
+            Mock<IClientSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Dispose();
             subject.Dispose();

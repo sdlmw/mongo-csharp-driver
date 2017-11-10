@@ -70,7 +70,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void Fork_should_return_a_new_handle_to_same_reference_counted_session()
         {
-            var subject = CreateSubject(out ReferenceCountedCoreSession referenceCounted);
+            ReferenceCountedCoreSession referenceCounted;
+            var subject = CreateSubject(out referenceCounted);
 
             var result = subject.Fork();
 
@@ -81,7 +82,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void Fork_should_increment_reference_count()
         {
-            var subject = CreateSubject(out ReferenceCountedCoreSession referenceCounted);
+            ReferenceCountedCoreSession referenceCounted;
+            var subject = CreateSubject(out referenceCounted);
             var originalReferenceCount = referenceCounted._referenceCount();
 
             var result = subject.Fork();
@@ -103,7 +105,8 @@ namespace MongoDB.Driver.Core.Bindings
         [Fact]
         public void Dispose_can_be_called_more_than_once()
         {
-            var subject = CreateSubject(out ReferenceCountedCoreSession referenceCounted);
+            ReferenceCountedCoreSession referenceCounted;
+            var subject = CreateSubject(out referenceCounted);
             var originalReferenceCount = referenceCounted._referenceCount();
 
             subject.Dispose();
@@ -117,7 +120,8 @@ namespace MongoDB.Driver.Core.Bindings
         [InlineData(true)]
         public void Dispose_with_disposing_should_decrement_reference_count_when_appropriate(bool disposing)
         {
-            var subject = CreateSubject(out ReferenceCountedCoreSession referenceCounted);
+            ReferenceCountedCoreSession referenceCounted;
+            var subject = CreateSubject(out referenceCounted);
             var originalReferenceCount = referenceCounted._referenceCount();
 
             subject.Dispose(disposing);

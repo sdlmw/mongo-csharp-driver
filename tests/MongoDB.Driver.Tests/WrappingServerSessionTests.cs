@@ -49,7 +49,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Id_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IServerSession> mockWrapped);
+            Mock<IServerSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Id;
 
@@ -71,7 +72,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void LastUsedAt_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IServerSession> mockWrapped);
+            Mock<IServerSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.LastUsedAt;
 
@@ -93,7 +95,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Wrapped_should_return_expected_result()
         {
-            var subject = CreateSubject(out Mock<IServerSession> mockWrapped);
+            Mock<IServerSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             var result = subject.Wrapped;
 
@@ -125,7 +128,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_can_be_called_more_than_once()
         {
-            var subject = CreateSubject(out Mock<IServerSession> mockWrapped);
+            Mock<IServerSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.Dispose();
             subject.Dispose();
@@ -136,7 +140,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void WasUsed_should_call_wrapped()
         {
-            var subject = CreateSubject(out Mock<IServerSession> mockWrapped);
+            Mock<IServerSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
 
             subject.WasUsed();
 

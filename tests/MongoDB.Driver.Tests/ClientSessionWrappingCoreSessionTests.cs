@@ -47,7 +47,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void ClusterTime_should_call_client_session()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
 
             var result = subject.ClusterTime;
 
@@ -68,7 +69,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Id_should_call_client_session()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
             var mockServerSession = new Mock<IServerSession>();
             mockClientSession.SetupGet(m => m.ServerSession).Returns(mockServerSession.Object);
 
@@ -91,7 +93,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void IsImplicit_should_call_client_session()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
 
             var result = subject.IsImplicit;
 
@@ -112,7 +115,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void OperationTime_should_call_client_session()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
 
             var result = subject.OperationTime;
 
@@ -133,7 +137,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void AdvanceClusterTime_should_call_client_session()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
             var newClusterTime = CreateClusterTime();
 
             subject.AdvanceClusterTime(newClusterTime);
@@ -156,7 +161,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void AdvanceOperationTime_should_call_client_session()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
             var newOperationTime = new BsonTimestamp(1L);
 
             subject.AdvanceOperationTime(newOperationTime);
@@ -189,7 +195,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_should_dispose_client_session()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
 
             subject.Dispose();
 
@@ -199,7 +206,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_can_be_called_more_than_once()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
 
             subject.Dispose();
             subject.Dispose();
@@ -210,7 +218,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void WasUsed_should_call_server_session()
         {
-            var subject = CreateSubject(out Mock<IServerSession> mockServerSession);
+            Mock<IServerSession> mockServerSession;
+            var subject = CreateSubject(out  mockServerSession);
 
             subject.WasUsed();
 
@@ -240,7 +249,8 @@ namespace MongoDB.Driver.Tests
 
         private ClientSessionWrappingCoreSession CreateDisposedSubject()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockClientSession);
+            Mock<IClientSession> mockClientSession;
+            var subject = CreateSubject(out mockClientSession);
             subject.Dispose();
             return subject;
         }

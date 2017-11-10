@@ -69,7 +69,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Fork_should_return_new_handle_to_same_reference_counted_session()
         {
-            var subject = CreateSubject(out ReferenceCountedClientSession referenceCounted);
+            ReferenceCountedClientSession referenceCounted;
+            var subject = CreateSubject(out referenceCounted);
 
             var result = subject.Fork();
 
@@ -80,7 +81,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Fork_should_increment_reference_count()
         {
-            var subject = CreateSubject(out ReferenceCountedClientSession referenceCounted);
+            ReferenceCountedClientSession referenceCounted;
+            var subject = CreateSubject(out referenceCounted);
             var originalReferenceCount = referenceCounted._referenceCount();
 
             subject.Fork();
@@ -112,7 +114,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_should_decrement_reference_count()
         {
-            var subject = CreateSubject(out ReferenceCountedClientSession referenceCounted);
+            ReferenceCountedClientSession referenceCounted;
+            var subject = CreateSubject(out referenceCounted);
             var fork = subject.Fork();
             var originalReferenceCount = referenceCounted._referenceCount();
 
@@ -124,7 +127,8 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_should_dispose_wrapped_session_when_reference_count_reaches_zero()
         {
-            var subject = CreateSubject(out Mock<IClientSession> mockSession);
+            Mock<IClientSession> mockSession;
+            var subject = CreateSubject(out mockSession);
 
             subject.Dispose();
 
@@ -134,7 +138,9 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Dispose_can_be_called_more_than_once()
         {
-            var subject = CreateSubject(out ReferenceCountedClientSession referenceCounted, out Mock<IClientSession> mockSession);
+            ReferenceCountedClientSession referenceCounted;
+            Mock<IClientSession> mockSession;
+            var subject = CreateSubject(out referenceCounted, out mockSession);
             var originalReferenceCount = referenceCounted._referenceCount();
 
             subject.Dispose();

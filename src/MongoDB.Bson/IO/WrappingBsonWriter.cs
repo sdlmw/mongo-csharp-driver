@@ -34,7 +34,11 @@ namespace MongoDB.Bson.IO
         /// <param name="wrapped">The wrapped writer.</param>
         public WrappingBsonWriter(IBsonWriter wrapped)
         {
-            _wrapped = wrapped ?? throw new ArgumentNullException(nameof(wrapped));
+            if (wrapped == null)
+            {
+                throw new ArgumentNullException(nameof(wrapped));
+            }
+            _wrapped = wrapped;
         }
 
         // public properties

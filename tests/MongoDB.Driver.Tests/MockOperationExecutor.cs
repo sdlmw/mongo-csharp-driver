@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Operations;
 using Moq;
@@ -62,7 +63,9 @@ namespace MongoDB.Driver.Tests
             {
                 Binding = binding,
                 Operation = operation,
-                CancellationToken = cancellationToken
+                CancellationToken = cancellationToken,
+                SessionId = binding.Session.Id,
+                UsedImplicitSession = binding.Session.IsImplicit
             });
 
             if (_results.Count > 0)
@@ -102,7 +105,9 @@ namespace MongoDB.Driver.Tests
             {
                 Binding = binding,
                 Operation = operation,
-                CancellationToken = cancellationToken
+                CancellationToken = cancellationToken,
+                SessionId = binding.Session.Id,
+                UsedImplicitSession = binding.Session.IsImplicit
             });
 
             if (_results.Count > 0)
@@ -189,6 +194,8 @@ namespace MongoDB.Driver.Tests
             public IReadBinding Binding { get; set; }
             public IReadOperation<TResult> Operation { get; set; }
             public CancellationToken CancellationToken { get; set; }
+            public BsonDocument SessionId { get; set; }
+            public bool UsedImplicitSession { get; set; }
         }
 
         public class WriteCall<TResult>
@@ -196,6 +203,8 @@ namespace MongoDB.Driver.Tests
             public IWriteBinding Binding { get; set; }
             public IWriteOperation<TResult> Operation { get; set; }
             public CancellationToken CancellationToken { get; set; }
+            public BsonDocument SessionId { get; set; }
+            public bool UsedImplicitSession { get; set; }
         }
     }
 }

@@ -170,7 +170,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(session, nameof(session));
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = new ListDatabasesOperation(messageEncoderSettings);
-            return ExecuteReadOperation(session, operation);
+            return ExecuteReadOperation(session, operation, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -185,7 +185,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(session, nameof(session));
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = new ListDatabasesOperation(messageEncoderSettings);
-            return ExecuteReadOperationAsync(session, operation);
+            return ExecuteReadOperationAsync(session, operation, cancellationToken);
         }
 
         /// <summary>

@@ -50,11 +50,30 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         [Fact]
+        public void Constructor_should_throw_if_session_is_null()
+        {
+            Action act = () => new ChannelSourceReadWriteBinding(_mockChannelSource.Object, ReadPreference.Primary, null);
+
+            act.ShouldThrow<ArgumentNullException>();
+        }
+
+        [Fact]
         public void Constructor_should_not_fork_channelSource()
         {
             new ChannelSourceReadWriteBinding(_mockChannelSource.Object, ReadPreference.Primary, NoCoreSession.NewHandle());
 
             _mockChannelSource.Verify(s => s.Fork(), Times.Never);
+        }
+
+        [Fact]
+        public void Session_should_return_expected_result()
+        {
+            var session = new Mock<ICoreSessionHandle>().Object;
+            var subject = new ChannelSourceReadWriteBinding(_mockChannelSource.Object, ReadPreference.Primary, session);
+
+            var result = subject.Session;
+
+            result.Should().BeSameAs(session);
         }
 
         [Theory]
@@ -149,6 +168,17 @@ namespace MongoDB.Driver.Core.Bindings
             subject.Dispose();
 
             _mockChannelSource.Verify(f => f.Dispose(), Times.Once);
+        }
+
+        [Fact]
+        public void Dispose_should_call_dispose_on_session()
+        {
+            var mockSession = new Mock<ICoreSessionHandle>();
+            var subject = new ChannelSourceReadWriteBinding(_mockChannelSource.Object, ReadPreference.Primary, mockSession.Object);
+
+            subject.Dispose();
+
+            mockSession.Verify(f => f.Dispose(), Times.Once);
         }
     }
 }

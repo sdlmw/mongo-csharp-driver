@@ -49,6 +49,14 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         [Fact]
+        public void Constructor_should_throw_when_session_is_null()
+        {
+            Action act = () => new ServerChannelSource(_mockServer.Object, null);
+
+            act.ShouldThrow<ArgumentNullException>();
+        }
+
+        [Fact]
         public void ServerDescription_should_return_description_of_server()
         {
             var session = new Mock<ICoreSessionHandle>().Object;
@@ -61,6 +69,17 @@ namespace MongoDB.Driver.Core.Bindings
             var result = subject.ServerDescription;
 
             result.Should().BeSameAs(desc);
+        }
+
+        [Fact]
+        public void Session_should_return_expected_result()
+        {
+            var session = new Mock<ICoreSessionHandle>().Object;
+            var subject = new ServerChannelSource(_mockServer.Object, session);
+
+            var result = subject.Session;
+
+            result.Should().BeSameAs(session);
         }
 
         [Theory]
@@ -107,6 +126,17 @@ namespace MongoDB.Driver.Core.Bindings
 
                 _mockServer.Verify(s => s.GetChannel(CancellationToken.None), Times.Once);
             }
+        }
+
+        [Fact]
+        public void Dispose_should_dispose_session()
+        {
+            var mockSession = new Mock<ICoreSessionHandle>();
+            var subject = new ServerChannelSource(_mockServer.Object, mockSession.Object);
+
+            subject.Dispose();
+
+            mockSession.Verify(m => m.Dispose(), Times.Once);
         }
     }
 }

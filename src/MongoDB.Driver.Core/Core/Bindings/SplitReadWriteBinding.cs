@@ -51,8 +51,12 @@ namespace MongoDB.Driver.Core.Bindings
         /// <param name="readPreference">The read preference.</param>
         /// <param name="session">The session.</param>
         public SplitReadWriteBinding(ICluster cluster, ReadPreference readPreference, ICoreSessionHandle session)
-            : this(new ReadPreferenceBinding(cluster, readPreference, session), new WritableServerBinding(cluster, session.Fork()))
         {
+            Ensure.IsNotNull(cluster, nameof(cluster));
+            Ensure.IsNotNull(readPreference, nameof(readPreference));
+            Ensure.IsNotNull(session, nameof(session));
+            _readBinding = new ReadPreferenceBinding(cluster, readPreference, session); // read binding owns session passed in
+            _writeBinding = new WritableServerBinding(cluster, session.Fork()); // write binding owns a forked copy
         }
 
         // properties

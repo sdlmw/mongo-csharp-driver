@@ -58,6 +58,16 @@ namespace MongoDB.Driver.Core.Bindings
 
         // methods
         /// <inheritdoc/>
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _session.Dispose();
+                _disposed = true;
+            }
+        }
+
+        /// <inheritdoc/>
         public IChannelSourceHandle GetReadChannelSource(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
@@ -90,21 +100,11 @@ namespace MongoDB.Driver.Core.Bindings
             return new ChannelSourceHandle(new ServerChannelSource(_server, _session.Fork()));
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            if (!_disposed)
-            {
-                _session.Dispose();
-                _disposed = true;
-            }
-        }
-
         private void ThrowIfDisposed()
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(GetType().Name);
+                throw new ObjectDisposedException(GetType().FullName);
             }
         }
     }

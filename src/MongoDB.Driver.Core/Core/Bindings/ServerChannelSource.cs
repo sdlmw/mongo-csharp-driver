@@ -65,6 +65,16 @@ namespace MongoDB.Driver.Core.Bindings
 
         // methods
         /// <inheritdoc/>
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _session.Dispose();
+                _disposed = true;
+            }
+        }
+
+        /// <inheritdoc/>
         public IChannelHandle GetChannel(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
@@ -78,21 +88,11 @@ namespace MongoDB.Driver.Core.Bindings
             return _server.GetChannelAsync(cancellationToken);
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            if (!_disposed)
-            {
-                _session.Dispose();
-                _disposed = true;
-            }
-        }
-
         private void ThrowIfDisposed()
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(GetType().Name);
+                throw new ObjectDisposedException(GetType().FullName);
             }
         }
     }

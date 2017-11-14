@@ -168,7 +168,7 @@ namespace MongoDB.Driver
         /// </returns>
         public static DeleteResult DeleteMany<TDocument>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return collection.DeleteMany<TDocument>(filter, null, cancellationToken);
+            return collection.DeleteMany(new ExpressionFilterDefinition<TDocument>(filter), cancellationToken);
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace MongoDB.Driver
         /// </returns>
         public static Task<DeleteResult> DeleteManyAsync<TDocument>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return collection.DeleteManyAsync<TDocument>(filter, null, cancellationToken);
+            return collection.DeleteManyAsync(new ExpressionFilterDefinition<TDocument>(filter), cancellationToken);
         }
 
         /// <summary>
@@ -278,7 +278,7 @@ namespace MongoDB.Driver
         /// </returns>
         public static DeleteResult DeleteOne<TDocument>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return collection.DeleteOne<TDocument>(filter, null, cancellationToken);
+            return collection.DeleteOne(new ExpressionFilterDefinition<TDocument>(filter), cancellationToken);
         }
 
         /// <summary>
@@ -333,7 +333,7 @@ namespace MongoDB.Driver
         /// </returns>
         public static Task<DeleteResult> DeleteOneAsync<TDocument>(this IMongoCollection<TDocument> collection, Expression<Func<TDocument, bool>> filter, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return collection.DeleteOneAsync<TDocument>(filter, null, cancellationToken);
+            return collection.DeleteOneAsync(new ExpressionFilterDefinition<TDocument>(filter), cancellationToken);
         }
 
         /// <summary>
@@ -367,7 +367,7 @@ namespace MongoDB.Driver
         /// <returns>
         /// The result of the delete operation.
         /// </returns>
-        public static Task<DeleteResult> DeleteOneAsync<TDocument>(this IMongoCollection<TDocument> collection, IClientSessionHandle session, Expression<Func<TDocument, bool>> filter, DeleteOptions options, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<DeleteResult> DeleteOneAsync<TDocument>(this IMongoCollection<TDocument> collection, IClientSessionHandle session, Expression<Func<TDocument, bool>> filter, DeleteOptions options = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(collection, nameof(collection));
             Ensure.IsNotNull(session, nameof(session));
@@ -395,7 +395,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.Distinct<TField>(
+            return collection.Distinct(
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 filter,
                 options,
@@ -421,7 +421,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.Distinct<TField>(
+            return collection.Distinct(
                 field,
                 new ExpressionFilterDefinition<TDocument>(filter),
                 options,
@@ -447,7 +447,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.Distinct<TField>(
+            return collection.Distinct(
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 new ExpressionFilterDefinition<TDocument>(filter),
                 options,
@@ -475,7 +475,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.Distinct<TField>(
+            return collection.Distinct(
                 session,
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 filter,
@@ -504,7 +504,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.Distinct<TField>(
+            return collection.Distinct(
                 session,
                 field,
                 new ExpressionFilterDefinition<TDocument>(filter),
@@ -533,7 +533,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.Distinct<TField>(
+            return collection.Distinct(
                 session,
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 new ExpressionFilterDefinition<TDocument>(filter),
@@ -560,7 +560,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.DistinctAsync<TField>(
+            return collection.DistinctAsync(
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 filter,
                 options,
@@ -586,7 +586,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.DistinctAsync<TField>(
+            return collection.DistinctAsync(
                 field,
                 new ExpressionFilterDefinition<TDocument>(filter),
                 options,
@@ -612,7 +612,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.DistinctAsync<TField>(
+            return collection.DistinctAsync(
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 new ExpressionFilterDefinition<TDocument>(filter),
                 options,
@@ -640,7 +640,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.DistinctAsync<TField>(
+            return collection.DistinctAsync(
                 session,
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 filter,
@@ -669,7 +669,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.DistinctAsync<TField>(
+            return collection.DistinctAsync(
                 session,
                 field,
                 new ExpressionFilterDefinition<TDocument>(filter),
@@ -698,7 +698,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(field, nameof(field));
             Ensure.IsNotNull(filter, nameof(filter));
 
-            return collection.DistinctAsync<TField>(
+            return collection.DistinctAsync(
                 session,
                 new ExpressionFieldDefinition<TDocument, TField>(field),
                 new ExpressionFilterDefinition<TDocument>(filter),

@@ -1,4 +1,4 @@
-/* Copyright 2010-2016 MongoDB Inc.
+/* Copyright 2010-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver.Core;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Clusters.ServerSelectors;
@@ -228,24 +229,25 @@ namespace MongoDB.Driver
             return new DatabaseNamespace(databaseName);
         }
 
-        public static IReadBinding GetReadBinding()
+        public static IReadBinding GetReadBinding(ICoreSessionHandle session)
         {
-            return GetReadBinding(ReadPreference.Primary);
+            return GetReadBinding(ReadPreference.Primary, session);
         }
 
-        public static IReadBinding GetReadBinding(ReadPreference readPreference)
+        public static IReadBinding GetReadBinding(ReadPreference readPreference, ICoreSessionHandle session)
         {
-            return new ReadPreferenceBinding(__cluster.Value, readPreference, NoCoreSession.NewHandle());
+            return new ReadPreferenceBinding(__cluster.Value, readPreference, session);
         }
 
-        public static IReadWriteBinding GetReadWriteBinding()
+        public static IReadWriteBinding GetReadWriteBinding(ICoreSessionHandle session)
         {
-            return new WritableServerBinding(__cluster.Value, NoCoreSession.NewHandle());
+            return new WritableServerBinding(__cluster.Value, session);
         }
 
         public static IEnumerable<string> GetModules()
         {
-            using (var binding = GetReadBinding())
+            var session = CoreTestConfiguration.StartSession();
+            using (var binding = GetReadBinding(session))
             {
                 var command = new BsonDocument("buildinfo", 1);
                 var operation = new ReadCommandOperation<BsonDocument>(DatabaseNamespace.Admin, command, BsonDocumentSerializer.Instance, __messageEncoderSettings);
@@ -264,7 +266,8 @@ namespace MongoDB.Driver
 
         public static string GetStorageEngine()
         {
-            using (var binding = GetReadWriteBinding())
+            var session = CoreTestConfiguration.StartSession();
+            using (var binding = GetReadWriteBinding(session))
             {
                 var command = new BsonDocument("serverStatus", 1);
                 var operation = new ReadCommandOperation<BsonDocument>(DatabaseNamespace.Admin, command, BsonDocumentSerializer.Instance, __messageEncoderSettings);
@@ -278,6 +281,18 @@ namespace MongoDB.Driver
                 {
                     return "mmapv1";
                 }
+            }
+        }
+
+        public static ICoreSessionHandle StartSession()
+        {
+            if (AreSessionsSupported())
+            {
+                return TestCoreSession.NewHandle();
+            }
+            else
+            {
+                return NoCoreSession.NewHandle();
             }
         }
 
@@ -340,11 +355,27 @@ namespace MongoDB.Driver
         #endregion
 
         // methods
+        private static bool AreSessionsSupported()
+        {
+            var cluster = __cluster.Value;
+            SpinWait.SpinUntil(() => cluster.Description.Servers.Any(s => s.State == ServerState.Connected), TimeSpan.FromSeconds(30));
+
+            return AreSessionsSupported(cluster.Description);
+        }
+
+        private static bool AreSessionsSupported(ClusterDescription clusterDescription)
+        {
+            return
+                clusterDescription.Servers.Any(s => s.State == ServerState.Connected) &&
+                clusterDescription.LogicalSessionTimeout.HasValue;
+        }
+
         private static void DropDatabase()
         {
             var operation = new DropDatabaseOperation(__databaseNamespace, __messageEncoderSettings);
 
-            using (var binding = GetReadWriteBinding())
+            var session = CoreTestConfiguration.StartSession();
+            using (var binding = GetReadWriteBinding(session))
             {
                 operation.Execute(binding, CancellationToken.None);
             }

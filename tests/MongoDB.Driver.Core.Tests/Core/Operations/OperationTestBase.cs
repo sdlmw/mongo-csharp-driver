@@ -18,10 +18,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Bindings;
+using MongoDB.Driver.Core.TestHelpers;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 using Xunit;
 
@@ -33,16 +35,20 @@ namespace MongoDB.Driver.Core.Operations
         protected CollectionNamespace _collectionNamespace;
         protected MessageEncoderSettings _messageEncoderSettings;
         private bool _hasOncePerFixtureRun;
+        protected readonly ICoreSessionHandle _session;
 
         public OperationTestBase()
         {
             _databaseNamespace = CoreTestConfiguration.DatabaseNamespace;
-            _collectionNamespace = new CollectionNamespace(_databaseNamespace, GetType().Name);
+            _collectionNamespace = CoreTestConfiguration.GetCollectionNamespaceForTestClass(GetType());
             _messageEncoderSettings = CoreTestConfiguration.MessageEncoderSettings;
+            _session = CoreTestConfiguration.StartSession();
         }
 
         public virtual void Dispose()
         {
+            _session.ReferenceCount().Should().Be(1);
+
             try
             {
                 // TODO: DropDatabase
@@ -93,7 +99,7 @@ namespace MongoDB.Driver.Core.Operations
 
         protected TResult ExecuteOperation<TResult>(IReadOperation<TResult> operation)
         {
-            using (var binding = CoreTestConfiguration.GetReadBinding())
+            using (var binding = CoreTestConfiguration.GetReadBinding(_session.Fork()))
             using (var bindingHandle = new ReadBindingHandle(binding))
             {
                 return operation.Execute(bindingHandle, CancellationToken.None);
@@ -136,7 +142,7 @@ namespace MongoDB.Driver.Core.Operations
 
         protected TResult ExecuteOperation<TResult>(IWriteOperation<TResult> operation)
         {
-            using (var binding = CoreTestConfiguration.GetReadWriteBinding())
+            using (var binding = CoreTestConfiguration.GetReadWriteBinding(_session.Fork()))
             using (var bindingHandle = new ReadWriteBindingHandle(binding))
             {
                 return operation.Execute(bindingHandle, CancellationToken.None);
@@ -169,7 +175,7 @@ namespace MongoDB.Driver.Core.Operations
 
         protected async Task<TResult> ExecuteOperationAsync<TResult>(IReadOperation<TResult> operation)
         {
-            using (var binding = CoreTestConfiguration.GetReadBinding())
+            using (var binding = CoreTestConfiguration.GetReadBinding(_session.Fork()))
             using (var bindingHandle = new ReadBindingHandle(binding))
             {
                 return await ExecuteOperationAsync(operation, bindingHandle);
@@ -183,7 +189,7 @@ namespace MongoDB.Driver.Core.Operations
 
         protected async Task<TResult> ExecuteOperationAsync<TResult>(IWriteOperation<TResult> operation)
         {
-            using (var binding = CoreTestConfiguration.GetReadWriteBinding())
+            using (var binding = CoreTestConfiguration.GetReadWriteBinding(_session.Fork()))
             using (var bindingHandle = new ReadWriteBindingHandle(binding))
             {
                 return await operation.ExecuteAsync(bindingHandle, CancellationToken.None);
@@ -247,8 +253,10 @@ namespace MongoDB.Driver.Core.Operations
         protected List<BsonDocument> ReadAllFromCollection(CollectionNamespace collectionNamespace)
         {
             var operation = new FindOperation<BsonDocument>(collectionNamespace, BsonDocumentSerializer.Instance, _messageEncoderSettings);
-            var cursor = ExecuteOperation(operation);
-            return ReadCursorToEnd(cursor);
+            using (var cursor = ExecuteOperation(operation))
+            {
+                return ReadCursorToEnd(cursor);
+            }
         }
 
         protected List<BsonDocument> ReadAllFromCollection(CollectionNamespace collectionNamespace, bool async)
@@ -271,8 +279,10 @@ namespace MongoDB.Driver.Core.Operations
         protected async Task<List<BsonDocument>> ReadAllFromCollectionAsync(CollectionNamespace collectionNamespace)
         {
             var operation = new FindOperation<BsonDocument>(collectionNamespace, BsonDocumentSerializer.Instance, _messageEncoderSettings);
-            var cursor = await ExecuteOperationAsync(operation);
-            return await ReadCursorToEndAsync(cursor);
+            using (var cursor = await ExecuteOperationAsync(operation))
+            {
+                return await ReadCursorToEndAsync(cursor);
+            }
         }
 
         protected List<T> ReadCursorToEnd<T>(IAsyncCursor<T> cursor)

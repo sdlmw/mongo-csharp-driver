@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 MongoDB Inc.
+/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -174,7 +174,8 @@ namespace MongoDB.Driver.Core.Operations
         {
             RequireServer.Check();
             DropCollection();
-            using (var binding = CoreTestConfiguration.GetReadWriteBinding())
+
+            using (var binding = CoreTestConfiguration.GetReadWriteBinding(_session.Fork()))
             {
                 var indexName = "x_1";
                 var subject = new DropIndexOperation(_collectionNamespace, indexName, _messageEncoderSettings);

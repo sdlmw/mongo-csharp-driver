@@ -1,4 +1,4 @@
-﻿/* Copyright 2015-2016 MongoDB Inc.
+﻿/* Copyright 2015-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -703,10 +703,12 @@ namespace MongoDB.Driver.Core.Operations
                 BatchSize = 2
             };
 
-            var cursor = ExecuteOperation(subject, async);
-            var result = ReadCursorToEnd(cursor);
+            using (var cursor = ExecuteOperation(subject, async))
+            {
+                var result = ReadCursorToEnd(cursor);
 
-            result.Should().HaveCount(5);
+                result.Should().HaveCount(5);
+            }
         }
 
         [SkippableTheory]

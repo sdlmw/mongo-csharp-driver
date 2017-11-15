@@ -458,11 +458,13 @@ namespace MongoDB.Driver.Core.Operations
                 BatchSize = batchSize
             };
 
-            var cursor = ExecuteOperation(subject, async);
-            var result = ReadCursorToEnd(cursor, async);
+            using (var cursor = ExecuteOperation(subject, async))
+            {
+                var result = ReadCursorToEnd(cursor, async);
 
-            result.Should().NotBeNull();
-            result.Should().HaveCount(1);
+                result.Should().NotBeNull();
+                result.Should().HaveCount(1);
+            }
         }
 
         [SkippableTheory]

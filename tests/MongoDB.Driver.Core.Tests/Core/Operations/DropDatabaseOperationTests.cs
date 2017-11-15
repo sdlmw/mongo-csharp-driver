@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 MongoDB Inc.
+/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -28,19 +28,8 @@ using Xunit;
 
 namespace MongoDB.Driver.Core.Operations
 {
-    public class DropDatabaseOperationTests
+    public class DropDatabaseOperationTests : OperationTestBase
     {
-        // fields
-        private DatabaseNamespace _databaseNamespace;
-        private MessageEncoderSettings _messageEncoderSettings;
-
-        // constructors
-        public DropDatabaseOperationTests()
-        {
-            _databaseNamespace = CoreTestConfiguration.GetDatabaseNamespaceForTestClass(typeof(DropDatabaseOperationTests));
-            _messageEncoderSettings = CoreTestConfiguration.MessageEncoderSettings;
-        }
-
         // test methods
         [Fact]
         public void constructor_should_initialize_subject()
@@ -103,7 +92,7 @@ namespace MongoDB.Driver.Core.Operations
         {
             RequireServer.Check();
 
-            using (var binding = CoreTestConfiguration.GetReadWriteBinding())
+            using (var binding = CoreTestConfiguration.GetReadWriteBinding(_session.Fork()))
             {
                 EnsureDatabaseExists(binding);
                 var subject = new DropDatabaseOperation(_databaseNamespace, _messageEncoderSettings);
@@ -141,7 +130,7 @@ namespace MongoDB.Driver.Core.Operations
 
             var exception = Record.Exception(() =>
             {
-                using (var binding = CoreTestConfiguration.GetReadWriteBinding())
+                using (var binding = CoreTestConfiguration.GetReadWriteBinding(_session.Fork()))
                 {
                     ExecuteOperation(subject, binding, async);
                 }
@@ -192,18 +181,6 @@ namespace MongoDB.Driver.Core.Operations
             var requests = new[] { new InsertRequest(new BsonDocument()) };
             var insertOperation = new BulkInsertOperation(collectionNamespace, requests, _messageEncoderSettings);
             insertOperation.Execute(binding, CancellationToken.None);
-        }
-
-        private TResult ExecuteOperation<TResult>(IWriteOperation<TResult> operation, IReadWriteBinding binding, bool async)
-        {
-            if (async)
-            {
-                return operation.ExecuteAsync(binding, CancellationToken.None).GetAwaiter().GetResult();
-            }
-            else
-            {
-                return operation.Execute(binding, CancellationToken.None);
-            }
         }
     }
 }

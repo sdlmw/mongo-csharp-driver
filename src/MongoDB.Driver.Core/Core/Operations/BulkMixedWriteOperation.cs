@@ -1,4 +1,4 @@
-/* Copyright 2010-2015 MongoDB Inc.
+/* Copyright 2010-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -190,7 +190,7 @@ namespace MongoDB.Driver.Core.Operations
                 var helper = new BatchHelper(this, channel);
                 foreach (var batch in helper.GetBatches())
                 {
-                    batch.Result = ExecuteBatch(channel, binding.Session, batch.Run, batch.IsLast, cancellationToken);
+                    batch.Result = ExecuteBatch(channel, channelSource.Session, batch.Run, batch.IsLast, cancellationToken);
                 }
                 return helper.GetFinalResultOrThrow();
             }
@@ -206,7 +206,7 @@ namespace MongoDB.Driver.Core.Operations
                 var helper = new BatchHelper(this, channel);
                 foreach (var batch in helper.GetBatches())
                 {
-                    batch.Result = await ExecuteBatchAsync(channel, binding.Session, batch.Run, batch.IsLast, cancellationToken).ConfigureAwait(false);
+                    batch.Result = await ExecuteBatchAsync(channel, channelSource.Session, batch.Run, batch.IsLast, cancellationToken).ConfigureAwait(false);
                 }
                 return helper.GetFinalResultOrThrow();
             }

@@ -91,10 +91,10 @@ namespace MongoDB.Driver.Core.Operations
             bool async)
         {
             RequireServer.Check();
+            EnsureDatabaseExists();
 
             using (var binding = CoreTestConfiguration.GetReadWriteBinding(_session.Fork()))
             {
-                EnsureDatabaseExists(binding);
                 var subject = new DropDatabaseOperation(_databaseNamespace, _messageEncoderSettings);
 
                 var result = ExecuteOperation(subject, binding, async);
@@ -139,6 +139,18 @@ namespace MongoDB.Driver.Core.Operations
             exception.Should().BeOfType<MongoWriteConcernException>();
         }
 
+        [SkippableTheory]
+        [ParameterAttributeData]
+        public void Execute_should_send_session_id_when_supported(
+            [Values(false, true)] bool async)
+        {
+            RequireServer.Check();
+            EnsureDatabaseExists();
+            var subject = new DropDatabaseOperation(_databaseNamespace, _messageEncoderSettings);
+
+            VerifySessionIdWasSentWhenSupported(subject, "dropDatabase", async);
+        }
+
         [Fact]
         public void DatabaseNamespace_get_should_return_expected_result()
         {
@@ -175,12 +187,10 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // helper methods
-        private void EnsureDatabaseExists(IWriteBinding binding)
+        private void EnsureDatabaseExists()
         {
-            var collectionNamespace = new CollectionNamespace(_databaseNamespace, "test");
-            var requests = new[] { new InsertRequest(new BsonDocument()) };
-            var insertOperation = new BulkInsertOperation(collectionNamespace, requests, _messageEncoderSettings);
-            insertOperation.Execute(binding, CancellationToken.None);
+            var document = new BsonDocument();
+            Insert(document);
         }
     }
 }

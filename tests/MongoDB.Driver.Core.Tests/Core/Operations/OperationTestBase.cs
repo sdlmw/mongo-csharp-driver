@@ -23,6 +23,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Bindings;
+using MongoDB.Driver.Core.Configuration;
+using MongoDB.Driver.Core.Events;
 using MongoDB.Driver.Core.TestHelpers;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 using Xunit;
@@ -342,6 +344,65 @@ namespace MongoDB.Driver.Core.Operations
         protected void Update(string filter, string update)
         {
             Update(BsonDocument.Parse(filter), BsonDocument.Parse(update));
+        }
+
+        protected void VerifySessionIdWasSentWhenSupported<TResult>(IReadOperation<TResult> operation, string commandName, bool async)
+        {
+            VerifySessionIdWasSentWhenSupported(
+                (binding, cancellationToken) => operation.ExecuteAsync(binding, cancellationToken),
+                (binding, cancellationToken) => operation.Execute(binding, cancellationToken),
+                commandName,
+                async);
+        }
+
+        protected void VerifySessionIdWasSentWhenSupported<TResult>(IWriteOperation<TResult> operation, string commandName, bool async)
+        {
+            VerifySessionIdWasSentWhenSupported(
+                (binding, cancellationToken) => operation.ExecuteAsync(binding, cancellationToken),
+                (binding, cancellationToken) => operation.Execute(binding, cancellationToken),
+                commandName,
+                async);
+        }
+
+        protected void VerifySessionIdWasSentWhenSupported<TResult>(
+            Func<WritableServerBinding, CancellationToken, Task<TResult>> executeAsync,
+            Func<WritableServerBinding, CancellationToken, TResult> execute, 
+            string commandName,
+            bool async)
+        {
+            var clusterBuilder = new ClusterBuilder();
+            var eventCapturer = new EventCapturer().Capture<CommandStartedEvent>(e => e.CommandName == commandName);
+            clusterBuilder.Subscribe(eventCapturer);
+            using (var cluster = clusterBuilder.BuildCluster())
+            {
+                cluster.Initialize();
+
+                using (var session = CoreTestConfiguration.StartSession(cluster))
+                using (var binding = new WritableServerBinding(cluster, session))
+                {
+                    var cancellationToken = new CancellationTokenSource().Token;
+                    if (async)
+                    {
+                        executeAsync(binding, cancellationToken).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        execute(binding, cancellationToken);
+                    }
+
+                    var commandStartedEvent = (CommandStartedEvent)eventCapturer.Next();
+                    var command = commandStartedEvent.Command;
+                    if (session.Id == null)
+                    {
+                        command.Contains("lsid").Should().BeFalse();
+                    }
+                    else
+                    {
+                        command["lsid"].Should().Be(session.Id);
+                    }
+                    session.ReferenceCount().Should().Be(1);
+                }
+            }
         }
     }
 }

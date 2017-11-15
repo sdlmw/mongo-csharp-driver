@@ -233,6 +233,19 @@ namespace MongoDB.Driver.Core.Operations
             exception.Should().BeOfType<MongoWriteConcernException>();
         }
 
+        [SkippableTheory]
+        [ParameterAttributeData]
+        public void Execute_should_send_session_id_when_supported(
+            [Values(false, true)] bool async)
+        {
+            RequireServer.Check().Supports(Feature.Views);
+            var viewName = "view";
+            DropView(viewName);
+            var subject = new CreateViewOperation(_databaseNamespace, viewName, _collectionNamespace.CollectionName, _pipeline, _messageEncoderSettings);
+
+            VerifySessionIdWasSentWhenSupported(subject, "create", async);
+        }
+
         [Theory]
         [ParameterAttributeData]
         public void CreateCommand_should_return_expected_result(

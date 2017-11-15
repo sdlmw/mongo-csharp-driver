@@ -127,7 +127,7 @@ namespace MongoDB.Driver.Core.Operations
             using (var channelSource = binding.GetWriteChannelSource(cancellationToken))
             using (var channel = channelSource.GetChannel(cancellationToken))
             {
-                return Execute(channel, binding.Session, cancellationToken);
+                return Execute(channel, channelSource.Session, cancellationToken);
             }
         }
 
@@ -152,7 +152,7 @@ namespace MongoDB.Driver.Core.Operations
             using (var channelSource = await binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false))
             using (var channel = await channelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false))
             {
-                return await ExecuteAsync(channel, binding.Session, cancellationToken).ConfigureAwait(false);
+                return await ExecuteAsync(channel, channelSource.Session, cancellationToken).ConfigureAwait(false);
             }
         }
 

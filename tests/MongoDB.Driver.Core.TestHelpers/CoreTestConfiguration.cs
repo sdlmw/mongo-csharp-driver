@@ -286,7 +286,12 @@ namespace MongoDB.Driver
 
         public static ICoreSessionHandle StartSession()
         {
-            if (AreSessionsSupported())
+            return StartSession(__cluster.Value);
+        }
+
+        public static ICoreSessionHandle StartSession(ICluster cluster)
+        {
+            if (AreSessionsSupported(cluster))
             {
                 return TestCoreSession.NewHandle();
             }
@@ -355,11 +360,9 @@ namespace MongoDB.Driver
         #endregion
 
         // methods
-        private static bool AreSessionsSupported()
+        private static bool AreSessionsSupported(ICluster cluster)
         {
-            var cluster = __cluster.Value;
             SpinWait.SpinUntil(() => cluster.Description.Servers.Any(s => s.State == ServerState.Connected), TimeSpan.FromSeconds(30));
-
             return AreSessionsSupported(cluster.Description);
         }
 

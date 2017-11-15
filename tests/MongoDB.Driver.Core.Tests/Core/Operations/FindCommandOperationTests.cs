@@ -789,6 +789,18 @@ namespace MongoDB.Driver.Core.Operations
             exception.Should().BeOfType<NotSupportedException>();
         }
 
+        [SkippableTheory]
+        [ParameterAttributeData]
+        public void Execute_should_send_session_id_when_supported(
+            [Values(false, true)] bool async)
+        {
+            RequireServer.Check().Supports(Feature.FindCommand);
+            EnsureTestData();
+            var subject = new FindCommandOperation<BsonDocument>(_collectionNamespace, BsonDocumentSerializer.Instance, _messageEncoderSettings);
+
+            VerifySessionIdWasSentWhenSupported(subject, "find", async);
+        }
+
         [Theory]
         [ParameterAttributeData]
         public void Filter_get_and_set_should_work(

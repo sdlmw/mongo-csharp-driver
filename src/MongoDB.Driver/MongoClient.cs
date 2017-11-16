@@ -267,13 +267,9 @@ namespace MongoDB.Driver
 
         private bool? AreSessionsSupported(ClusterDescription clusterDescription)
         {
-            if (clusterDescription.LogicalSessionTimeout.HasValue)
+            if (clusterDescription.Servers.Any(s => s.IsDataBearing))
             {
-                return true;
-            }
-            else if (clusterDescription.Servers.Any(s => s.State == ServerState.Connected))
-            {
-                return false;
+                return clusterDescription.LogicalSessionTimeout.HasValue;
             }
             else
             {
@@ -409,7 +405,7 @@ namespace MongoDB.Driver
             public IEnumerable<ServerDescription> SelectServers(ClusterDescription cluster, IEnumerable<ServerDescription> servers)
             {
                 ClusterDescription = cluster;
-                return servers.Take(1);
+                return servers.Where(s => s.IsDataBearing);
             }
         }
     }

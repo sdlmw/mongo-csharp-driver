@@ -67,7 +67,7 @@ namespace MongoDB.Driver.Tests
         {
             var operationExecutor = new MockOperationExecutor();
             var writeConcern = new WriteConcern(1);
-            var subject = new MongoClient(operationExecutor, new MongoClientSettings()).WithWriteConcern(writeConcern);
+            var subject = new MongoClient(operationExecutor, DriverTestConfiguration.GetClientSettings()).WithWriteConcern(writeConcern);
             var session = CreateClientSession();
             var cancellationToken = new CancellationTokenSource().Token;
 
@@ -117,7 +117,7 @@ namespace MongoDB.Driver.Tests
             [Values(false, true)] bool async)
         {
             var operationExecutor = new MockOperationExecutor();
-            var subject = new MongoClient(operationExecutor, new MongoClientSettings());
+            var subject = new MongoClient(operationExecutor, DriverTestConfiguration.GetClientSettings());
             var session = CreateClientSession();
             var cancellationToken = new CancellationTokenSource().Token;
 

@@ -257,10 +257,12 @@ namespace MongoDB.Driver.Core.Operations
                 Limit = limit
             };
 
-            var cursor = await ExecuteOperationAsync(subject);
-            var result = await ReadCursorToEndAsync(cursor);
+            using (var cursor = await ExecuteOperationAsync(subject))
+            {
+                var result = await ReadCursorToEndAsync(cursor);
 
-            result.Should().HaveCount(limit);
+                result.Should().HaveCount(limit);
+            }
         }
 
         [SkippableFact]

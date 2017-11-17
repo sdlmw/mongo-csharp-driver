@@ -150,8 +150,20 @@ namespace MongoDB.Driver
 
         public static ICluster CreateCluster()
         {
+            return CreateCluster(b => b);
+        }
+
+        public static ICluster CreateCluster(Func<ClusterBuilder, ClusterBuilder> postConfigurator)
+        {
+            var builder = new ClusterBuilder();
+            builder = ConfigureCluster(builder);
+            builder = postConfigurator(builder);
+            return CreateCluster(builder);
+        }
+
+        public static ICluster CreateCluster(ClusterBuilder builder)
+        {
             var hasWritableServer = 0;
-            var builder = ConfigureCluster();
             var cluster = builder.BuildCluster();
             cluster.DescriptionChanged += (o, e) =>
             {

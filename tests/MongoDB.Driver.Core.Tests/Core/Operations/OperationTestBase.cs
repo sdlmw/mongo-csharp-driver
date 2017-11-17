@@ -370,13 +370,9 @@ namespace MongoDB.Driver.Core.Operations
             string commandName,
             bool async)
         {
-            var clusterBuilder = new ClusterBuilder();
             var eventCapturer = new EventCapturer().Capture<CommandStartedEvent>(e => e.CommandName == commandName);
-            clusterBuilder.Subscribe(eventCapturer);
-            using (var cluster = clusterBuilder.BuildCluster())
+            using (var cluster = CoreTestConfiguration.CreateCluster(b => b.Subscribe(eventCapturer)))
             {
-                cluster.Initialize();
-
                 using (var session = CoreTestConfiguration.StartSession(cluster))
                 using (var binding = new WritableServerBinding(cluster, session))
                 {

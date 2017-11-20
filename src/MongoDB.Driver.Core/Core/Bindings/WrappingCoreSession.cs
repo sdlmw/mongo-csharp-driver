@@ -131,6 +131,12 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
+        public long AdvanceTransactionId()
+        {
+            return _wrapped.AdvanceTransactionId();
+        }
+
+        /// <inheritdoc />
         public virtual void WasUsed()
         {
             ThrowIfDisposed();

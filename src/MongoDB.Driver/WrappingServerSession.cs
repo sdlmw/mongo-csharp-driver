@@ -62,6 +62,12 @@ namespace MongoDB.Driver
         }
 
         // public methods
+        public long AdvanceTransactionId()
+        {
+            ThrowIfDisposed();
+            return _wrapped.AdvanceTransactionId();
+        }
+
         public void Dispose()
         {
             Dispose(true);

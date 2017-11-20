@@ -62,7 +62,7 @@ namespace MongoDB.Driver
         /// <inheritdoc />
         public long AdvanceTransactionId()
         {
-            return _transactionId++;
+            return ++_transactionId;
         }
 
         /// <inheritdoc />

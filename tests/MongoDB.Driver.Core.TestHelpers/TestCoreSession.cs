@@ -45,6 +45,7 @@ namespace MongoDB.Driver.Core
         private readonly IClusterClock _clusterClock = new ClusterClock();
         private readonly BsonDocument _id = GenerateSessionId();
         private readonly IOperationClock _operationClock = new OperationClock();
+        private long _transactionId;
 
         public BsonDocument ClusterTime => _clusterClock.ClusterTime;
 
@@ -64,6 +65,11 @@ namespace MongoDB.Driver.Core
         public void AdvanceOperationTime(BsonTimestamp newOperationTime)
         {
             _operationClock.AdvanceOperationTime(newOperationTime);
+        }
+
+        public long AdvanceTransactionId()
+        {
+            return _transactionId++;
         }
 
         public void Dispose()

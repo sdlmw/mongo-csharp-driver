@@ -192,7 +192,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "bypassDocumentValidation", () => _bypassDocumentValidation.Value, _bypassDocumentValidation.HasValue && Feature.BypassDocumentValidation.IsSupported(serverVersion) },
                 { "collation", () => Collation.ToBsonDocument(), Collation != null },
                 { "arrayFilters", () => new BsonArray(_arrayFilters), _arrayFilters != null },
-                { "txnNumber", ()=> transactionId, transactionId.HasValue }
+                { "txnNumber", () => transactionId, transactionId.HasValue }
             };
         }
 

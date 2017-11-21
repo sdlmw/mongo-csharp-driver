@@ -174,7 +174,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "writeConcern", () => WriteConcern.ToBsonDocument(), WriteConcern != null && !WriteConcern.IsServerDefault && Feature.FindAndModifyWriteConcern.IsSupported(serverVersion) },
                 { "bypassDocumentValidation", () => _bypassDocumentValidation.Value, _bypassDocumentValidation.HasValue && Feature.BypassDocumentValidation.IsSupported(serverVersion) },
                 { "collation", () => Collation.ToBsonDocument(), Collation != null },
-                { "txnNumber", ()=> transactionId, transactionId.HasValue }
+                { "txnNumber", () => transactionId, transactionId.HasValue }
             };
         }
 

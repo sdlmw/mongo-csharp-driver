@@ -111,7 +111,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "maxTimeMS", () => _maxTime.Value.TotalMilliseconds, _maxTime.HasValue },
                 { "writeConcern", () => WriteConcern.ToBsonDocument(), WriteConcern != null && !WriteConcern.IsServerDefault && Feature.FindAndModifyWriteConcern.IsSupported(serverVersion) },
                 { "collation", () => Collation.ToBsonDocument(), Collation != null },
-                { "txnNumber", ()=> transactionId, transactionId.HasValue }
+                { "txnNumber", () => transactionId, transactionId.HasValue }
             };
         }
 

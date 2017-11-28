@@ -34,7 +34,7 @@ namespace MongoDB.Driver.Core.Operations
     /// Represents a base class for find and modify operations.
     /// </summary>
     /// <typeparam name="TResult">The type of the result.</typeparam>
-    public abstract class FindAndModifyOperationBase<TResult> : IWriteOperation<TResult>
+    public abstract class FindAndModifyOperationBase<TResult> : IWriteOperation<TResult>, IRetryableWriteOperation<TResult>
     {
         // fields
         private Collation _collation;
@@ -42,7 +42,7 @@ namespace MongoDB.Driver.Core.Operations
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly IBsonSerializer<TResult> _resultSerializer;
         private WriteConcern _writeConcern;
-        private bool _retryOnFailure;
+        private bool _retryable;
 
         // constructors
         /// <summary>
@@ -114,12 +114,12 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
-        /// Gets or sets whether to retry the operation on failure.
+        /// Gets or sets whether the operation can be retried.
         /// </summary>
-        public bool RetryOnFailure
+        public bool Retryable
         {
-            get { return _retryOnFailure; }
-            set { _retryOnFailure = value; }
+            get { return _retryable; }
+            set { _retryable = value; }
         }
 
         // public methods
@@ -128,95 +128,88 @@ namespace MongoDB.Driver.Core.Operations
         {
             Ensure.IsNotNull(binding, nameof(binding));
 
-            return Execute(binding, null, cancellationToken);
+            using (var context = new RetryableWriteOperationContext(binding, _retryable))
+            {
+                return RetryableWriteOperationExecutor.Execute(this, context, cancellationToken);
+            }
         }
 
         /// <inheritdoc/>
-        public Task<TResult> ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
+        public async Task<TResult> ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
         {
             Ensure.IsNotNull(binding, nameof(binding));
 
-            return ExecuteAsync(binding, null, cancellationToken);
+            using (var context = new RetryableWriteOperationContext(binding, _retryable))
+            {
+                return await RetryableWriteOperationExecutor.ExecuteAsync(this, context, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <inheritdoc/>
+        public TResult ExecuteFirstAttempt(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
+        {
+            return ExecuteAttempt(context, transactionNumber, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public Task<TResult> ExecuteFirstAttemptAsync(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
+        {
+            return ExecuteAttemptAsync(context, transactionNumber, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public TResult ExecuteRetry(RetryableWriteOperationContext context, long transactionNumber, CancellationToken cancellationToken)
+        {
+            return ExecuteAttempt(context, transactionNumber, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public Task<TResult> ExecuteRetryAsync(RetryableWriteOperationContext context, long transactionNumber, CancellationToken cancellationToken)
+        {
+            return ExecuteAttemptAsync(context, transactionNumber, cancellationToken);
         }
 
         // private methods
-        internal abstract BsonDocument CreateCommand(SemanticVersion serverVersion, long? transactionId);
+        internal abstract BsonDocument CreateCommand(SemanticVersion serverVersion, long? transactionNumber);
 
-        private WriteCommandOperation<RawBsonDocument> CreateOperation(SemanticVersion serverVersion, long? transactionId)
+        private WriteCommandOperation<RawBsonDocument> CreateOperation(SemanticVersion serverVersion, long? transactionNumber)
         {
-            var command = CreateCommand(serverVersion, transactionId);
+            var command = CreateCommand(serverVersion, transactionNumber);
             return new WriteCommandOperation<RawBsonDocument>(_collectionNamespace.DatabaseNamespace, command, RawBsonDocumentSerializer.Instance, _messageEncoderSettings)
             {
                 CommandValidator = GetCommandValidator()
             };
         }
 
-        private TResult Execute(IWriteBinding binding, long? transactionId, CancellationToken cancellationToken)
+        private TResult ExecuteAttempt(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
         {
-            bool retryable = false;
-            try
+            var binding = context.Binding;
+            var channelSource = context.ChannelSource;
+            var channel = context.Channel;
+
+            using (var channelBinding = new ChannelReadWriteBinding(channelSource.Server, channel, binding.Session.Fork()))
             {
-                using (var channelSource = binding.GetWriteChannelSource(cancellationToken))
-                using (var channel = channelSource.GetChannel(cancellationToken))
-                using (var channelBinding = new ChannelReadWriteBinding(channelSource.Server, channel, binding.Session.Fork()))
+                var operation = CreateOperation(channel.ConnectionDescription.ServerVersion, transactionNumber);
+                using (var rawBsonDocument = operation.Execute(channelBinding, cancellationToken))
                 {
-                    if (transactionId == null && OperationHelper.IsRetryableWrite(_retryOnFailure, _writeConcern, channel.ConnectionDescription))
-                    {
-                        transactionId = binding.Session.AdvanceTransactionId();
-                        retryable = true;
-                    }
-                    var operation = CreateOperation(channel.ConnectionDescription.ServerVersion, transactionId);
-                    using (var rawBsonDocument = operation.Execute(channelBinding, cancellationToken))
-                    {
-                        return ProcessCommandResult(channel.ConnectionDescription.ConnectionId, rawBsonDocument);
-                    }
+                    return ProcessCommandResult(channel.ConnectionDescription.ConnectionId, rawBsonDocument);
                 }
-            }
-            catch(Exception ex) when(retryable && OperationHelper.IsRetryableException(ex))
-            {
-                try
-                {
-                    return Execute(binding, transactionId, cancellationToken);
-                }
-                catch
-                { }
-                throw; // ignore nested exception and throw outer exception
             }
         }
 
-        private async Task<TResult> ExecuteAsync(IWriteBinding binding, long? transactionId, CancellationToken cancellationToken)
+        private async Task<TResult> ExecuteAttemptAsync(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
         {
-            bool retryable = false;
-            try
+            var binding = context.Binding;
+            var channelSource = context.ChannelSource;
+            var channel = context.Channel;
+
+            using (var channelBinding = new ChannelReadWriteBinding(channelSource.Server, channel, binding.Session.Fork()))
             {
-                using (var channelSource = await binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false))
-                using (var channel = await channelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false))
-                using (var channelBinding = new ChannelReadWriteBinding(channelSource.Server, channel, binding.Session.Fork()))
+                var operation = CreateOperation(channel.ConnectionDescription.ServerVersion, transactionNumber);
+                using (var rawBsonDocument = await operation.ExecuteAsync(channelBinding, cancellationToken).ConfigureAwait(false))
                 {
-                    if (transactionId == null && OperationHelper.IsRetryableWrite(_retryOnFailure, _writeConcern, channel.ConnectionDescription))
-                    {
-                        transactionId = binding.Session.AdvanceTransactionId();
-                        retryable = true;
-                    }
-                    var operation = CreateOperation(channel.ConnectionDescription.ServerVersion, transactionId);
-                    using (var rawBsonDocument = await operation.ExecuteAsync(channelBinding, cancellationToken).ConfigureAwait(false))
-                    {
-                        return ProcessCommandResult(channel.ConnectionDescription.ConnectionId, rawBsonDocument);
-                    }
+                    return ProcessCommandResult(channel.ConnectionDescription.ConnectionId, rawBsonDocument);
                 }
-            }
-            catch (Exception ex) when (retryable && OperationHelper.IsRetryableException(ex))
-            {
-                if (retryable)
-                {
-                    try
-                    {
-                        return await ExecuteAsync(binding, transactionId, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch
-                    { }
-                }
-                throw; // ignore nested exception and throw outer exception
             }
         }
 

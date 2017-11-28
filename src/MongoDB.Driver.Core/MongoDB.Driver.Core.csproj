@@ -100,6 +100,7 @@
     <Compile Include="Core\Misc\ReadAheadEnumerable.cs" />
     <Compile Include="Core\Misc\ReadConcernFeature.cs" />
     <Compile Include="Core\Misc\SplittableBatch.cs" />
+    <Compile Include="Core\Misc\SplittableBatchSerializer.cs" />
     <Compile Include="Core\Misc\TaskExtensions.cs" />
     <Compile Include="Core\Operations\ChangeStreamCursor.cs" />
     <Compile Include="Core\Operations\ChangeStreamOperation.cs" />

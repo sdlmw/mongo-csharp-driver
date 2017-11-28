@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Bindings;
+using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver.Core.Operations
@@ -63,7 +64,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <inheritdoc />
         public BsonDocument ExecuteInitialAttempt(RetryableWriteContext context, long? transactionNumber, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var command = CreateCommand();
         }
 
         /// <inheritdoc />
@@ -82,6 +83,23 @@ namespace MongoDB.Driver.Core.Operations
         public Task<BsonDocument> ExecuteRetryAsync(RetryableWriteContext context, long transactionNumber, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        // private methods
+        private BsonDocument CreateCommand(ConnectionDescription connectionDescription)
+        {
+            var maxMessageSize = connectionDescription.IsMasterResult.MaxMessageSize;
+            var splittableBatchSerializer = new SplitableBatchSerializer(maxMessageSize);
+            var splittableBatchWrapper = new BsonDocumentWrapper(_documents, splittableBatchSerializer);
+            var command = new BsonDocument
+            {
+                { "insert", _collectionNamespace.FullName },
+                { "ordered", _ordered },
+                { "writeConcern", _writeConcern.ToBsonDocument() },
+                { "bypassDocumentValidation", _bypassDocumentValidation },
+                { "documents", new BsonArray { splittableBatchWrapper } }
+            };
+            return command;
         }
     }
 }

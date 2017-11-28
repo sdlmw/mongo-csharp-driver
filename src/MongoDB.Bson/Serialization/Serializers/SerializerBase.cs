@@ -23,7 +23,7 @@ namespace MongoDB.Bson.Serialization.Serializers
     /// Represents an abstract base class for serializers.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
-    public abstract class SerializerBase<TValue> : IBsonSerializer<TValue>
+    public abstract class SerializerBase<TValue> : SealedClassSerializerBase<TValue>
     {
         // public properties
         /// <summary>

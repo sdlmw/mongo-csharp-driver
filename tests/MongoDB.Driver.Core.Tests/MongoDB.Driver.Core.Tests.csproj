@@ -107,7 +107,6 @@
     <Compile Include="Core\Operations\OperationClockTests.cs" />
     <Compile Include="Core\Operations\OperationTestHelper.cs" />
     <Compile Include="Core\Operations\ReadConcernHelperTests.cs" />
-    <Compile Include="Core\Operations\OperationHelperTests.cs" />
     <Compile Include="Core\Operations\ReIndexOperationTests.cs" />
     <Compile Include="Core\Operations\UpdateRequestTests.cs" />
     <Compile Include="Core\Operations\GeoSearchOperationTests.cs" />

@@ -138,9 +138,9 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
-        public long AdvanceTransactionId()
+        public long AdvanceTransactionNumber()
         {
-            return _serverSession.AdvanceTransactionId();
+            return _serverSession.AdvanceTransactionNumber();
         }
 
         /// <summary>

@@ -50,7 +50,7 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
-        public long AdvanceTransactionId()
+        public long AdvanceTransactionNumber()
         {
             return -1;
         }

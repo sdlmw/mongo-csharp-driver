@@ -225,18 +225,18 @@ namespace MongoDB.Driver.Core.Operations
         [Theory]
         [ParameterAttributeData]
         public void CreateCommand_should_return_expected_result(
-            [Values(null, 100L)]long? transactionId)
+            [Values(null, 100L)]long? transactionNumber)
         {
             var subject = new FindOneAndReplaceOperation<BsonDocument>(_collectionNamespace, _filter, _replacement, BsonDocumentSerializer.Instance, _messageEncoderSettings);
 
-            var result = subject.CreateCommand(null, transactionId);
+            var result = subject.CreateCommand(null, transactionNumber);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
-                { "txnNumber", () => transactionId, transactionId != null }
+                { "txnNumber", () => transactionNumber, transactionNumber != null }
             };
             result.Should().Be(expectedResult);
         }

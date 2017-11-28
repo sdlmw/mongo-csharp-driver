@@ -81,7 +81,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// Advances the transaction id.
         /// </summary>
         /// <returns>The transaction id.</returns>
-        long AdvanceTransactionId();
+        long AdvanceTransactionNumber();
 
         /// <summary>
         /// Called by the driver when the session is used (i.e. sent to the server).

@@ -131,9 +131,9 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
-        public long AdvanceTransactionId()
+        public long AdvanceTransactionNumber()
         {
-            return _wrapped.AdvanceTransactionId();
+            return _wrapped.AdvanceTransactionNumber();
         }
 
         /// <inheritdoc />

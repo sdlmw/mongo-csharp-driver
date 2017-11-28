@@ -41,12 +41,12 @@ namespace MongoDB.Driver
         DateTime? LastUsedAt { get; }
 
         /// <summary>
-        /// Gets the next transaction id.
+        /// Gets the next transaction number.
         /// </summary>
         /// <value>
-        /// The transaction id.
+        /// The transaction number.
         /// </value>
-        long AdvanceTransactionId();
+        long AdvanceTransactionNumber();
 
         // methods
         /// <summary>

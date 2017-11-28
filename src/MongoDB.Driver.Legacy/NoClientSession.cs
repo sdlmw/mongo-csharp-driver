@@ -44,9 +44,9 @@ namespace MongoDB.Driver
         {
         }
 
-        public long AdvanceTransactionId()
+        public long AdvanceTransactionNumber()
         {
-            return _noServerSession.AdvanceTransactionId();
+            return _noServerSession.AdvanceTransactionNumber();
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed")]

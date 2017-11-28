@@ -90,10 +90,10 @@ namespace MongoDB.Driver
             _clientSession.AdvanceOperationTime(newOperationTime);
         }
 
-        public long AdvanceTransactionId()
+        public long AdvanceTransactionNumber()
         {
             ThrowIfDisposed();
-            return _clientSession.AdvanceTransactionId();
+            return _clientSession.AdvanceTransactionNumber();
         }
 
         public void Dispose()

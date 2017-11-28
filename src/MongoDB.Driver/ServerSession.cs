@@ -37,13 +37,13 @@ namespace MongoDB.Driver
         // private fields
         private readonly BsonDocument _id;
         private DateTime? _lastUsedAt;
-        private long _transactionId;
+        private long _transactionNumber;
 
         // constructors
         internal ServerSession()
         {
             _id = GenerateSessionId();
-            _transactionId = 0;
+            _transactionNumber = 0;
         }
 
         // public properties
@@ -60,9 +60,9 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
-        public long AdvanceTransactionId()
+        public long AdvanceTransactionNumber()
         {
-            return ++_transactionId;
+            return ++_transactionNumber;
         }
 
         /// <inheritdoc />

@@ -28,36 +28,20 @@ namespace MongoDB.Driver.Core.Operations
         /// Executes the first attempt.
         /// </summary>
         /// <param name="context">The context.</param>
+        /// <param name="attempt">The attempt.</param>
         /// <param name="transactionNumber">The transaction number.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The result.</returns>
-        TResult ExecuteFirstAttempt(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken);
+        TResult ExecuteAttempt(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken);
 
         /// <summary>
         /// Executes the first attempt.
         /// </summary>
         /// <param name="context">The context.</param>
+        /// <param name="attempt">The attempt.</param>
         /// <param name="transactionNumber">The transaction number.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The result.</returns>
-        Task<TResult> ExecuteFirstAttemptAsync(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Executes a retry.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <param name="transactionNumber">The transaction number.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The result.</returns>
-        TResult ExecuteRetry(RetryableWriteOperationContext context, long transactionNumber, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Executes a retry.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <param name="transactionNumber">The transaction number.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The result.</returns>
-        Task<TResult> ExecuteRetryAsync(RetryableWriteOperationContext context, long transactionNumber, CancellationToken cancellationToken);
+        Task<TResult> ExecuteAttemptAsync(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken);
     }
 }

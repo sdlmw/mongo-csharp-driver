@@ -42,7 +42,7 @@ namespace MongoDB.Driver.Core.Operations
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly IBsonSerializer<TResult> _resultSerializer;
         private WriteConcern _writeConcern;
-        private bool _retryable;
+        private bool _retryRequested;
 
         // constructors
         /// <summary>
@@ -116,72 +116,27 @@ namespace MongoDB.Driver.Core.Operations
         /// <summary>
         /// Gets or sets whether the operation can be retried.
         /// </summary>
-        public bool Retryable
+        public bool RetryRequested
         {
-            get { return _retryable; }
-            set { _retryable = value; }
+            get { return _retryRequested; }
+            set { _retryRequested = value; }
         }
 
         // public methods
         /// <inheritdoc/>
         public TResult Execute(IWriteBinding binding, CancellationToken cancellationToken)
         {
-            Ensure.IsNotNull(binding, nameof(binding));
-
-            using (var context = new RetryableWriteOperationContext(binding, _retryable))
-            {
-                return RetryableWriteOperationExecutor.Execute(this, context, cancellationToken);
-            }
+            return RetryableWriteOperationExecutor.Execute(this, binding, _retryRequested, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public async Task<TResult> ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
+        public Task<TResult> ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
         {
-            Ensure.IsNotNull(binding, nameof(binding));
-
-            using (var context = new RetryableWriteOperationContext(binding, _retryable))
-            {
-                return await RetryableWriteOperationExecutor.ExecuteAsync(this, context, cancellationToken).ConfigureAwait(false);
-            }
+            return RetryableWriteOperationExecutor.ExecuteAsync(this, binding, _retryRequested, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public TResult ExecuteFirstAttempt(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
-        {
-            return ExecuteAttempt(context, transactionNumber, cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public Task<TResult> ExecuteFirstAttemptAsync(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
-        {
-            return ExecuteAttemptAsync(context, transactionNumber, cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public TResult ExecuteRetry(RetryableWriteOperationContext context, long transactionNumber, CancellationToken cancellationToken)
-        {
-            return ExecuteAttempt(context, transactionNumber, cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public Task<TResult> ExecuteRetryAsync(RetryableWriteOperationContext context, long transactionNumber, CancellationToken cancellationToken)
-        {
-            return ExecuteAttemptAsync(context, transactionNumber, cancellationToken);
-        }
-
-        // private methods
-        internal abstract BsonDocument CreateCommand(SemanticVersion serverVersion, long? transactionNumber);
-
-        private WriteCommandOperation<RawBsonDocument> CreateOperation(SemanticVersion serverVersion, long? transactionNumber)
-        {
-            var command = CreateCommand(serverVersion, transactionNumber);
-            return new WriteCommandOperation<RawBsonDocument>(_collectionNamespace.DatabaseNamespace, command, RawBsonDocumentSerializer.Instance, _messageEncoderSettings)
-            {
-                CommandValidator = GetCommandValidator()
-            };
-        }
-
-        private TResult ExecuteAttempt(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
+        public TResult ExecuteAttempt(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken)
         {
             var binding = context.Binding;
             var channelSource = context.ChannelSource;
@@ -197,7 +152,8 @@ namespace MongoDB.Driver.Core.Operations
             }
         }
 
-        private async Task<TResult> ExecuteAttemptAsync(RetryableWriteOperationContext context, long? transactionNumber, CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        public async Task<TResult> ExecuteAttemptAsync(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken)
         {
             var binding = context.Binding;
             var channelSource = context.ChannelSource;
@@ -211,6 +167,18 @@ namespace MongoDB.Driver.Core.Operations
                     return ProcessCommandResult(channel.ConnectionDescription.ConnectionId, rawBsonDocument);
                 }
             }
+        }
+
+        // private methods
+        internal abstract BsonDocument CreateCommand(SemanticVersion serverVersion, long? transactionNumber);
+
+        private WriteCommandOperation<RawBsonDocument> CreateOperation(SemanticVersion serverVersion, long? transactionNumber)
+        {
+            var command = CreateCommand(serverVersion, transactionNumber);
+            return new WriteCommandOperation<RawBsonDocument>(_collectionNamespace.DatabaseNamespace, command, RawBsonDocumentSerializer.Instance, _messageEncoderSettings)
+            {
+                CommandValidator = GetCommandValidator()
+            };
         }
 
         /// <summary>

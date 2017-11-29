@@ -19,50 +19,43 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
-using MongoDB.Driver.Core.Operations.ElementNameValidators;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
 {
     /// <summary>
-    /// Represents an insert command operation.
+    /// Represents an update command operation.
     /// </summary>
-    public class InsertCommandOperation<TDocument> : RetryableWriteCommandOperationBase<BsonDocument>
+    public class UpdateCommandOperation<TDocument> : RetryableWriteCommandOperationBase<BsonDocument>
     {
         // private fields
         private bool _bypassDocumentValidation;
         private readonly CollectionNamespace _collectionNamespace;
-        private readonly SplittableBatch<TDocument> _documents;
-        private readonly IBsonSerializer<TDocument> _documentSerializer;
+        private readonly SplittableBatch<UpdateRequest> _updates;
         private bool _ordered = true;
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="InsertCommandOperation{TDocument}"/> class.
+        /// Initializes a new instance of the <see cref="InsertCommandOperation{TDocument}" /> class.
         /// </summary>
         /// <param name="collectionNamespace">The collection namespace.</param>
-        /// <param name="documents">The documents.</param>
-        /// <param name="documentSerializer">The document serializer.</param>
+        /// <param name="updates">The updates.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        public InsertCommandOperation(
+        public UpdateCommandOperation(
             CollectionNamespace collectionNamespace,
-            SplittableBatch<TDocument> documents,
-            IBsonSerializer<TDocument> documentSerializer,
+            SplittableBatch<UpdateRequest> updates,
             MessageEncoderSettings messageEncoderSettings)
             : base(Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace)).DatabaseNamespace, BsonDocumentSerializer.Instance, messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
-            _documents = Ensure.IsNotNull(documents, nameof(documents));
-            _documentSerializer = Ensure.IsNotNull(documentSerializer, nameof(documentSerializer));
+            _updates = Ensure.IsNotNull(updates, nameof(updates));
         }
 
         // public properties
         /// <summary>
         /// Gets or sets a value indicating whether to bypass document validation.
         /// </summary>
-        /// <value>
-        /// A value indicating whether to bypass document validation.
-        /// </value>
+        /// <value>A value indicating whether to bypass document validation.</value>
         public bool BypassDocumentValidation
         {
             get { return _bypassDocumentValidation; }
@@ -81,28 +74,6 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
-        /// Gets the documents.
-        /// </summary>
-        /// <value>
-        /// The documents.
-        /// </value>
-        public SplittableBatch<TDocument> Documents
-        {
-            get { return _documents; }
-        }
-
-        /// <summary>
-        /// Gets the document serializer.
-        /// </summary>
-        /// <value>
-        /// The document serializer.
-        /// </value>
-        public IBsonSerializer<TDocument> DocumentSerializer
-        {
-            get { return _documentSerializer; }
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether the server should process the inserts in order.
         /// </summary>
         /// <value>A value indicating whether the server should process the inserts in order.</value>
@@ -112,40 +83,82 @@ namespace MongoDB.Driver.Core.Operations
             set { _ordered = value; }
         }
 
+        /// <summary>
+        /// Gets the updates.
+        /// </summary>
+        /// <value>
+        /// The updates.
+        /// </value>
+        public SplittableBatch<UpdateRequest> Updates
+        {
+            get { return _updates; }
+        }
+
         // protected methods
         /// <inheritdoc />
         protected override BsonDocument CreateCommand(ConnectionDescription connectionDescription, int attempt, long? transactionNumber)
         {
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
-            var batchWrapper = new BsonDocumentWrapper(_documents, batchSerializer);
+            var batchWrapper = new BsonDocumentWrapper(_updates, batchSerializer);
 
             return new BsonDocument
             {
-                { "insert", _collectionNamespace.FullName },
+                { "update", _collectionNamespace.CollectionName },
                 { "ordered", _ordered },
                 { "writeConcern", WriteConcern.ToBsonDocument() },
                 { "bypassDocumentValidation", _bypassDocumentValidation },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
-                { "documents", new BsonArray { batchWrapper } }
+                { "updates", new BsonArray { batchWrapper } }
             };
         }
 
         // private methods
-        private IBsonSerializer<SplittableBatch<TDocument>> CreateBatchSerializer(ConnectionDescription connectionDescription, int attempt)
+        private IBsonSerializer<SplittableBatch<UpdateRequest>> CreateBatchSerializer(ConnectionDescription connectionDescription, int attempt)
         {
-            var isSystemIndexesCollection = _collectionNamespace.Equals(CollectionNamespace.DatabaseNamespace.SystemIndexesCollection);
-            var elementNameValidator = isSystemIndexesCollection ? (IElementNameValidator)NoOpElementNameValidator.Instance : CollectionElementNameValidator.Instance;
-
             if (attempt == 1)
             {
                 var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
                 var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
-                return new SizeLimitingSplittableBatchSerializer<TDocument>(_documentSerializer, elementNameValidator, maxItemSize, maxBatchSize);
+                return new SizeLimitingSplittableBatchSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxItemSize, maxBatchSize);
             }
             else
             {
-                var count = _documents.SplitIndex;
-                return new FixedCountSplittableBatchSerializer<TDocument>(_documentSerializer, elementNameValidator, count);
+                var count = _updates.SplitIndex;
+                return new FixedCountSplittableBatchSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
+            }
+        }
+
+        // nested types
+        private class UpdateRequestSerializer : SealedClassSerializerBase<UpdateRequest>
+        {
+            public static readonly IBsonSerializer<UpdateRequest> Instance = new UpdateRequestSerializer();
+
+            protected override void SerializeValue(BsonSerializationContext context, BsonSerializationArgs args, UpdateRequest value)
+            {
+                var writer = context.Writer;
+                writer.WriteStartDocument();
+                writer.WriteName("q");
+                BsonDocumentSerializer.Instance.Serialize(context, value.Filter);
+                writer.WriteName("u");
+                BsonDocumentSerializer.Instance.Serialize(context, value.Update);
+                writer.WriteName("upsert");
+                writer.WriteBoolean(value.IsUpsert);
+                writer.WriteName("multi");
+                writer.WriteBoolean(value.IsMulti);
+                if (value.Collation != null)
+                {
+                    BsonDocumentSerializer.Instance.Serialize(context, value.Collation.ToBsonDocument());
+                }
+                if (value.ArrayFilters != null)
+                {
+                    writer.WriteName("arrayFilters");
+                    foreach (var arrayFilter in value.ArrayFilters)
+                    {
+                        BsonDocumentSerializer.Instance.Serialize(context, arrayFilter);
+                    }
+                    writer.WriteEndArray();
+                }
+                writer.WriteEndDocument();
             }
         }
     }

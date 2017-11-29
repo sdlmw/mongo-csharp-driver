@@ -30,18 +30,18 @@ namespace MongoDB.Driver.Core.Operations
         private IChannelHandle _channel;
         private IChannelSourceHandle _channelSource;
         private bool _disposed;
-        private readonly bool _retryable;
+        private readonly bool _retryRequested;
 
         // constructors
         /// <summary>
         /// Initializes a new instance of the <see cref="RetryableWriteOperationContext"/> class.
         /// </summary>
         /// <param name="binding">The binding.</param>
-        /// <param name="retryable">if set to <c>true</c> the operation can be retried.</param>
-        public RetryableWriteOperationContext(IWriteBinding binding, bool retryable)
+        /// <param name="retryRequested">if set to <c>true</c> the operation can be retried.</param>
+        public RetryableWriteOperationContext(IWriteBinding binding, bool retryRequested)
         {
             _binding = Ensure.IsNotNull(binding, nameof(binding));
-            _retryable = retryable;
+            _retryRequested = retryRequested;
         }
 
         // public properties
@@ -70,12 +70,12 @@ namespace MongoDB.Driver.Core.Operations
         public IChannelSourceHandle ChannelSource => _channelSource;
 
         /// <summary>
-        /// Gets a value indicating whether [with retry].
+        /// Gets a value indicating whether the operation can be retried.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if [with retry]; otherwise, <c>false</c>.
+        ///   <c>true</c> if the operation can be retried; otherwise, <c>false</c>.
         /// </value>
-        public bool Retryable => _retryable;
+        public bool RetryRequested => _retryRequested;
 
         // public methods
         /// <inheritdoc />

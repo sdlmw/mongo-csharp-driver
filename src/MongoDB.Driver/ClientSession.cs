@@ -128,6 +128,12 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
+        public long AdvanceTransactionNumber()
+        {
+            return _serverSession.AdvanceTransactionNumber();
+        }
+
+        /// <inheritdoc />
         public void Dispose()
         {
             if (!_disposed)
@@ -135,12 +141,6 @@ namespace MongoDB.Driver
                 _disposed = true;
                 _serverSession.Dispose();
             }
-        }
-
-        /// <inheritdoc />
-        public long AdvanceTransactionNumber()
-        {
-            return _serverSession.AdvanceTransactionNumber();
         }
 
         /// <summary>

@@ -55,14 +55,14 @@ namespace MongoDB.Driver
 
         // public methods
         /// <inheritdoc />
-        public void Dispose()
-        {
-        }
-
-        /// <inheritdoc />
         public long AdvanceTransactionNumber()
         {
             return ++_transactionNumber;
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
         }
 
         /// <inheritdoc />

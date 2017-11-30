@@ -75,14 +75,14 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
-        public void Dispose()
-        {
-        }
-
-        /// <inheritdoc />
         public long AdvanceTransactionNumber()
         {
             return -1;
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
         }
 
         /// <inheritdoc />

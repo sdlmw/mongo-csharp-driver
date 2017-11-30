@@ -124,16 +124,16 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
+        public long AdvanceTransactionNumber()
+        {
+            return _wrapped.AdvanceTransactionNumber();
+        }
+
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        /// <inheritdoc />
-        public long AdvanceTransactionNumber()
-        {
-            return _wrapped.AdvanceTransactionNumber();
         }
 
         /// <inheritdoc />

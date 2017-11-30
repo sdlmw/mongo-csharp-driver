@@ -41,6 +41,7 @@ namespace MongoDB.Driver.Core.Operations
         private int? _maxBatchLength;
         private MessageEncoderSettings _messageEncoderSettings;
         private IEnumerable<WriteRequest> _requests;
+        private bool _retryRequested;
         private WriteConcern _writeConcern = WriteConcern.Acknowledged;
 
         // constructors
@@ -99,6 +100,12 @@ namespace MongoDB.Driver.Core.Operations
 
         protected abstract string RequestsElementName { get; }
 
+        public bool RetryRequested
+        {
+            get { return _retryRequested; }
+            set { _retryRequested = value; }
+        }
+
         public WriteConcern WriteConcern
         {
             get { return _writeConcern; }
@@ -131,6 +138,17 @@ namespace MongoDB.Driver.Core.Operations
             }
         }
 
+        public BulkWriteOperationResult Execute(RetryableWriteOperationContext context, CancellationToken cancellationToken)
+        {
+            // TODO: implement correctly
+            if (context.Channel == null)
+            {
+                context.SetChannelSource(context.Binding.GetWriteChannelSource(cancellationToken));
+                context.SetChannel(context.ChannelSource.GetChannel(cancellationToken));
+            }
+            return Execute(context.Channel, context.Binding.Session, cancellationToken);
+        }
+
         public async Task<BulkWriteOperationResult> ExecuteAsync(IChannelHandle channel, ICoreSessionHandle session, CancellationToken cancellationToken)
         {
             using (EventContext.BeginOperation())
@@ -154,6 +172,17 @@ namespace MongoDB.Driver.Core.Operations
             {
                 return await ExecuteAsync(channel, channelSource.Session, cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        public async Task<BulkWriteOperationResult> ExecuteAsync(RetryableWriteOperationContext context, CancellationToken cancellationToken)
+        {
+            // TODO: implement correctly
+            if (context.Channel == null)
+            {
+                context.SetChannelSource(await context.Binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false));
+                context.SetChannel(await context.ChannelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false));
+            }
+            return await ExecuteAsync(context.Channel, context.Binding.Session, cancellationToken).ConfigureAwait(false);
         }
 
         // private methods

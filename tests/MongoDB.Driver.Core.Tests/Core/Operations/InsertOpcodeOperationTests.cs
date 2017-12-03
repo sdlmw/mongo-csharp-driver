@@ -1,4 +1,4 @@
-﻿/* Copyright 2013-2016 MongoDB Inc.
+﻿/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ namespace MongoDB.Driver.Core.Operations
         [Fact]
         public void Constructor_should_throw_when_document_source_is_null()
         {
-            Action act = () => new InsertOpcodeOperation<BsonDocument>(_collectionNamespace, null, BsonDocumentSerializer.Instance, _messageEncoderSettings);
+            Action act = () => new InsertOpcodeOperation<BsonDocument>(_collectionNamespace, (BatchableSource<BsonDocument>)null, BsonDocumentSerializer.Instance, _messageEncoderSettings);
 
             act.ShouldThrow<ArgumentNullException>();
         }

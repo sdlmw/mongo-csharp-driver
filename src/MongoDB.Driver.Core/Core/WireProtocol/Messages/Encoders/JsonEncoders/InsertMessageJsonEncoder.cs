@@ -107,20 +107,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
         {
             Ensure.IsNotNull(message, nameof(message));
 
-            BsonValue documents;
-            if (message.DocumentSource.Batch == null)
+            var documents = new BsonArray();
+            foreach (var document in message.DocumentSource.Items)
             {
-                documents = BsonNull.Value;
-            }
-            else
-            {
-                var array = new BsonArray();
-                foreach (var document in message.DocumentSource.Batch)
-                {
-                    var wrappedDocument = new BsonDocumentWrapper(document, _serializer);
-                    array.Add(wrappedDocument);
-                }
-                documents = array;
+                var wrappedDocument = new BsonDocumentWrapper(document, _serializer);
+                documents.Add(wrappedDocument);
             }
 
             var messageDocument = new BsonDocument

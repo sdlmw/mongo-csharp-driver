@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver.Core.Misc;
@@ -29,7 +30,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
     /// <typeparam name="TDocument">The type of the documents.</typeparam>
     public class InsertMessageBinaryEncoder<TDocument> : MessageBinaryEncoderBase, IMessageEncoder
     {
-        // fields
+        // private fields
         private readonly IBsonSerializer<TDocument> _serializer;
 
         // constructors
@@ -45,58 +46,13 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
             _serializer = Ensure.IsNotNull(serializer, nameof(serializer));
         }
 
-        // methods
-        private void AddDocument(State state, byte[] serializedDocument)
-        {
-            var binaryWriter = state.BinaryWriter;
-            var stream = binaryWriter.BsonStream;
-            stream.WriteBytes(serializedDocument, 0, serializedDocument.Length);
-            state.BatchCount++;
-            state.MessageSize = (int)stream.Position - state.MessageStartPosition;
-        }
-
-        private void AddDocument(State state, TDocument document)
-        {
-            var binaryWriter = state.BinaryWriter;
-
-            var collectionNamespace = state.Message.CollectionNamespace;
-            var isSystemIndexesCollection = collectionNamespace.Equals(collectionNamespace.DatabaseNamespace.SystemIndexesCollection);
-            var elementNameValidator = isSystemIndexesCollection ? (IElementNameValidator)NoOpElementNameValidator.Instance : CollectionElementNameValidator.Instance;
-
-            binaryWriter.PushElementNameValidator(elementNameValidator);
-            try
-            {
-                var stream = binaryWriter.BsonStream;
-                var context = BsonSerializationContext.CreateRoot(binaryWriter);
-                _serializer.Serialize(context, document);
-                state.BatchCount++;
-                state.MessageSize = (int)stream.Position - state.MessageStartPosition;
-            }
-            finally
-            {
-                binaryWriter.PopElementNameValidator();
-            }
-        }
-
-        private InsertFlags BuildInsertFlags(InsertMessage<TDocument> message)
-        {
-            var flags = InsertFlags.None;
-            if (message.ContinueOnError)
-            {
-                flags |= InsertFlags.ContinueOnError;
-            }
-            return flags;
-        }
-
-        /// <summary>
-        /// Reads the message.
-        /// </summary>
-        /// <returns>A message.</returns>
+        // public methods
+        /// <inheritdoc />
         public InsertMessage<TDocument> ReadMessage()
         {
-            var binaryReader = CreateBinaryReader();
-            var stream = binaryReader.BsonStream;
-            var startPosition = stream.Position;
+            var reader = CreateBinaryReader();
+            var stream = reader.BsonStream;
+            var messageStartPosition = stream.Position;
 
             var messageSize = stream.ReadInt32();
             var requestId = stream.ReadInt32();
@@ -104,13 +60,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
             stream.ReadInt32(); // opcode
             var flags = (InsertFlags)stream.ReadInt32();
             var fullCollectionName = stream.ReadCString(Encoding);
-            var documents = new List<TDocument>();
-            while (stream.Position < startPosition + messageSize)
-            {
-                var context = BsonDeserializationContext.CreateRoot(binaryReader);
-                var document = _serializer.Deserialize(context);
-                documents.Add(document);
-            }
+            var documents = ReadDocuments(reader, messageStartPosition, messageSize);
 
             var documentSource = new BatchableSource<TDocument>(documents);
             var maxBatchCount = int.MaxValue;
@@ -127,62 +77,14 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                 continueOnError);
         }
 
-        private byte[] RemoveLastDocument(State state, int documentStartPosition)
-        {
-            var binaryWriter = state.BinaryWriter;
-            var stream = binaryWriter.BsonStream;
-
-            var documentSize = (int)stream.Position - documentStartPosition;
-            stream.Position = documentStartPosition;
-            var serializedDocument = new byte[documentSize];
-            stream.ReadBytes(serializedDocument, 0, documentSize);
-            stream.Position = documentStartPosition;
-            stream.SetLength(documentStartPosition);
-            state.BatchCount--;
-            state.MessageSize = (int)stream.Position - state.MessageStartPosition;
-
-            return serializedDocument;
-        }
-
-        private void WriteDocuments(State state)
-        {
-            if (state.Message.DocumentSource.Batch == null)
-            {
-                WriteNextBatch(state);
-            }
-            else
-            {
-                WriteSingleBatch(state);
-            }
-        }
-
-        private void WriteSingleBatch(State state)
-        {
-            var message = state.Message;
-
-            foreach (var document in message.DocumentSource.Batch)
-            {
-                AddDocument(state, document);
-
-                if ((state.BatchCount > message.MaxBatchCount || state.MessageSize > message.MaxMessageSize) && state.BatchCount > 1)
-                {
-                    throw new ArgumentException("The non-batchable documents do not fit in a single Insert message.");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Writes the message.
-        /// </summary>
-        /// <param name="message">The message.</param>
+        /// <inheritdoc />
         public void WriteMessage(InsertMessage<TDocument> message)
         {
             Ensure.IsNotNull(message, nameof(message));
 
-            var binaryWriter = CreateBinaryWriter();
-            var stream = binaryWriter.BsonStream;
+            var writer = CreateBinaryWriter();
+            var stream = writer.BsonStream;
             var messageStartPosition = (int)stream.Position;
-            var state = new State { BinaryWriter = binaryWriter, Message = message, MessageStartPosition = messageStartPosition };
 
             stream.WriteInt32(0); // messageSize
             stream.WriteInt32(message.RequestId);
@@ -190,50 +92,77 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
             stream.WriteInt32((int)Opcode.Insert);
             stream.WriteInt32((int)BuildInsertFlags(message));
             stream.WriteCString(message.CollectionNamespace.FullName);
-            WriteDocuments(state);
+            WriteDocuments(writer, messageStartPosition, message);
             stream.BackpatchSize(messageStartPosition);
         }
 
-        private void WriteNextBatch(State state)
+        // private methods
+        private InsertFlags BuildInsertFlags(InsertMessage<TDocument> message)
         {
-            var batch = new List<TDocument>();
-
-            var message = state.Message;
-            var documentSource = message.DocumentSource;
-
-            var overflow = documentSource.StartBatch();
-            if (overflow != null)
+            var flags = InsertFlags.None;
+            if (message.ContinueOnError)
             {
-                batch.Add(overflow.Item);
-                AddDocument(state, (byte[])overflow.State);
+                flags |= InsertFlags.ContinueOnError;
+            }
+            return flags;
+        }
+
+        private List<TDocument> ReadDocuments(BsonBinaryReader reader, long messageStartPosition, int messageSize)
+        {
+            var context = BsonDeserializationContext.CreateRoot(reader);
+            var stream = reader.BsonStream;
+
+            var documents = new List<TDocument>();
+            while (stream.Position < messageStartPosition + messageSize)
+            {
+                var document = _serializer.Deserialize(context);
+                documents.Add(document);
             }
 
-            // always go one document too far so that we can detect when the docuemntSource runs out of documents
-            while (documentSource.MoveNext())
+            return documents;
+        }
+
+        private void WriteDocuments(BsonBinaryWriter writer, long messageStartPosition, InsertMessage<TDocument> message)
+        {
+            var stream = writer.BsonStream;
+            var context = BsonSerializationContext.CreateRoot(writer);
+
+            var collectionNamespace = message.CollectionNamespace;
+            var isSystemIndexesCollection = collectionNamespace.Equals(collectionNamespace.DatabaseNamespace.SystemIndexesCollection);
+            var elementNameValidator = isSystemIndexesCollection ? (IElementNameValidator)NoOpElementNameValidator.Instance : CollectionElementNameValidator.Instance;
+
+            writer.PushElementNameValidator(elementNameValidator);
+            try
             {
-                var document = documentSource.Current;
-                if (document == null)
+                var batch = message.DocumentSource;
+                var documents = batch.Items;
+                for (var i = 0; i < message.MaxBatchCount; i++)
                 {
-                    throw new ArgumentException("Batch contains one or more null documents.");
+                    var documentStartPosition = stream.Position;
+                    var document = documents[i];
+
+                    _serializer.Serialize(context, document);
+
+                    var messageSize = stream.Position - messageStartPosition;
+                    if (messageSize > message.MaxMessageSize)
+                    {
+                        if (i > 0 && batch.CanBeAdjusted)
+                        {
+                            stream.Position = documentStartPosition;
+                            batch.SetAdjustedCount(i);
+                            return;
+                        }
+                        else
+                        {
+                            throw new BsonSerializationException("Batch is too large.");
+                        }
+                    }
                 }
-
-                var binaryWriter = state.BinaryWriter;
-                var stream = binaryWriter.BsonStream;
-                var documentStartPosition = (int)stream.Position;
-                AddDocument(state, document);
-
-                if ((state.BatchCount > message.MaxBatchCount || state.MessageSize > message.MaxMessageSize) && state.BatchCount > 1)
-                {
-                    var serializedDocument = RemoveLastDocument(state, documentStartPosition);
-                    overflow = new BatchableSource<TDocument>.Overflow { Item = document, State = serializedDocument };
-                    documentSource.EndBatch(batch, overflow);
-                    return;
-                }
-
-                batch.Add(document);
             }
-
-            documentSource.EndBatch(batch);
+            finally
+            {
+                writer.PopElementNameValidator();
+            }
         }
 
         // explicit interface implementations
@@ -253,15 +182,6 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
         {
             None = 0,
             ContinueOnError = 1
-        }
-
-        private class State
-        {
-            public BsonBinaryWriter BinaryWriter;
-            public InsertMessage<TDocument> Message;
-            public int MessageStartPosition;
-            public int BatchCount;
-            public int MessageSize;
         }
     }
 }

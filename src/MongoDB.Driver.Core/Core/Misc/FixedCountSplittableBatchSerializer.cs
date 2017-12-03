@@ -23,7 +23,7 @@ namespace MongoDB.Driver.Core.Misc
     /// A serializer for splittable batches that serializes as much of the splittable batch as fits in the max serialized size.
     /// </summary>
     /// <typeparam name="TItem">The type of the items.</typeparam>
-    public class FixedCountSplittableBatchSerializer<TItem> : SerializerBase<SplittableBatch<TItem>>
+    public class FixedCountSplittableBatchSerializer<TItem> : SerializerBase<BatchableSource<TItem>>
     {
         // private fields
         private readonly int _count;
@@ -46,7 +46,7 @@ namespace MongoDB.Driver.Core.Misc
 
         // public methods
         /// <inheritdoc />
-        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, SplittableBatch<TItem> value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, BatchableSource<TItem> value)
         {
             Ensure.IsNotNull(value, nameof(value));
             var writer = context.Writer;
@@ -56,7 +56,7 @@ namespace MongoDB.Driver.Core.Misc
             {
                 for (var i = 0; i < _count; i++)
                 {
-                    var item = value.Items.Array[value.Items.Offset + i];
+                    var item = value.Items[value.Offset + i];
                     _itemSerializer.Serialize(context, item);
                 }
             }

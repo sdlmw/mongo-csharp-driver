@@ -1,4 +1,4 @@
-﻿/* Copyright 2013-2016 MongoDB Inc.
+﻿/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     numberOfBatches++;
                     batchedDocuments.AddRange(documentSource.Batch);
 
-                    documentSource.ClearBatch();
+                    documentSource.AdvanceOffset();
                 }
 
                 numberOfBatches.Should().Be(expectedNumberOfBatches);
@@ -226,7 +226,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     numberOfBatches++;
                     batchedDocuments.AddRange(documentSource.Batch);
 
-                    documentSource.ClearBatch();
+                    documentSource.AdvanceOffset();
                 }
 
                 numberOfBatches.Should().Be(expectedNumberOfBatches);

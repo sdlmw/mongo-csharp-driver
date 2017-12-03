@@ -24,7 +24,7 @@ namespace MongoDB.Driver.Core.Misc
     /// A serializer for splittable batches that serializes as much of the splittable batch as fits in the max batch size.
     /// </summary>
     /// <typeparam name="TItem">The type of the items.</typeparam>
-    public class SizeLimitingSplittableBatchSerializer<TItem> : SerializerBase<SplittableBatch<TItem>>
+    public class SizeLimitingSplittableBatchSerializer<TItem> : SerializerBase<BatchableSource<TItem>>
     {
         // private fields
         private readonly IElementNameValidator _itemElementNameValidator;
@@ -50,7 +50,7 @@ namespace MongoDB.Driver.Core.Misc
 
         // public methods
         /// <inheritdoc />
-        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, SplittableBatch<TItem> value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, BatchableSource<TItem> value)
         {
             Ensure.IsNotNull(value, nameof(value));
 
@@ -71,16 +71,16 @@ namespace MongoDB.Driver.Core.Misc
                 {
                     var itemPosition = binaryWriter?.Position;
 
-                    var item = value.Items.Array[value.Items.Offset + i];
+                    var item = value.Items[value.Offset + i];
                     _itemSerializer.Serialize(context, args, item);
 
                     var batchSize = binaryWriter?.Position - startPosition;
                     if (batchSize > _maxBatchSize)
                     {
-                        if (value.CanBeSplit)
+                        if (i > 0 && value.CanBeAdjusted)
                         {
                             binaryWriter.BaseStream.Position = itemPosition.Value; // remove the last item
-                            value.SplitAt(i);
+                            value.SetAdjustedCount(i);
                             return;
                         }
                         else
@@ -89,8 +89,6 @@ namespace MongoDB.Driver.Core.Misc
                         }
                     }
                 }
-
-                value.SplitAt(value.Items.Count);
             }
             finally
             {

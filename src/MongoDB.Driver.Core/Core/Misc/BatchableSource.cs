@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 MongoDB Inc.
+﻿/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -26,15 +26,24 @@ namespace MongoDB.Driver.Core.Misc
     public sealed class BatchableSource<T>
     {
         #region static
-        // static fields
-        private static readonly T[] __emptyBatch = new T[0];
+        // private static methods
+        private static List<T> ToList(IEnumerator<T> enumerator)
+        {
+            var list = new List<T>();
+            while (enumerator.MoveNext())
+            {
+                list.Add(enumerator.Current);
+            }
+            return list;
+        }
         #endregion
 
         // fields
-        private IReadOnlyList<T> _batch;
-        private IEnumerator<T> _enumerator;
-        private bool _hasMore;
-        private Overflow _overflow;
+        private int _adjustedCount;
+        private readonly bool _canBeAdjusted;
+        private int _count;
+        private readonly IReadOnlyList<T> _items;
+        private int _offset;
 
         // constructors
         /// <summary>
@@ -46,8 +55,8 @@ namespace MongoDB.Driver.Core.Misc
         /// </remarks>
         /// <param name="batch">The single batch.</param>
         public BatchableSource(IEnumerable<T> batch)
+            : this(Ensure.IsNotNull(batch, nameof(batch)).ToList())
         {
-            _batch = Ensure.IsNotNull(batch, nameof(batch)).ToList();
         }
 
         /// <summary>
@@ -55,12 +64,47 @@ namespace MongoDB.Driver.Core.Misc
         /// </summary>
         /// <param name="enumerator">The enumerator that will provide the items for the batch.</param>
         public BatchableSource(IEnumerator<T> enumerator)
+            : this(ToList(Ensure.IsNotNull(enumerator, nameof(enumerator))))
         {
-            _enumerator = Ensure.IsNotNull(enumerator, nameof(enumerator));
-            _hasMore = true;
         }
 
-        // properties
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BatchableSource{T}" /> class.
+        /// </summary>
+        /// <remarks>
+        /// Use this overload when you know the batch is small and won't have to be broken up into sub-batches. 
+        /// </remarks>
+        /// <param name="items">The items.</param>
+        public BatchableSource(IReadOnlyList<T> items)
+            : this(Ensure.IsNotNull(items, nameof(items)), 0, items.Count, false)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BatchableSource{T}"/> class.
+        /// </summary>
+        /// <param name="items">The items.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="canBeAdjusted">if set to <c>true</c> the batch can be adjusted.</param>
+        public BatchableSource(IReadOnlyList<T> items, int offset, int count, bool canBeAdjusted = true)
+        {
+            _items = Ensure.IsNotNull(items, nameof(items));
+            _offset = Ensure.IsBetween(offset, 0, items.Count, nameof(offset));
+            _count = Ensure.IsBetween(count, 0, items.Count - offset, nameof(count));
+            _canBeAdjusted = canBeAdjusted;
+            _adjustedCount = count;
+        }
+
+        // public properties
+        /// <summary>
+        /// Gets the adjusted count.
+        /// </summary>
+        /// <value>
+        /// The adjusted count.
+        /// </value>
+        public int AdjustedCount => _adjustedCount;
+
         /// <summary>
         /// Gets the most recent batch.
         /// </summary>
@@ -69,23 +113,26 @@ namespace MongoDB.Driver.Core.Misc
         /// </value>
         public IReadOnlyList<T> Batch
         {
-            get { return _batch; }
+            get { return _items.Skip(_offset).Take(_adjustedCount).ToList(); }
         }
 
         /// <summary>
-        /// Gets the current item.
+        /// Gets a value indicating whether the batch can be adjusted.
         /// </summary>
         /// <value>
-        /// The current item.
+        ///   <c>true</c> if the batch can be adjusted; otherwise, <c>false</c>.
         /// </value>
-        public T Current
+        public bool CanBeAdjusted => _canBeAdjusted;
+
+        /// <summary>
+        /// Gets the count.
+        /// </summary>
+        /// <value>
+        /// The count.
+        /// </value>
+        public int Count
         {
-            get
-            {
-                ThrowIfNotBatchable();
-                ThrowIfHasBatch();
-                return _enumerator.Current;
-            }
+            get { return _count; }
         }
 
         /// <summary>
@@ -98,44 +145,42 @@ namespace MongoDB.Driver.Core.Misc
         {
             get
             {
-                return _hasMore;
+                return _count > 0;
             }
         }
 
-        // methods
         /// <summary>
-        /// Clears the most recent batch.
+        /// Gets the items.
         /// </summary>
-        public void ClearBatch()
-        {
-            ThrowIfNotBatchable();
-            _batch = null;
-        }
+        /// <value>
+        /// The items.
+        /// </value>
+        public IReadOnlyList<T> Items => _items;
 
         /// <summary>
-        /// Called when the last batch is complete.
+        /// Gets the offset.
         /// </summary>
-        /// <param name="batch">The batch.</param>
-        public void EndBatch(IReadOnlyList<T> batch)
-        {
-            ThrowIfNotBatchable();
-            ThrowIfHasBatch();
-            _batch = batch;
-            _hasMore = false;
-        }
+        /// <value>
+        /// The offset.
+        /// </value>
+        public int Offset => _offset;
 
+        // public methods
         /// <summary>
-        /// Called when an intermediate batch is complete.
+        /// Advances the offset.
         /// </summary>
-        /// <param name="batch">The batch.</param>
-        /// <param name="overflow">The overflow item.</param>
-        public void EndBatch(IReadOnlyList<T> batch, Overflow overflow)
+        public void AdvanceOffset()
         {
-            ThrowIfNotBatchable();
-            ThrowIfHasBatch();
-            _batch = batch;
-            _overflow = overflow;
-            _hasMore = true;
+            if (_canBeAdjusted)
+            {
+                _offset = _offset + _adjustedCount;
+                _count = _count - _adjustedCount;
+                _adjustedCount = _count;
+            }
+            else
+            {
+                throw new InvalidOperationException("The batch cannot be adjusted.");
+            }
         }
 
         /// <summary>
@@ -144,86 +189,24 @@ namespace MongoDB.Driver.Core.Misc
         /// <returns>The remaining items.</returns>
         public IEnumerable<T> GetRemainingItems()
         {
-            if (_overflow != null)
-            {
-                yield return _overflow.Item;
-                _overflow = null;
-            }
+            return _items.Skip(_offset).Take(_count);
+        }
 
-            if (_enumerator != null)
+        /// <summary>
+        /// Sets the adjustedcount.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        public void SetAdjustedCount(int value)
+        {
+            if (_canBeAdjusted)
             {
-                while (_enumerator.MoveNext())
-                {
-                    yield return _enumerator.Current;
-                }
+                Ensure.IsBetween(value, 0, _count, nameof(value));
+                _adjustedCount = value;
             }
             else
             {
-                foreach (var item in _batch)
-                {
-                    yield return item;
-                }
-                _batch = __emptyBatch;
+                throw new InvalidOperationException("The batch cannot be adjusted.");
             }
-
-            _hasMore = false;
-        }
-
-        /// <summary>
-        /// Moves to the next item in the source.
-        /// </summary>
-        /// <returns>True if there are more items.</returns>
-        public bool MoveNext()
-        {
-            ThrowIfNotBatchable();
-            ThrowIfHasBatch();
-            return _enumerator.MoveNext();
-        }
-
-        /// <summary>
-        /// Starts a new batch.
-        /// </summary>
-        /// <returns>The overflow item of the previous batch if there is one; otherwise, null.</returns>
-        public Overflow StartBatch()
-        {
-            ThrowIfNotBatchable();
-            ThrowIfHasBatch();
-            var overflow = _overflow;
-            _overflow = null;
-            return overflow;
-        }
-
-        private void ThrowIfHasBatch()
-        {
-            if (_batch != null)
-            {
-                throw new InvalidOperationException("This method can only be called when there is no current batch.");
-            }
-        }
-
-        private void ThrowIfNotBatchable()
-        {
-            if (_enumerator == null)
-            {
-                throw new InvalidOperationException("This method can only be called when an enumerator was provided.");
-            }
-        }
-
-        // nested types
-        /// <summary>
-        /// Represents an overflow item that did not fit in the most recent batch and will be become the first item in the next batch.
-        /// </summary>
-        public class Overflow
-        {
-            /// <summary>
-            /// The item.
-            /// </summary>
-            public T Item;
-
-            /// <summary>
-            /// The state information, if any, that the consumer wishes to associate with the overflow item.
-            /// </summary>
-            public object State;
         }
     }
 }

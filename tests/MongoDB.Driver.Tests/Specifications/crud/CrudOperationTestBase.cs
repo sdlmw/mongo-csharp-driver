@@ -14,9 +14,11 @@
 */
 
 using System;
+using System.Threading.Tasks;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Clusters;
+using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver.Tests.Specifications.crud
 {

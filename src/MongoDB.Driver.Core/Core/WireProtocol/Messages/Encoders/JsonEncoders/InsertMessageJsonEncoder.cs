@@ -107,13 +107,6 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
         {
             Ensure.IsNotNull(message, nameof(message));
 
-            var documents = new BsonArray();
-            foreach (var document in message.DocumentSource.Items)
-            {
-                var wrappedDocument = new BsonDocumentWrapper(document, _serializer);
-                documents.Add(wrappedDocument);
-            }
-
             var messageDocument = new BsonDocument
             {
                 { "opcode", "insert" },
@@ -123,7 +116,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
                 { "maxBatchCount", message.MaxBatchCount },
                 { "maxMessageSize", message.MaxMessageSize },
                 { "continueOnError", message.ContinueOnError },
-                { "documents", documents }
+                { "documents", WrapDocuments(message) }
             };
 
             var jsonWriter = CreateJsonWriter();
@@ -140,6 +133,28 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
         void IMessageEncoder.WriteMessage(MongoDBMessage message)
         {
             WriteMessage((InsertMessage<TDocument>)message);
+        }
+
+        // private methods
+        private BsonArray WrapDocuments(InsertMessage<TDocument> message)
+        {
+            var documentSource = message.DocumentSource;
+            var batchCount = Math.Min(documentSource.Count, message.MaxBatchCount);
+            if (batchCount < documentSource.Count && !documentSource.CanBeAdjusted)
+            {
+                throw new BsonSerializationException("Batch is too large.");
+            }
+
+            var wrappedDocuments = new BsonArray(batchCount);
+            for (var i = 0; i < batchCount; i++)
+            {
+                var document = documentSource.Items[documentSource.Offset + i];
+                var wrappedDocument = new BsonDocumentWrapper(document, _serializer);
+                wrappedDocuments.Add(wrappedDocument);
+            }
+            documentSource.SetAdjustedCount(batchCount);
+
+            return wrappedDocuments;
         }
     }
 }

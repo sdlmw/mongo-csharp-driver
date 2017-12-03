@@ -109,10 +109,10 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
 
         private List<TDocument> ReadDocuments(BsonBinaryReader reader, long messageStartPosition, int messageSize)
         {
-            var context = BsonDeserializationContext.CreateRoot(reader);
             var stream = reader.BsonStream;
-
+            var context = BsonDeserializationContext.CreateRoot(reader);
             var documents = new List<TDocument>();
+
             while (stream.Position < messageStartPosition + messageSize)
             {
                 var document = _serializer.Deserialize(context);
@@ -134,22 +134,27 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
             writer.PushElementNameValidator(elementNameValidator);
             try
             {
-                var batch = message.DocumentSource;
-                var documents = batch.Items;
-                for (var i = 0; i < message.MaxBatchCount; i++)
+                var documentSource = message.DocumentSource;
+                var batchCount = Math.Min(documentSource.Count, message.MaxBatchCount);
+                if (batchCount < documentSource.Count && !documentSource.CanBeAdjusted)
                 {
+                    throw new BsonSerializationException("Batch is too large.");
+                }
+
+                for (var i = 0; i < batchCount; i++)
+                {
+                    var document = documentSource.Items[documentSource.Offset + i];
                     var documentStartPosition = stream.Position;
-                    var document = documents[i];
 
                     _serializer.Serialize(context, document);
 
                     var messageSize = stream.Position - messageStartPosition;
                     if (messageSize > message.MaxMessageSize)
                     {
-                        if (i > 0 && batch.CanBeAdjusted)
+                        if (i > 0 && documentSource.CanBeAdjusted)
                         {
                             stream.Position = documentStartPosition;
-                            batch.SetAdjustedCount(i);
+                            documentSource.SetAdjustedCount(i);
                             return;
                         }
                         else
@@ -158,6 +163,8 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                         }
                     }
                 }
+
+                documentSource.SetAdjustedCount(batchCount);
             }
             finally
             {

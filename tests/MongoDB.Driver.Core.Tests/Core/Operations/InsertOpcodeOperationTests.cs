@@ -75,7 +75,7 @@ namespace MongoDB.Driver.Core.Operations
             var subject = new InsertOpcodeOperation<BsonDocument>(_collectionNamespace, _documentSource, BsonDocumentSerializer.Instance, _messageEncoderSettings);
 
             subject.CollectionNamespace.FullName.Should().Be(_collectionNamespace.FullName);
-            subject.DocumentSource.Should().NotBeNull();
+            subject.Documents.Should().HaveCount(_documentSource.Count);
             subject.Serializer.Should().BeSameAs(BsonDocumentSerializer.Instance);
             subject.MessageEncoderSettings.Should().BeEquivalentTo(_messageEncoderSettings);
         }

@@ -140,12 +140,12 @@ namespace MongoDB.Driver.Core.Operations
             {
                 var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
                 var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
-                return new SizeLimitingSplittableBatchSerializer<TDocument>(_documentSerializer, elementNameValidator, maxItemSize, maxBatchSize);
+                return new SizeLimitingBatchableSourceSerializer<TDocument>(_documentSerializer, elementNameValidator, maxItemSize, maxBatchSize);
             }
             else
             {
                 var count = _documents.Count; // as adjusted by the first attempt
-                return new FixedCountSplittableBatchSerializer<TDocument>(_documentSerializer, elementNameValidator, count);
+                return new FixedCountBatchableSourceSerializer<TDocument>(_documentSerializer, elementNameValidator, count);
             }
         }
     }

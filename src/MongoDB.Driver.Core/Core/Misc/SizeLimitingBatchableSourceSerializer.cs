@@ -21,10 +21,10 @@ using MongoDB.Bson.Serialization.Serializers;
 namespace MongoDB.Driver.Core.Misc
 {
     /// <summary>
-    /// A serializer for splittable batches that serializes as much of the splittable batch as fits in the max batch size.
+    /// A serializer for BatchableSource that serializes as much of the BatchableSource as fits in the max batch size.
     /// </summary>
     /// <typeparam name="TItem">The type of the items.</typeparam>
-    public class SizeLimitingSplittableBatchSerializer<TItem> : SerializerBase<BatchableSource<TItem>>
+    public class SizeLimitingBatchableSourceSerializer<TItem> : SerializerBase<BatchableSource<TItem>>
     {
         // private fields
         private readonly IElementNameValidator _itemElementNameValidator;
@@ -34,13 +34,13 @@ namespace MongoDB.Driver.Core.Misc
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="SizeLimitingSplittableBatchSerializer{T}" /> class.
+        /// Initializes a new instance of the <see cref="SizeLimitingBatchableSourceSerializer{TItem}" /> class.
         /// </summary>
         /// <param name="itemSerializer">The item serializer.</param>
         /// <param name="itemElementNameValidator">The item element name validator.</param>
         /// <param name="maxItemSize">Maximum size of a serialized item.</param>
         /// <param name="maxBatchSize">Maximum size of the batch.</param>
-        public SizeLimitingSplittableBatchSerializer(IBsonSerializer<TItem> itemSerializer, IElementNameValidator itemElementNameValidator, int maxItemSize, int maxBatchSize)
+        public SizeLimitingBatchableSourceSerializer(IBsonSerializer<TItem> itemSerializer, IElementNameValidator itemElementNameValidator, int maxItemSize, int maxBatchSize)
         {
             _itemSerializer = Ensure.IsNotNull(itemSerializer, nameof(itemSerializer));
             _itemElementNameValidator = Ensure.IsNotNull(itemElementNameValidator, nameof(itemElementNameValidator));

@@ -20,10 +20,10 @@ using MongoDB.Bson.Serialization.Serializers;
 namespace MongoDB.Driver.Core.Misc
 {
     /// <summary>
-    /// A serializer for splittable batches that serializes as much of the splittable batch as fits in the max serialized size.
+    /// A serializer for BatchableSource that serializes a fixed count of items.
     /// </summary>
     /// <typeparam name="TItem">The type of the items.</typeparam>
-    public class FixedCountSplittableBatchSerializer<TItem> : SerializerBase<BatchableSource<TItem>>
+    public class FixedCountBatchableSourceSerializer<TItem> : SerializerBase<BatchableSource<TItem>>
     {
         // private fields
         private readonly int _count;
@@ -32,12 +32,12 @@ namespace MongoDB.Driver.Core.Misc
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="SizeLimitingSplittableBatchSerializer{T}" /> class.
+        /// Initializes a new instance of the <see cref="FixedCountBatchableSourceSerializer{TITem}" /> class.
         /// </summary>
         /// <param name="itemSerializer">The item serializer.</param>
         /// <param name="itemElementNameValidator">The item element name validator.</param>
         /// <param name="count">The count.</param>
-        public FixedCountSplittableBatchSerializer(IBsonSerializer<TItem> itemSerializer, IElementNameValidator itemElementNameValidator, int count)
+        public FixedCountBatchableSourceSerializer(IBsonSerializer<TItem> itemSerializer, IElementNameValidator itemElementNameValidator, int count)
         {
             _itemSerializer = Ensure.IsNotNull(itemSerializer, nameof(itemSerializer));
             _itemElementNameValidator = Ensure.IsNotNull(itemElementNameValidator, nameof(itemElementNameValidator));

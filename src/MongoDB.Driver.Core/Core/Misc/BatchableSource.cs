@@ -87,7 +87,7 @@ namespace MongoDB.Driver.Core.Misc
         /// <param name="offset">The offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="canBeAdjusted">if set to <c>true</c> the batch can be adjusted.</param>
-        public BatchableSource(IReadOnlyList<T> items, int offset, int count, bool canBeAdjusted = true)
+        public BatchableSource(IReadOnlyList<T> items, int offset, int count, bool canBeAdjusted)
         {
             _items = Ensure.IsNotNull(items, nameof(items));
             _offset = Ensure.IsBetween(offset, 0, items.Count, nameof(offset));
@@ -181,15 +181,6 @@ namespace MongoDB.Driver.Core.Misc
             {
                 throw new InvalidOperationException("The batch cannot be adjusted.");
             }
-        }
-
-        /// <summary>
-        /// Gets all the remaining items that haven't been previously consumed.
-        /// </summary>
-        /// <returns>The remaining items.</returns>
-        public IEnumerable<T> GetRemainingItems()
-        {
-            return _items.Skip(_offset).Take(_count);
         }
 
         /// <summary>

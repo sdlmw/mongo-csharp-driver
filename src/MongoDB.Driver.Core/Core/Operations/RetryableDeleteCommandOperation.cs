@@ -107,12 +107,12 @@ namespace MongoDB.Driver.Core.Operations
             {
                 var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
                 var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
-                return new SizeLimitingSplittableBatchSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxItemSize, maxBatchSize);
+                return new SizeLimitingBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxItemSize, maxBatchSize);
             }
             else
             {
                 var count = _deletes.Count; // as adjusted by the first attempt
-                return new FixedCountSplittableBatchSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
+                return new FixedCountBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
             }
         }
 

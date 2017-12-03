@@ -377,7 +377,7 @@ namespace MongoDB.Driver.Core.Connections
                 // Plus, for this we really want BsonDocuments, not whatever the generic type is.
                 var decodedMessage = encoder.ReadMessage();
 
-                var documents = decodedMessage.DocumentSource.GetRemainingItems().ToList();
+                var documents = decodedMessage.DocumentSource.Batch;
                 numberOfDocuments = documents.Count;
                 try
                 {
@@ -409,7 +409,10 @@ namespace MongoDB.Driver.Core.Connections
                 }
                 finally
                 {
-                    documents.ForEach(d => d.Dispose());
+                    foreach (var document in documents)
+                    {
+                        document.Dispose();
+                    }
                 }
             }
 

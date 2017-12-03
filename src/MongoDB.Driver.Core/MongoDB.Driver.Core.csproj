@@ -106,7 +106,7 @@
     <Compile Include="Core\Misc\FixedCountSplittableBatchSerializer.cs" />
     <Compile Include="Core\Misc\ReadAheadEnumerable.cs" />
     <Compile Include="Core\Misc\ReadConcernFeature.cs" />
-    <Compile Include="Core\Misc\SplittableBatch.cs" />
+    <Compile Include="Core\Misc\BatchableSource.cs" />
     <Compile Include="Core\Misc\SizeLimitingSplittableBatchSerializer.cs" />
     <Compile Include="Core\Misc\TaskExtensions.cs" />
     <Compile Include="Core\Operations\ChangeStreamCursor.cs" />
@@ -114,8 +114,8 @@
     <Compile Include="Core\Clusters\ClusterClock.cs" />
     <Compile Include="Core\Operations\CreateViewOperation.cs" />
     <Compile Include="Core\Clusters\IClusterClock.cs" />
-    <Compile Include="Core\Operations\DeleteCommandOperation.cs" />
-    <Compile Include="Core\Operations\InsertCommandOperation.cs" />
+    <Compile Include="Core\Operations\RetryableDeleteCommandOperation.cs" />
+    <Compile Include="Core\Operations\RetryableInsertCommandOperation.cs" />
     <Compile Include="Core\Operations\IOperationClock.cs" />
     <Compile Include="Core\Operations\IRetryableOperation.cs" />
     <Compile Include="Core\Operations\OperationClock.cs" />
@@ -123,8 +123,8 @@
     <Compile Include="Core\Operations\ReIndexOperation.cs" />
     <Compile Include="Core\Operations\RetryableWriteCommandOperationBase.cs" />
     <Compile Include="Core\Operations\RetryableWriteOperationExecutor.cs" />
-    <Compile Include="Core\Operations\RetryableWriteOperationContext.cs" />
-    <Compile Include="Core\Operations\UpdateCommandOperation.cs" />
+    <Compile Include="Core\Operations\RetryableWriteContext.cs" />
+    <Compile Include="Core\Operations\RetryableUpdateCommandOperation.cs" />
     <Compile Include="Core\Operations\WriteConcernErrorHelper.cs" />
     <Compile Include="Core\Servers\ClusterClockAdvancingCoreSession.cs" />
     <Compile Include="Core\Servers\IServerMonitor.cs" />
@@ -266,7 +266,6 @@
     <Compile Include="Core\Operations\DeleteOpcodeOperationEmulator.cs" />
     <Compile Include="Core\Operations\InsertOpcodeOperationEmulator.cs" />
     <Compile Include="Core\Operations\UpdateOpcodeOperationEmulator.cs" />
-    <Compile Include="Core\Misc\BatchableSource.cs" />
     <Compile Include="Core\Misc\IndexMap.cs" />
     <Compile Include="Core\Misc\Metronome.cs" />
     <Compile Include="Core\Async\AsyncQueue.cs" />

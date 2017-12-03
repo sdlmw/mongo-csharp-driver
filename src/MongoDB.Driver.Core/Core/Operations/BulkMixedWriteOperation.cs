@@ -211,7 +211,7 @@ namespace MongoDB.Driver.Core.Operations
         public BulkWriteOperationResult Execute(IWriteBinding binding, CancellationToken cancellationToken)
         {
             using (EventContext.BeginOperation())
-            using (var context = new RetryableWriteOperationContext(binding, _retryRequested))
+            using (var context = RetryableWriteContext.Create(binding, _retryRequested, cancellationToken))
             {
                 var helper = new BatchHelper(_requests, _isOrdered, _writeConcern);
                 foreach (var batch in helper.GetBatches())
@@ -226,7 +226,7 @@ namespace MongoDB.Driver.Core.Operations
         public async Task<BulkWriteOperationResult> ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
         {
             using (EventContext.BeginOperation())
-            using (var context = new RetryableWriteOperationContext(binding, _retryRequested))
+            using (var context = await RetryableWriteContext.CreateAsync(binding, _retryRequested, cancellationToken).ConfigureAwait(false))
             {
                 var helper = new BatchHelper(_requests, _isOrdered, _writeConcern);
                 foreach (var batch in helper.GetBatches())
@@ -290,14 +290,13 @@ namespace MongoDB.Driver.Core.Operations
             };
         }
 
-        private BulkWriteBatchResult ExecuteBatch(RetryableWriteOperationContext context, BatchHelper.Batch batch, CancellationToken cancellationToken)
+        private BulkWriteBatchResult ExecuteBatch(RetryableWriteContext context, BatchHelper.Batch batch, CancellationToken cancellationToken)
         {
-            var operation = CreateOperation(batch);
-
             BulkWriteOperationResult result;
             MongoBulkWriteOperationException exception = null;
             try
             {
+                var operation = CreateOperation(batch);
                 result = operation.Execute(context, cancellationToken);
             }
             catch (MongoBulkWriteOperationException ex)
@@ -309,14 +308,13 @@ namespace MongoDB.Driver.Core.Operations
             return BulkWriteBatchResult.Create(result, exception, batch.IndexMap);
         }
 
-        private async Task<BulkWriteBatchResult> ExecuteBatchAsync(RetryableWriteOperationContext context, BatchHelper.Batch batch, CancellationToken cancellationToken)
+        private async Task<BulkWriteBatchResult> ExecuteBatchAsync(RetryableWriteContext context, BatchHelper.Batch batch, CancellationToken cancellationToken)
         {
-            var operation = CreateOperation(batch);
-
             BulkWriteOperationResult result;
             MongoBulkWriteOperationException exception = null;
             try
             {
+                var operation = CreateOperation(batch);
                 result = await operation.ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
             }
             catch (MongoBulkWriteOperationException ex)
@@ -389,19 +387,19 @@ namespace MongoDB.Driver.Core.Operations
                 {
                     var index = _unprocessed.FindIndex(r => r.Request.RequestType != batchType);
                     var count = index == -1 ? _unprocessed.Count : index;
-                    indexMap = new IndexMap.RangeBased(0, _unprocessed[0].Index, count);
                     requests = _unprocessed.Take(count).Select(r => r.Request).ToList();
+                    indexMap = new IndexMap.RangeBased(0, _unprocessed[0].Index, count);
                     _unprocessed.RemoveRange(0, count);
                 }
                 else
                 {
                     var matching = _unprocessed.Where(r => r.Request.RequestType == batchType).ToList();
+                    requests = matching.Select(r => r.Request).ToList();
                     indexMap = new IndexMap.DictionaryBased();
                     for (var i = 0; i < matching.Count; i++)
                     {
                         indexMap.Add(i, matching[i].Index);
                     }
-                    requests = matching.Select(r => r.Request).ToList();
                     _unprocessed = _unprocessed.Where(r => r.Request.RequestType != batchType).ToList();
                   
                 }

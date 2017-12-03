@@ -13,7 +13,6 @@
 * limitations under the License.
 */
 
-using System;
 using MongoDB.Bson;
 
 namespace MongoDB.Driver.Core.Bindings

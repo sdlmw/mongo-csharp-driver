@@ -703,6 +703,7 @@ namespace MongoDB.Driver
             {
                 BypassDocumentValidation = options.BypassDocumentValidation,
                 IsOrdered = options.IsOrdered,
+                RetryRequested = _database.Client.Settings.RetryWrites,
                 WriteConcern = _settings.WriteConcern
             };
         }

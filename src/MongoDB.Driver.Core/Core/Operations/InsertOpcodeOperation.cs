@@ -126,6 +126,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <value>
         /// The document source.
         /// </value>
+        [Obsolete("Use Documents instead.")]
         public BatchableSource<TDocument> DocumentSource
         {
             get { return new BatchableSource<TDocument>(_documents); }

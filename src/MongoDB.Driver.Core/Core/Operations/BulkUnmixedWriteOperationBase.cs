@@ -129,6 +129,7 @@ namespace MongoDB.Driver.Core.Operations
             using (EventContext.BeginOperation())
             using (var context = RetryableWriteContext.Create(binding, _retryRequested, cancellationToken))
             {
+                context.DisableRetriesIfAnyWriteRequestIsNotRetryable(_requests);
                 return Execute(context, cancellationToken);
             }
         }
@@ -151,6 +152,7 @@ namespace MongoDB.Driver.Core.Operations
             using (EventContext.BeginOperation())
             using (var context = await RetryableWriteContext.CreateAsync(binding, _retryRequested, cancellationToken).ConfigureAwait(false))
             {
+                context.DisableRetriesIfAnyWriteRequestIsNotRetryable(_requests);
                 return await ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
             }
         }

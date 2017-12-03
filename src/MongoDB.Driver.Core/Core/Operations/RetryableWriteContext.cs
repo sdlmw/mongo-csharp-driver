@@ -14,6 +14,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver.Core.Bindings;
@@ -79,7 +80,7 @@ namespace MongoDB.Driver.Core.Operations
         private IChannelHandle _channel;
         private IChannelSourceHandle _channelSource;
         private bool _disposed;
-        private readonly bool _retryRequested;
+        private bool _retryRequested;
 
         // constructors
         /// <summary>
@@ -127,6 +128,24 @@ namespace MongoDB.Driver.Core.Operations
         public bool RetryRequested => _retryRequested;
 
         // public methods
+        /// <summary>
+        /// Disables retries.
+        /// </summary>
+        public void DisableRetriesIfAnyWriteRequestIsNotRetryable(IEnumerable<WriteRequest> requests)
+        {
+            if (_retryRequested)
+            {
+                foreach (var request in requests)
+                {
+                    if (!request.IsRetryable(_channel.ConnectionDescription))
+                    {
+                        _retryRequested = false;
+                        return;
+                    }
+                }
+            }
+        }
+
         /// <inheritdoc />
         public void Dispose()
         {
@@ -139,10 +158,10 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
-        /// Sets the channel.
+        /// Replaces the channel.
         /// </summary>
         /// <param name="channel">The channel.</param>
-        public void SetChannel(IChannelHandle channel)
+        public void ReplaceChannel(IChannelHandle channel)
         {
             Ensure.IsNotNull(channel, nameof(channel));
             _channel?.Dispose();
@@ -150,10 +169,10 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
-        /// Sets the channel source.
+        /// Replaces the channel source.
         /// </summary>
         /// <param name="channelSource">The channel source.</param>
-        public void SetChannelSource(IChannelSourceHandle channelSource)
+        public void ReplaceChannelSource(IChannelSourceHandle channelSource)
         {
             Ensure.IsNotNull(channelSource, nameof(channelSource));
             _channelSource?.Dispose();

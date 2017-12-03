@@ -103,11 +103,11 @@
     <Compile Include="Core\Misc\CommandsThatWriteAcceptWriteConcernFeature.cs" />
     <Compile Include="Core\Misc\DefaultRandomStringGenerator.cs" />
     <Compile Include="Core\Misc\Feature.cs" />
-    <Compile Include="Core\Misc\FixedCountSplittableBatchSerializer.cs" />
+    <Compile Include="Core\Misc\FixedCountBatchableSourceSerializer.cs" />
     <Compile Include="Core\Misc\ReadAheadEnumerable.cs" />
     <Compile Include="Core\Misc\ReadConcernFeature.cs" />
     <Compile Include="Core\Misc\BatchableSource.cs" />
-    <Compile Include="Core\Misc\SizeLimitingSplittableBatchSerializer.cs" />
+    <Compile Include="Core\Misc\SizeLimitingBatchableSourceSerializer.cs" />
     <Compile Include="Core\Misc\TaskExtensions.cs" />
     <Compile Include="Core\Operations\ChangeStreamCursor.cs" />
     <Compile Include="Core\Operations\ChangeStreamOperation.cs" />

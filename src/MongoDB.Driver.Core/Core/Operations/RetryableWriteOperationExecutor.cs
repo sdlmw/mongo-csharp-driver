@@ -52,8 +52,8 @@ namespace MongoDB.Driver.Core.Operations
 
             try
             {
-                context.SetChannelSource(context.Binding.GetWriteChannelSource(cancellationToken));
-                context.SetChannel(context.ChannelSource.GetChannel(cancellationToken));
+                context.ReplaceChannelSource(context.Binding.GetWriteChannelSource(cancellationToken));
+                context.ReplaceChannel(context.ChannelSource.GetChannel(cancellationToken));
             }
             catch
             {
@@ -85,12 +85,6 @@ namespace MongoDB.Driver.Core.Operations
 
         public static async Task<TResult> ExecuteAsync<TResult>(IRetryableWriteOperation<TResult> operation, RetryableWriteContext context, CancellationToken cancellationToken)
         {
-            if (context.Channel == null)
-            {
-                context.SetChannelSource(await context.Binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false));
-                context.SetChannel(await context.ChannelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false));
-            }
-
             if (!context.RetryRequested || !AreRetryableWritesSupported(context.Channel.ConnectionDescription))
             {
                 return await operation.ExecuteAttemptAsync(context, 1, null, cancellationToken).ConfigureAwait(false);
@@ -109,8 +103,8 @@ namespace MongoDB.Driver.Core.Operations
 
             try
             {
-                context.SetChannelSource(await context.Binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false));
-                context.SetChannel(await context.ChannelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false));
+                context.ReplaceChannelSource(await context.Binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false));
+                context.ReplaceChannel(await context.ChannelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false));
             }
             catch
             {

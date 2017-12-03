@@ -17,10 +17,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver.Core.Bindings;
-using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Events;
 using MongoDB.Driver.Core.Misc;
-using MongoDB.Driver.Core.WireProtocol;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
@@ -28,7 +26,7 @@ namespace MongoDB.Driver.Core.Operations
     /// <summary>
     /// Represents a delete operation using the delete opcode.
     /// </summary>
-    public class DeleteOpcodeOperation : IWriteOperation<WriteConcernResult>
+    public class DeleteOpcodeOperation : IWriteOperation<WriteConcernResult>, IExecutableInRetryableWriteContext<WriteConcernResult>
     {
         // fields
         private readonly CollectionNamespace _collectionNamespace;
@@ -106,18 +104,25 @@ namespace MongoDB.Driver.Core.Operations
             Ensure.IsNotNull(binding, nameof(binding));
 
             using (EventContext.BeginOperation())
-            using (var channelSource = binding.GetWriteChannelSource(cancellationToken))
-            using (var channel = channelSource.GetChannel(cancellationToken))
+            using (var context = RetryableWriteContext.Create(binding, false, cancellationToken))
             {
-                if (Feature.WriteCommands.IsSupported(channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
-                {
-                    var emulator = CreateEmulator();
-                    return emulator.Execute(channel, channelSource.Session, cancellationToken);
-                }
-                else
-                {
-                    return ExecuteProtocol(channel, cancellationToken);
-                }
+                return Execute(context, cancellationToken);
+            }
+        }
+
+        /// <inheritdoc/>
+        public WriteConcernResult Execute(RetryableWriteContext context, CancellationToken cancellationToken)
+        {
+            Ensure.IsNotNull(context, nameof(context));
+
+            if (Feature.WriteCommands.IsSupported(context.Channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
+            {
+                var emulator = CreateEmulator();
+                return emulator.Execute(context, cancellationToken);
+            }
+            else
+            {
+                return ExecuteProtocol(context.Channel, cancellationToken);
             }
         }
 
@@ -127,23 +132,31 @@ namespace MongoDB.Driver.Core.Operations
             Ensure.IsNotNull(binding, nameof(binding));
 
             using (EventContext.BeginOperation())
-            using (var channelSource = await binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false))
-            using (var channel = await channelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false))
+            using (var context = await RetryableWriteContext.CreateAsync(binding, false, cancellationToken).ConfigureAwait(false))
             {
-                if (Feature.WriteCommands.IsSupported(channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
-                {
-                    var emulator = CreateEmulator();
-                    return await emulator.ExecuteAsync(channel, channelSource.Session, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    return await ExecuteProtocolAsync(channel, cancellationToken).ConfigureAwait(false);
-                }
+                return await ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <inheritdoc/>
+        public Task<WriteConcernResult> ExecuteAsync(RetryableWriteContext context, CancellationToken cancellationToken)
+        {
+            Ensure.IsNotNull(context, nameof(context));
+
+            if (Feature.WriteCommands.IsSupported(context.Channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
+            {
+                var emulator = CreateEmulator();
+                return emulator.ExecuteAsync(context, cancellationToken);
+
+            }
+            else
+            {
+                return ExecuteProtocolAsync(context.Channel, cancellationToken);
             }
         }
 
         // private methods
-        private DeleteOpcodeOperationEmulator CreateEmulator()
+        private IExecutableInRetryableWriteContext<WriteConcernResult> CreateEmulator()
         {
             return new DeleteOpcodeOperationEmulator(_collectionNamespace, _request, _messageEncoderSettings)
             {

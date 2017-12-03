@@ -29,7 +29,7 @@ namespace MongoDB.Driver.Core.Operations
     /// <summary>
     /// Represents an update operation using the update opcode.
     /// </summary>
-    public class UpdateOpcodeOperation : IWriteOperation<WriteConcernResult>
+    public class UpdateOpcodeOperation : IWriteOperation<WriteConcernResult>, IExecutableInRetryableWriteContext<WriteConcernResult>
     {
         // fields
         private bool? _bypassDocumentValidation;
@@ -133,18 +133,23 @@ namespace MongoDB.Driver.Core.Operations
             Ensure.IsNotNull(binding, nameof(binding));
 
             using (EventContext.BeginOperation())
-            using (var channelSource = binding.GetWriteChannelSource(cancellationToken))
-            using (var channel = channelSource.GetChannel(cancellationToken))
+            using (var context = RetryableWriteContext.Create(binding, false, cancellationToken))
             {
-                if (Feature.WriteCommands.IsSupported(channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
-                {
-                    var emulator = CreateEmulator();
-                    return emulator.Execute(channel, channelSource.Session, cancellationToken);
-                }
-                else
-                {
-                    return ExecuteProtocol(channel, cancellationToken);
-                }
+                return Execute(context, cancellationToken);
+            }
+        }
+
+        /// <inheritdoc/>
+        public WriteConcernResult Execute(RetryableWriteContext context, CancellationToken cancellationToken)
+        {
+            if (Feature.WriteCommands.IsSupported(context.Channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
+            {
+                var emulator = CreateEmulator();
+                return emulator.Execute(context, cancellationToken);
+            }
+            else
+            {
+                return ExecuteProtocol(context.Channel, cancellationToken);
             }
         }
 
@@ -154,18 +159,23 @@ namespace MongoDB.Driver.Core.Operations
             Ensure.IsNotNull(binding, nameof(binding));
 
             using (EventContext.BeginOperation())
-            using (var channelSource = await binding.GetWriteChannelSourceAsync(cancellationToken).ConfigureAwait(false))
-            using (var channel = await channelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false))
+            using (var context = await RetryableWriteContext.CreateAsync(binding, false, cancellationToken).ConfigureAwait(false))
             {
-                if (Feature.WriteCommands.IsSupported(channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
-                {
-                    var emulator = CreateEmulator();
-                    return await emulator.ExecuteAsync(channel, channelSource.Session, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    return await ExecuteProtocolAsync(channel, cancellationToken).ConfigureAwait(false);
-                }
+                return await ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<WriteConcernResult> ExecuteAsync(RetryableWriteContext context, CancellationToken cancellationToken)
+        {
+            if (Feature.WriteCommands.IsSupported(context.Channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
+            {
+                var emulator = CreateEmulator();
+                return await emulator.ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                return await ExecuteProtocolAsync(context.Channel, cancellationToken).ConfigureAwait(false);
             }
         }
 

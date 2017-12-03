@@ -23,7 +23,7 @@ using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
 {
-    internal class UpdateOpcodeOperationEmulator
+    internal class UpdateOpcodeOperationEmulator : IExecutableInRetryableWriteContext<WriteConcernResult>
     {
         // fields
         private bool? _bypassDocumentValidation;
@@ -85,16 +85,16 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // public methods
-        public WriteConcernResult Execute(IChannelHandle channel, ICoreSessionHandle session, CancellationToken cancellationToken)
+        public WriteConcernResult Execute(RetryableWriteContext context, CancellationToken cancellationToken)
         {
-            Ensure.IsNotNull(channel, nameof(channel));
+            Ensure.IsNotNull(context, nameof(context));
 
             var operation = CreateOperation();
             BulkWriteOperationResult result;
             MongoBulkWriteOperationException exception = null;
             try
             {
-                result = operation.Execute(channel, session, cancellationToken);
+                result = operation.Execute(context, cancellationToken);
             }
             catch (MongoBulkWriteOperationException ex)
             {
@@ -102,19 +102,19 @@ namespace MongoDB.Driver.Core.Operations
                 exception = ex;
             }
 
-            return CreateResultOrThrow(channel, result, exception);
+            return CreateResultOrThrow(context.Channel, result, exception);
         }
 
-        public async Task<WriteConcernResult> ExecuteAsync(IChannelHandle channel, ICoreSessionHandle session, CancellationToken cancellationToken)
+        public async Task<WriteConcernResult> ExecuteAsync(RetryableWriteContext context, CancellationToken cancellationToken)
         {
-            Ensure.IsNotNull(channel, nameof(channel));
+            Ensure.IsNotNull(context, nameof(context));
 
             var operation = CreateOperation();
             BulkWriteOperationResult result;
             MongoBulkWriteOperationException exception = null;
             try
             {
-                result = await operation.ExecuteAsync(channel, session, cancellationToken).ConfigureAwait(false);
+                result = await operation.ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
             }
             catch (MongoBulkWriteOperationException ex)
             {
@@ -122,7 +122,7 @@ namespace MongoDB.Driver.Core.Operations
                 exception = ex;
             }
 
-            return CreateResultOrThrow(channel, result, exception);
+            return CreateResultOrThrow(context.Channel, result, exception);
         }
 
         // private methods

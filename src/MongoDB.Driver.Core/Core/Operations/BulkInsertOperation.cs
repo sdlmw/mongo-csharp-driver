@@ -1,4 +1,4 @@
-﻿/* Copyright 2010-2016 MongoDB Inc.
+﻿/* Copyright 2010-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -16,18 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using MongoDB.Bson;
-using MongoDB.Bson.IO;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Bson.Serialization.Options;
-using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver.Core.Bindings;
-using MongoDB.Driver.Core.Connections;
-using MongoDB.Driver.Core.Misc;
-using MongoDB.Driver.Core.Operations.ElementNameValidators;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
@@ -43,84 +32,15 @@ namespace MongoDB.Driver.Core.Operations
         {
         }
 
-        // properties
-        protected override string CommandName
-        {
-            get { return "insert"; }
-        }
-
-        public new IEnumerable<InsertRequest> Requests
-        {
-            get { return base.Requests.Cast<InsertRequest>(); }
-        }
-
-        protected override string RequestsElementName
-        {
-            get { return "documents"; }
-        }
-
         // methods
-        protected override BatchSerializer CreateBatchSerializer(ConnectionDescription connectionDescription, int maxBatchCount, int maxBatchLength)
+        protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation()
         {
-            var isSystemIndexesCollection = CollectionNamespace.Equals(CollectionNamespace.DatabaseNamespace.SystemIndexesCollection);
-            var elementNameValidator = isSystemIndexesCollection ? (IElementNameValidator)NoOpElementNameValidator.Instance : CollectionElementNameValidator.Instance;
-            return new InsertBatchSerializer(connectionDescription, maxBatchCount, maxBatchLength, elementNameValidator);
+            throw new NotImplementedException();
         }
 
-        protected override BulkUnmixedWriteOperationEmulatorBase CreateEmulator()
+        protected override IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateEmulator()
         {
-            return new BulkInsertOperationEmulator(CollectionNamespace, Requests, MessageEncoderSettings)
-            {
-                MaxBatchCount = MaxBatchCount,
-                MaxBatchLength = MaxBatchLength,
-                IsOrdered = IsOrdered,
-                WriteConcern = WriteConcern
-            };
-        }
-
-        // nested types
-        private class InsertBatchSerializer : BatchSerializer
-        {
-            // fields
-            private IBsonSerializer _cachedSerializer;
-            private Type _cachedSerializerType;
-            private IElementNameValidator _elementNameValidator;
-
-            // constructors
-            public InsertBatchSerializer(ConnectionDescription connectionDescription, int maxBatchCount, int maxBatchLength, IElementNameValidator elementNameValidator)
-                : base(connectionDescription, maxBatchCount, maxBatchLength)
-            {
-                _elementNameValidator = elementNameValidator;
-            }
-
-            // methods
-            protected override void SerializeRequest(BsonSerializationContext context, WriteRequest request)
-            {
-                var insertRequest = (InsertRequest)request;
-                var document = insertRequest.Document;
-
-                var actualType = document.GetType();
-                if (_cachedSerializerType != actualType)
-                {
-                    _cachedSerializer = BsonSerializer.LookupSerializer(actualType);
-                    _cachedSerializerType = actualType;
-                }
-
-                var serializer = _cachedSerializer;
-
-                var writer = context.Writer;
-                writer.PushSettings(s => { var bs = s as BsonBinaryWriterSettings; if (bs != null) { bs.MaxDocumentSize = ConnectionDescription.MaxDocumentSize; } });
-                writer.PushElementNameValidator(_elementNameValidator);
-                try
-                {
-                    serializer.Serialize(context, document);
-                }
-                finally
-                {
-                    writer.PopElementNameValidator();
-                    writer.PopSettings();
-                }
-            }
+            throw new NotImplementedException();
         }
     }
 }

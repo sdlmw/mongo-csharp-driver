@@ -19,10 +19,33 @@ using System.Threading.Tasks;
 namespace MongoDB.Driver.Core.Operations
 {
     /// <summary>
+    /// Represents an operation (that may or may not be retryable) that can be executed in a retryable write context.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result.</typeparam>
+    public interface IExecutableInRetryableWriteContext<TResult>
+    {
+        /// <summary>
+        /// Executes the first attempt.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The result.</returns>
+        TResult Execute(RetryableWriteContext context, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Executes the first attempt.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The result.</returns>
+        Task<TResult> ExecuteAsync(RetryableWriteContext context, CancellationToken cancellationToken);
+    }
+
+    /// <summary>
     /// Represents a retryable operation.
     /// </summary>
     /// <typeparam name="TResult">The type of the result.</typeparam>
-    public interface IRetryableWriteOperation<TResult>
+    public interface IRetryableWriteOperation<TResult> : IExecutableInRetryableWriteContext<TResult>
     {
         /// <summary>
         /// Executes the first attempt.
@@ -32,7 +55,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <param name="transactionNumber">The transaction number.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The result.</returns>
-        TResult ExecuteAttempt(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken);
+        TResult ExecuteAttempt(RetryableWriteContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken);
 
         /// <summary>
         /// Executes the first attempt.
@@ -42,6 +65,6 @@ namespace MongoDB.Driver.Core.Operations
         /// <param name="transactionNumber">The transaction number.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The result.</returns>
-        Task<TResult> ExecuteAttemptAsync(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken);
+        Task<TResult> ExecuteAttemptAsync(RetryableWriteContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken);
     }
 }

@@ -93,7 +93,7 @@ namespace MongoDB.Driver
         public long AdvanceTransactionNumber()
         {
             ThrowIfDisposed();
-            return _clientSession.AdvanceTransactionNumber();
+            return _clientSession.ServerSession.AdvanceTransactionNumber();
         }
 
         public void Dispose()

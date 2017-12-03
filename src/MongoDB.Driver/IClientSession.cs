@@ -84,12 +84,6 @@ namespace MongoDB.Driver
         /// </summary>
         /// <param name="newOperationTime">The new operation time.</param>
         void AdvanceOperationTime(BsonTimestamp newOperationTime);
-
-        /// <summary>
-        /// Gets the next transaction number.
-        /// </summary>
-        /// <returns>The transaction number.</returns>
-        long AdvanceTransactionNumber();
     }
 
     /// <summary>

@@ -128,12 +128,6 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc />
-        public long AdvanceTransactionNumber()
-        {
-            return _serverSession.AdvanceTransactionNumber();
-        }
-
-        /// <inheritdoc />
         public void Dispose()
         {
             if (!_disposed)

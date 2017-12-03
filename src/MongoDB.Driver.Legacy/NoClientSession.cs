@@ -13,7 +13,6 @@
 * limitations under the License.
 */
 
-using System;
 using MongoDB.Bson;
 
 namespace MongoDB.Driver
@@ -42,11 +41,6 @@ namespace MongoDB.Driver
 
         public void AdvanceOperationTime(BsonTimestamp newOperationTime)
         {
-        }
-
-        public long AdvanceTransactionNumber()
-        {
-            return _noServerSession.AdvanceTransactionNumber();
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed")]

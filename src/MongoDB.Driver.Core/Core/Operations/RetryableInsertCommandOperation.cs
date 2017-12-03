@@ -19,38 +19,56 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
+using MongoDB.Driver.Core.Operations.ElementNameValidators;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
 {
     /// <summary>
-    /// Represents a delete command operation.
+    /// Represents an insert command operation.
     /// </summary>
-    public class DeleteCommandOperation<TDocument> : RetryableWriteCommandOperationBase<BsonDocument>
+    public class RetryableInsertCommandOperation<TDocument> : RetryableWriteCommandOperationBase
     {
         // private fields
+        private bool _bypassDocumentValidation;
         private readonly CollectionNamespace _collectionNamespace;
-        private readonly SplittableBatch<DeleteRequest> _deletes;
+        private readonly BatchableSource<TDocument> _documents;
+        private readonly IBsonSerializer<TDocument> _documentSerializer;
         private bool _ordered = true;
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="InsertCommandOperation{TDocument}" /> class.
+        /// Initializes a new instance of the <see cref="RetryableInsertCommandOperation{TDocument}"/> class.
         /// </summary>
         /// <param name="collectionNamespace">The collection namespace.</param>
-        /// <param name="deletes">The deletes.</param>
+        /// <param name="documents">The documents.</param>
+        /// <param name="documentSerializer">The document serializer.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        public DeleteCommandOperation(
+        public RetryableInsertCommandOperation(
             CollectionNamespace collectionNamespace,
-            SplittableBatch<DeleteRequest> deletes,
+            BatchableSource<TDocument> documents,
+            IBsonSerializer<TDocument> documentSerializer,
             MessageEncoderSettings messageEncoderSettings)
-            : base(Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace)).DatabaseNamespace, BsonDocumentSerializer.Instance, messageEncoderSettings)
+            : base(Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace)).DatabaseNamespace, messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
-            _deletes = Ensure.IsNotNull(deletes, nameof(deletes));
+            _documents = Ensure.IsNotNull(documents, nameof(documents));
+            _documentSerializer = Ensure.IsNotNull(documentSerializer, nameof(documentSerializer));
         }
 
         // public properties
+        /// <summary>
+        /// Gets or sets a value indicating whether to bypass document validation.
+        /// </summary>
+        /// <value>
+        /// A value indicating whether to bypass document validation.
+        /// </value>
+        public bool BypassDocumentValidation
+        {
+            get { return _bypassDocumentValidation; }
+            set { _bypassDocumentValidation = value; }
+        }
+
         /// <summary>
         /// Gets the collection namespace.
         /// </summary>
@@ -63,14 +81,25 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
-        /// Gets the deletes.
+        /// Gets the documents.
         /// </summary>
         /// <value>
-        /// The deletes.
+        /// The documents.
         /// </value>
-        public SplittableBatch<DeleteRequest> Deletes
+        public BatchableSource<TDocument> Documents
         {
-            get { return _deletes; }
+            get { return _documents; }
+        }
+
+        /// <summary>
+        /// Gets the document serializer.
+        /// </summary>
+        /// <value>
+        /// The document serializer.
+        /// </value>
+        public IBsonSerializer<TDocument> DocumentSerializer
+        {
+            get { return _documentSerializer; }
         }
 
         /// <summary>
@@ -88,52 +117,35 @@ namespace MongoDB.Driver.Core.Operations
         protected override BsonDocument CreateCommand(ConnectionDescription connectionDescription, int attempt, long? transactionNumber)
         {
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
-            var batchWrapper = new BsonDocumentWrapper(_deletes, batchSerializer);
+            var batchWrapper = new BsonDocumentWrapper(_documents, batchSerializer);
 
             return new BsonDocument
             {
-                { "delete", _collectionNamespace.CollectionName },
+                { "insert", _collectionNamespace.FullName },
                 { "ordered", _ordered },
                 { "writeConcern", WriteConcern.ToBsonDocument() },
+                { "bypassDocumentValidation", _bypassDocumentValidation },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
-                { "deletes", new BsonArray { batchWrapper } }
+                { "documents", new BsonArray { batchWrapper } }
             };
         }
 
         // private methods
-        private IBsonSerializer<SplittableBatch<DeleteRequest>> CreateBatchSerializer(ConnectionDescription connectionDescription, int attempt)
+        private IBsonSerializer<BatchableSource<TDocument>> CreateBatchSerializer(ConnectionDescription connectionDescription, int attempt)
         {
+            var isSystemIndexesCollection = _collectionNamespace.Equals(CollectionNamespace.DatabaseNamespace.SystemIndexesCollection);
+            var elementNameValidator = isSystemIndexesCollection ? (IElementNameValidator)NoOpElementNameValidator.Instance : CollectionElementNameValidator.Instance;
+
             if (attempt == 1)
             {
                 var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
                 var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
-                return new SizeLimitingSplittableBatchSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxItemSize, maxBatchSize);
+                return new SizeLimitingSplittableBatchSerializer<TDocument>(_documentSerializer, elementNameValidator, maxItemSize, maxBatchSize);
             }
             else
             {
-                var count = _deletes.SplitIndex;
-                return new FixedCountSplittableBatchSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
-            }
-        }
-
-        // nested types
-        private class DeleteRequestSerializer : SealedClassSerializerBase<DeleteRequest>
-        {
-            public static readonly IBsonSerializer<DeleteRequest> Instance = new DeleteRequestSerializer();
-
-            protected override void SerializeValue(BsonSerializationContext context, BsonSerializationArgs args, DeleteRequest value)
-            {
-                var writer = context.Writer;
-                writer.WriteStartDocument();
-                writer.WriteName("q");
-                BsonDocumentSerializer.Instance.Serialize(context, value.Filter);
-                writer.WriteName("limit");
-                writer.WriteInt32(value.Limit);
-                if (value.Collation != null)
-                {
-                    BsonDocumentSerializer.Instance.Serialize(context, value.Collation.ToBsonDocument());
-                }
-                writer.WriteEndDocument();
+                var count = _documents.Count; // as adjusted by the first attempt
+                return new FixedCountSplittableBatchSerializer<TDocument>(_documentSerializer, elementNameValidator, count);
             }
         }
     }

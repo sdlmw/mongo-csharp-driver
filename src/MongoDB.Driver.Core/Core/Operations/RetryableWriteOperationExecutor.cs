@@ -14,7 +14,6 @@
 */
 
 using System;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver.Core.Bindings;
@@ -27,20 +26,14 @@ namespace MongoDB.Driver.Core.Operations
         // public static methods
         public static TResult Execute<TResult>(IRetryableWriteOperation<TResult> operation, IWriteBinding binding, bool retryRequested, CancellationToken cancellationToken)
         {
-            using (var context = new RetryableWriteOperationContext(binding, retryRequested))
+            using (var context = RetryableWriteContext.Create(binding, retryRequested, cancellationToken))
             {
                 return Execute(operation, context, cancellationToken);
             }
         }
 
-        public static TResult Execute<TResult>(IRetryableWriteOperation<TResult> operation, RetryableWriteOperationContext context, CancellationToken cancellationToken)
+        public static TResult Execute<TResult>(IRetryableWriteOperation<TResult> operation, RetryableWriteContext context, CancellationToken cancellationToken)
         {
-            if (context.Channel == null)
-            {
-                context.SetChannelSource(context.Binding.GetWriteChannelSource(cancellationToken));
-                context.SetChannel(context.ChannelSource.GetChannel(cancellationToken));
-            }
-
             if (!context.RetryRequested || !AreRetryableWritesSupported(context.Channel.ConnectionDescription))
             {
                 return operation.ExecuteAttempt(context, 1, null, cancellationToken);
@@ -84,13 +77,13 @@ namespace MongoDB.Driver.Core.Operations
 
         public async static Task<TResult> ExecuteAsync<TResult>(IRetryableWriteOperation<TResult> operation, IWriteBinding binding, bool retryRequested, CancellationToken cancellationToken)
         {
-            using (var context = new RetryableWriteOperationContext(binding, retryRequested))
+            using (var context = await RetryableWriteContext.CreateAsync(binding, retryRequested, cancellationToken).ConfigureAwait(false))
             {
                 return await ExecuteAsync(operation, context, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        public static async Task<TResult> ExecuteAsync<TResult>(IRetryableWriteOperation<TResult> operation, RetryableWriteOperationContext context, CancellationToken cancellationToken)
+        public static async Task<TResult> ExecuteAsync<TResult>(IRetryableWriteOperation<TResult> operation, RetryableWriteContext context, CancellationToken cancellationToken)
         {
             if (context.Channel == null)
             {

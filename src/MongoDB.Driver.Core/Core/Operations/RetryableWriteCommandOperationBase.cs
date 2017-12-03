@@ -17,7 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
-using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
@@ -27,31 +27,27 @@ using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 namespace MongoDB.Driver.Core.Operations
 {
     /// <summary>
-    /// Represents a retryable write command operation.
+    /// Represents a base class for a delete, insert or update command operation.
     /// </summary>
-    public abstract class RetryableWriteCommandOperationBase<TResult> : IWriteOperation<TResult>, IRetryableWriteOperation<TResult>
+    public abstract class RetryableWriteCommandOperationBase : IWriteOperation<BsonDocument>, IRetryableWriteOperation<BsonDocument>
     {
         // private fields
         private readonly DatabaseNamespace _databaseNamespace;
         private readonly MessageEncoderSettings _messageEncoderSettings;
-        private readonly IBsonSerializer<TResult> _resultSerializer;
         private bool _retryRequested;
         private WriteConcern _writeConcern = WriteConcern.Acknowledged;
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="InsertCommandOperation{TDocument}" /> class.
+        /// Initializes a new instance of the <see cref="RetryableWriteCommandOperationBase" /> class.
         /// </summary>
         /// <param name="databaseNamespace">The database namespace.</param>
-        /// <param name="resultSerializer">The result serializer.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
         public RetryableWriteCommandOperationBase(
             DatabaseNamespace databaseNamespace,
-            IBsonSerializer<TResult> resultSerializer,
             MessageEncoderSettings messageEncoderSettings)
         {
             _databaseNamespace = Ensure.IsNotNull(databaseNamespace, nameof(databaseNamespace));
-            _resultSerializer = Ensure.IsNotNull(resultSerializer, nameof(resultSerializer));
             _messageEncoderSettings = Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
         }
 
@@ -79,17 +75,6 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
-        /// Gets the result serializer.
-        /// </summary>
-        /// <value>
-        /// The result serializer.
-        /// </value>
-        public IBsonSerializer<TResult> ResultSerializer
-        {
-            get { return _resultSerializer; }
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether retry is enabled for the operation.
         /// </summary>
         /// <value>A value indicating whether retry is enabled.</value>
@@ -113,24 +98,40 @@ namespace MongoDB.Driver.Core.Operations
 
         // public methods
         /// <inheritdoc />
-        public virtual TResult Execute(IWriteBinding binding, CancellationToken cancellationToken)
+        public virtual BsonDocument Execute(IWriteBinding binding, CancellationToken cancellationToken)
         {
-            return RetryableWriteOperationExecutor.Execute(this, binding, _retryRequested, cancellationToken);
+            using (var context = RetryableWriteContext.Create(binding, _retryRequested, cancellationToken))
+            {
+                return Execute(context, cancellationToken);
+            }
         }
 
         /// <inheritdoc />
-        public virtual async Task<TResult> ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
+        public virtual BsonDocument Execute(RetryableWriteContext context, CancellationToken cancellationToken)
         {
-            return await RetryableWriteOperationExecutor.ExecuteAsync(this, binding, _retryRequested, cancellationToken).ConfigureAwait(false);
+            return RetryableWriteOperationExecutor.Execute(this, context, cancellationToken);
         }
 
         /// <inheritdoc />
-        public TResult ExecuteAttempt(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken)
+        public virtual async Task<BsonDocument> ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
         {
-            var channel = context.Channel;
-            var command = CreateCommand(channel.ConnectionDescription, attempt, transactionNumber);
+            using (var context = await RetryableWriteContext.CreateAsync(binding, _retryRequested, cancellationToken).ConfigureAwait(false))
+            {
+                return Execute(context, cancellationToken);
+            }
+        }
 
-            return channel.Command<TResult>(
+        /// <inheritdoc />
+        public virtual Task<BsonDocument> ExecuteAsync(RetryableWriteContext context, CancellationToken cancellationToken)
+        {
+            return RetryableWriteOperationExecutor.ExecuteAsync(this, context, cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public BsonDocument ExecuteAttempt(RetryableWriteContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken)
+        {
+            var command = CreateCommand(context.Channel.ConnectionDescription, attempt, transactionNumber);
+            return context.Channel.Command<BsonDocument>(
                 context.ChannelSource.Session,
                 ReadPreference.Primary,
                 _databaseNamespace,
@@ -139,18 +140,16 @@ namespace MongoDB.Driver.Core.Operations
                 null, // additionalOptions,
                 () => CommandResponseHandling.Return,
                 false, // slaveOk
-                _resultSerializer,
+                BsonDocumentSerializer.Instance,
                 _messageEncoderSettings,
                 cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<TResult> ExecuteAttemptAsync(RetryableWriteOperationContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken)
+        public Task<BsonDocument> ExecuteAttemptAsync(RetryableWriteContext context, int attempt, long? transactionNumber, CancellationToken cancellationToken)
         {
-            var channel = context.Channel;
-            var command = CreateCommand(channel.ConnectionDescription, attempt, transactionNumber);
-
-            return channel.CommandAsync<TResult>(
+            var command = CreateCommand(context.Channel.ConnectionDescription, attempt, transactionNumber);
+            return context.Channel.CommandAsync<BsonDocument>(
                 context.ChannelSource.Session,
                 ReadPreference.Primary,
                 _databaseNamespace,
@@ -159,7 +158,7 @@ namespace MongoDB.Driver.Core.Operations
                 null, // additionalOptions,
                 () => CommandResponseHandling.Return,
                 false, // slaveOk
-                _resultSerializer,
+                BsonDocumentSerializer.Instance,
                 _messageEncoderSettings,
                 cancellationToken);
         }

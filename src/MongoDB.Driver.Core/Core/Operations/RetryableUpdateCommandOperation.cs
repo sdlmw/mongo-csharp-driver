@@ -26,26 +26,26 @@ namespace MongoDB.Driver.Core.Operations
     /// <summary>
     /// Represents an update command operation.
     /// </summary>
-    public class UpdateCommandOperation<TDocument> : RetryableWriteCommandOperationBase<BsonDocument>
+    public class RetryableUpdateCommandOperation : RetryableWriteCommandOperationBase
     {
         // private fields
         private bool _bypassDocumentValidation;
         private readonly CollectionNamespace _collectionNamespace;
-        private readonly SplittableBatch<UpdateRequest> _updates;
+        private readonly BatchableSource<UpdateRequest> _updates;
         private bool _ordered = true;
 
         // constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="InsertCommandOperation{TDocument}" /> class.
+        /// Initializes a new instance of the <see cref="RetryableUpdateCommandOperation" /> class.
         /// </summary>
         /// <param name="collectionNamespace">The collection namespace.</param>
         /// <param name="updates">The updates.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        public UpdateCommandOperation(
+        public RetryableUpdateCommandOperation(
             CollectionNamespace collectionNamespace,
-            SplittableBatch<UpdateRequest> updates,
+            BatchableSource<UpdateRequest> updates,
             MessageEncoderSettings messageEncoderSettings)
-            : base(Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace)).DatabaseNamespace, BsonDocumentSerializer.Instance, messageEncoderSettings)
+            : base(Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace)).DatabaseNamespace, messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
             _updates = Ensure.IsNotNull(updates, nameof(updates));
@@ -89,7 +89,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <value>
         /// The updates.
         /// </value>
-        public SplittableBatch<UpdateRequest> Updates
+        public BatchableSource<UpdateRequest> Updates
         {
             get { return _updates; }
         }
@@ -113,7 +113,7 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // private methods
-        private IBsonSerializer<SplittableBatch<UpdateRequest>> CreateBatchSerializer(ConnectionDescription connectionDescription, int attempt)
+        private IBsonSerializer<BatchableSource<UpdateRequest>> CreateBatchSerializer(ConnectionDescription connectionDescription, int attempt)
         {
             if (attempt == 1)
             {
@@ -123,7 +123,7 @@ namespace MongoDB.Driver.Core.Operations
             }
             else
             {
-                var count = _updates.SplitIndex;
+                var count = _updates.Count; // as adjusted by the first attempt
                 return new FixedCountSplittableBatchSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
             }
         }

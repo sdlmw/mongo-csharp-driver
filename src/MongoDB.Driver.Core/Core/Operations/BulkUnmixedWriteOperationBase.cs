@@ -25,7 +25,8 @@ using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
 {
-    internal abstract class BulkUnmixedWriteOperationBase : IWriteOperation<BulkWriteOperationResult>, IExecutableInRetryableWriteContext<BulkWriteOperationResult>
+    internal abstract class BulkUnmixedWriteOperationBase<TWriteRequest> : IWriteOperation<BulkWriteOperationResult>, IExecutableInRetryableWriteContext<BulkWriteOperationResult>
+        where TWriteRequest : WriteRequest
     {
         // fields
         private bool? _bypassDocumentValidation;
@@ -34,14 +35,14 @@ namespace MongoDB.Driver.Core.Operations
         private int? _maxBatchCount;
         private int? _maxBatchLength;
         private MessageEncoderSettings _messageEncoderSettings;
-        private List<WriteRequest> _requests;
+        private List<TWriteRequest> _requests;
         private bool _retryRequested;
         private WriteConcern _writeConcern = WriteConcern.Acknowledged;
 
         // constructors
         protected BulkUnmixedWriteOperationBase(
             CollectionNamespace collectionNamespace,
-            IEnumerable<WriteRequest> requests,
+            IEnumerable<TWriteRequest> requests,
             MessageEncoderSettings messageEncoderSettings)
             : this(collectionNamespace, Ensure.IsNotNull(requests, nameof(requests)).ToList(), messageEncoderSettings)
         {
@@ -49,7 +50,7 @@ namespace MongoDB.Driver.Core.Operations
 
         protected BulkUnmixedWriteOperationBase(
             CollectionNamespace collectionNamespace,
-            List<WriteRequest> requests,
+            List<TWriteRequest> requests,
             MessageEncoderSettings messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
@@ -67,6 +68,12 @@ namespace MongoDB.Driver.Core.Operations
         public CollectionNamespace CollectionNamespace
         {
             get { return _collectionNamespace; }
+        }
+
+        public bool IsOrdered
+        {
+            get { return _isOrdered; }
+            set { _isOrdered = value; }
         }
 
         public int? MaxBatchCount
@@ -87,13 +94,7 @@ namespace MongoDB.Driver.Core.Operations
             set { _messageEncoderSettings = value; }
         }
 
-        public bool IsOrdered
-        {
-            get { return _isOrdered; }
-            set { _isOrdered = value; }
-        }
-
-        public IEnumerable<WriteRequest> Requests
+        public IEnumerable<TWriteRequest> Requests
         {
             get { return _requests; }
         }
@@ -158,7 +159,7 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // protected methods
-        protected abstract IRetryableWriteOperation<BsonDocument> CreateBatchOperation();
+        protected abstract IRetryableWriteOperation<BsonDocument> CreateBatchOperation(Batch batch);
 
         protected abstract IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateEmulator();
 
@@ -177,14 +178,14 @@ namespace MongoDB.Driver.Core.Operations
 
         private BulkWriteBatchResult ExecuteBatch(RetryableWriteContext context, Batch batch, CancellationToken cancellationToken)
         {
-            var operation = CreateBatchOperation();
+            var operation = CreateBatchOperation(batch);
             var operationResult = RetryableWriteOperationExecutor.Execute(operation, context, cancellationToken);
             return CreateBatchResult(batch, operationResult);
         }
 
         private async Task<BulkWriteBatchResult> ExecuteBatchAsync(RetryableWriteContext context, Batch batch, CancellationToken cancellationToken)
         {
-            var operation = CreateBatchOperation();
+            var operation = CreateBatchOperation(batch);
             var operationResult = await RetryableWriteOperationExecutor.ExecuteAsync(operation, context, cancellationToken).ConfigureAwait(false);
             return CreateBatchResult(batch, operationResult);
         }
@@ -215,12 +216,12 @@ namespace MongoDB.Driver.Core.Operations
             private readonly List<BulkWriteBatchResult> _batchResults = new List<BulkWriteBatchResult>();
             private bool _hasWriteErrors;
             private readonly bool _isOrdered;
-            private readonly BatchableSource<WriteRequest> _requests;
+            private readonly BatchableSource<TWriteRequest> _requests;
             private readonly WriteConcern _writeConcern;
 
-            public BatchHelper(IReadOnlyList<WriteRequest> requests, WriteConcern writeConcern, bool isOrdered)
+            public BatchHelper(IReadOnlyList<TWriteRequest> requests, WriteConcern writeConcern, bool isOrdered)
             {
-                _requests = new BatchableSource<WriteRequest>(requests, 0, requests.Count, canBeAdjusted: true);
+                _requests = new BatchableSource<TWriteRequest>(requests, 0, requests.Count, canBeAdjusted: true);
                 _writeConcern = writeConcern;
                 _isOrdered = isOrdered;
             }
@@ -257,9 +258,9 @@ namespace MongoDB.Driver.Core.Operations
             }
         }
 
-        private class Batch
+        protected class Batch
         {
-            public BatchableSource<WriteRequest> Requests;
+            public BatchableSource<TWriteRequest> Requests;
             public BulkWriteBatchResult Result;
         }
     }

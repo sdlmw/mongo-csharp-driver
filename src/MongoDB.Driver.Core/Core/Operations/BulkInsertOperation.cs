@@ -17,11 +17,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
 {
-    internal class BulkInsertOperation : BulkUnmixedWriteOperationBase
+    internal class BulkInsertOperation : BulkUnmixedWriteOperationBase<InsertRequest>
     {
         // constructors
         public BulkInsertOperation(
@@ -33,14 +36,43 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // methods
-        protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation()
+        protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation(Batch batch)
         {
-            throw new NotImplementedException();
+            return new RetryableInsertCommandOperation<InsertRequest>(CollectionNamespace, batch.Requests, InsertRequestSerializer.Instance, MessageEncoderSettings)
+            {
+                BypassDocumentValidation = BypassDocumentValidation,
+                IsOrdered = IsOrdered,
+                RetryRequested = RetryRequested,
+                WriteConcern = WriteConcern
+            };
         }
 
         protected override IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateEmulator()
         {
-            throw new NotImplementedException();
+            return new BulkInsertOperationEmulator(CollectionNamespace, Requests, MessageEncoderSettings)
+            {
+                IsOrdered = IsOrdered,
+                MaxBatchCount = MaxBatchCount,
+                MaxBatchLength = MaxBatchLength,
+                WriteConcern = WriteConcern
+            };
+        }
+
+        // nested types
+        private class InsertRequestSerializer : SealedClassSerializerBase<InsertRequest>
+        {
+            public static InsertRequestSerializer Instance = new InsertRequestSerializer();
+
+            protected override InsertRequest DeserializeValue(BsonDeserializationContext context, BsonDeserializationArgs args)
+            {
+                var document = BsonDocumentSerializer.Instance.Deserialize(context, args);
+                return new InsertRequest(document);
+            }
+
+            protected override void SerializeValue(BsonSerializationContext context, BsonSerializationArgs args, InsertRequest value)
+            {
+                BsonDocumentSerializer.Instance.Serialize(context, args, value.Document);
+            }
         }
     }
 }

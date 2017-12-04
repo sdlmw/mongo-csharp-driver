@@ -240,7 +240,7 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // private methods
-        private BulkDeleteOperation CreateDeleteOperation(BatchHelper.Batch batch)
+        private IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateBulkDeleteOperation(Batch batch)
         {
             var requests = batch.Requests.Cast<DeleteRequest>();
             return new BulkDeleteOperation(_collectionNamespace, requests, _messageEncoderSettings)
@@ -252,47 +252,47 @@ namespace MongoDB.Driver.Core.Operations
             };
         }
 
-        private BulkInsertOperation CreateInsertOperation(BatchHelper.Batch batch)
+        private IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateBulkInsertOperation(Batch batch)
         {
             var requests = batch.Requests.Cast<InsertRequest>();
             return new BulkInsertOperation(_collectionNamespace, requests, _messageEncoderSettings)
             {
                 BypassDocumentValidation = _bypassDocumentValidation,
+                IsOrdered = _isOrdered,
                 MaxBatchCount = _maxBatchCount,
                 MaxBatchLength = _maxBatchLength,
-                IsOrdered = _isOrdered,
                 MessageEncoderSettings = _messageEncoderSettings,
                 WriteConcern = batch.WriteConcern,
                 RetryRequested = _retryRequested
             };
         }
 
-        private BulkUnmixedWriteOperationBase CreateUnmixedBatchOperation(BatchHelper.Batch batch)
-        {
-            switch (batch.BatchType)
-            {
-                case WriteRequestType.Delete: return CreateDeleteOperation(batch);
-                case WriteRequestType.Insert: return CreateInsertOperation(batch);
-                case WriteRequestType.Update: return CreateUpdateOperation(batch);
-                default: throw new ArgumentException("Invalid batch type.", nameof(batch));
-            }
-        }
-
-        private BulkUpdateOperation CreateUpdateOperation(BatchHelper.Batch batch)
+        private IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateBulkUpdateOperation(Batch batch)
         {
             var requests = batch.Requests.Cast<UpdateRequest>();
             return new BulkUpdateOperation(_collectionNamespace, requests, _messageEncoderSettings)
             {
                 BypassDocumentValidation = _bypassDocumentValidation,
+                IsOrdered = _isOrdered,
                 MaxBatchCount = _maxBatchCount,
                 MaxBatchLength = _maxBatchLength,
-                IsOrdered = _isOrdered,
                 WriteConcern = batch.WriteConcern,
                 RetryRequested = _retryRequested
             };
         }
 
-        private BulkWriteBatchResult ExecuteBatch(RetryableWriteContext context, BatchHelper.Batch batch, CancellationToken cancellationToken)
+        private IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateUnmixedBatchOperation(Batch batch)
+        {
+            switch (batch.BatchType)
+            {
+                case WriteRequestType.Delete: return CreateBulkDeleteOperation(batch);
+                case WriteRequestType.Insert: return CreateBulkInsertOperation(batch);
+                case WriteRequestType.Update: return CreateBulkUpdateOperation(batch);
+                default: throw new ArgumentException("Invalid batch type.", nameof(batch));
+            }
+        }
+
+        private BulkWriteBatchResult ExecuteBatch(RetryableWriteContext context, Batch batch, CancellationToken cancellationToken)
         {
             BulkWriteOperationResult result;
             MongoBulkWriteOperationException exception = null;
@@ -310,7 +310,7 @@ namespace MongoDB.Driver.Core.Operations
             return BulkWriteBatchResult.Create(result, exception, batch.IndexMap);
         }
 
-        private async Task<BulkWriteBatchResult> ExecuteBatchAsync(RetryableWriteContext context, BatchHelper.Batch batch, CancellationToken cancellationToken)
+        private async Task<BulkWriteBatchResult> ExecuteBatchAsync(RetryableWriteContext context, Batch batch, CancellationToken cancellationToken)
         {
             BulkWriteOperationResult result;
             MongoBulkWriteOperationException exception = null;
@@ -329,6 +329,15 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // nested types
+        private class Batch
+        {
+            public WriteRequestType BatchType;
+            public List<WriteRequest> Requests;
+            public IndexMap IndexMap;
+            public WriteConcern WriteConcern;
+            public BulkWriteBatchResult Result;
+        }
+
         private class BatchHelper
         {
             // private fields
@@ -402,8 +411,7 @@ namespace MongoDB.Driver.Core.Operations
                     {
                         indexMap.Add(i, matching[i].Index);
                     }
-                    _unprocessed = _unprocessed.Where(r => r.Request.RequestType != batchType).ToList();
-                  
+                    _unprocessed = _unprocessed.Where(r => r.Request.RequestType != batchType).ToList();                 
                 }
 
                 var writeConcern = _writeConcern;
@@ -424,16 +432,6 @@ namespace MongoDB.Driver.Core.Operations
             private bool ShouldContinue()
             {
                 return !_hasWriteErrors || !_isOrdered;
-            }
-
-            // nested types
-            public class Batch
-            {
-                public WriteRequestType BatchType;
-                public List<WriteRequest> Requests;
-                public IndexMap IndexMap;
-                public WriteConcern WriteConcern;
-                public BulkWriteBatchResult Result;
             }
 
             private struct WriteRequestWithIndex

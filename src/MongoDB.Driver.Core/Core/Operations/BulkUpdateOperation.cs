@@ -20,7 +20,7 @@ using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
 {
-    internal class BulkUpdateOperation : BulkUnmixedWriteOperationBase
+    internal class BulkUpdateOperation : BulkUnmixedWriteOperationBase<UpdateRequest>
     {
         // constructors
         public BulkUpdateOperation(
@@ -32,9 +32,15 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // methods
-        protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation()
+        protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation(Batch batch)
         {
-            throw new System.NotImplementedException();
+            return new RetryableUpdateCommandOperation(CollectionNamespace, batch.Requests, MessageEncoderSettings)
+            {
+                BypassDocumentValidation = BypassDocumentValidation,
+                IsOrdered = IsOrdered,
+                RetryRequested = RetryRequested,
+                WriteConcern = WriteConcern
+            };
         }
 
         protected override IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateEmulator()

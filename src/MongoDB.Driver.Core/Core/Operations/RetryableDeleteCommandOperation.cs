@@ -13,6 +13,8 @@
 * limitations under the License.
 */
 
+using System;
+using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
@@ -30,24 +32,28 @@ namespace MongoDB.Driver.Core.Operations
     {
         // private fields
         private readonly CollectionNamespace _collectionNamespace;
-        private readonly BatchableSource<DeleteRequest> _deletes;
-        private bool _ordered = true;
+        private bool _isOrdered = true;
+        private readonly BatchableSource<DeleteRequest> _requests;
 
         // constructors
         /// <summary>
         /// Initializes a new instance of the <see cref="RetryableDeleteCommandOperation" /> class.
         /// </summary>
         /// <param name="collectionNamespace">The collection namespace.</param>
-        /// <param name="deletes">The deletes.</param>
+        /// <param name="requests">The requests.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
         public RetryableDeleteCommandOperation(
             CollectionNamespace collectionNamespace,
-            BatchableSource<DeleteRequest> deletes,
+            BatchableSource<DeleteRequest> requests,
             MessageEncoderSettings messageEncoderSettings)
             : base(Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace)).DatabaseNamespace, messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
-            _deletes = Ensure.IsNotNull(deletes, nameof(deletes));
+            _requests = Ensure.IsNotNull(requests, nameof(requests));
+            if (requests.Items.Any(r => !(r.RequestType == WriteRequestType.Delete)))
+            {
+                throw new ArgumentException("All requests must be delete requests.");
+            }
         }
 
         // public properties
@@ -70,17 +76,17 @@ namespace MongoDB.Driver.Core.Operations
         /// </value>
         public BatchableSource<DeleteRequest> Deletes
         {
-            get { return _deletes; }
+            get { return _requests; }
         }
 
         /// <summary>
         /// Gets or sets a value indicating whether the server should process the deletes in order.
         /// </summary>
         /// <value>A value indicating whether the server should process the deletes in order.</value>
-        public bool Ordered
+        public bool IsOrdered
         {
-            get { return _ordered; }
-            set { _ordered = value; }
+            get { return _isOrdered; }
+            set { _isOrdered = value; }
         }
 
         // protected methods
@@ -88,12 +94,12 @@ namespace MongoDB.Driver.Core.Operations
         protected override BsonDocument CreateCommand(ConnectionDescription connectionDescription, int attempt, long? transactionNumber)
         {
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
-            var batchWrapper = new BsonDocumentWrapper(_deletes, batchSerializer);
+            var batchWrapper = new BsonDocumentWrapper(_requests, batchSerializer);
 
             return new BsonDocument
             {
                 { "delete", _collectionNamespace.CollectionName },
-                { "ordered", _ordered },
+                { "ordered", _isOrdered },
                 { "writeConcern", WriteConcern.ToBsonDocument() },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
                 { "deletes", new BsonArray { batchWrapper } }
@@ -111,7 +117,7 @@ namespace MongoDB.Driver.Core.Operations
             }
             else
             {
-                var count = _deletes.Count; // as adjusted by the first attempt
+                var count = _requests.Count; // as adjusted by the first attempt
                 return new FixedCountBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
             }
         }

@@ -30,11 +30,11 @@ namespace MongoDB.Driver.Core.Operations
     public class RetryableInsertCommandOperation<TDocument> : RetryableWriteCommandOperationBase
     {
         // private fields
-        private bool _bypassDocumentValidation;
+        private bool? _bypassDocumentValidation;
         private readonly CollectionNamespace _collectionNamespace;
         private readonly BatchableSource<TDocument> _documents;
         private readonly IBsonSerializer<TDocument> _documentSerializer;
-        private bool _ordered = true;
+        private bool _isOrdered = true;
 
         // constructors
         /// <summary>
@@ -63,7 +63,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <value>
         /// A value indicating whether to bypass document validation.
         /// </value>
-        public bool BypassDocumentValidation
+        public bool? BypassDocumentValidation
         {
             get { return _bypassDocumentValidation; }
             set { _bypassDocumentValidation = value; }
@@ -106,10 +106,10 @@ namespace MongoDB.Driver.Core.Operations
         /// Gets or sets a value indicating whether the server should process the inserts in order.
         /// </summary>
         /// <value>A value indicating whether the server should process the inserts in order.</value>
-        public bool Ordered
+        public bool IsOrdered
         {
-            get { return _ordered; }
-            set { _ordered = value; }
+            get { return _isOrdered; }
+            set { _isOrdered = value; }
         }
 
         // protected methods
@@ -122,9 +122,9 @@ namespace MongoDB.Driver.Core.Operations
             return new BsonDocument
             {
                 { "insert", _collectionNamespace.FullName },
-                { "ordered", _ordered },
+                { "ordered", _isOrdered },
                 { "writeConcern", WriteConcern.ToBsonDocument() },
-                { "bypassDocumentValidation", _bypassDocumentValidation },
+                { "bypassDocumentValidation", () => _bypassDocumentValidation, _bypassDocumentValidation.HasValue },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
                 { "documents", new BsonArray { batchWrapper } }
             };

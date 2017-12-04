@@ -15,12 +15,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
 {
-    internal class BulkDeleteOperation : BulkUnmixedWriteOperationBase
+    internal class BulkDeleteOperation : BulkUnmixedWriteOperationBase<DeleteRequest>
     {
         // constructors
         public BulkDeleteOperation(
@@ -32,14 +33,25 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // methods
-        protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation()
+        protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation(Batch batch)
         {
-            throw new NotImplementedException();
+            return new RetryableDeleteCommandOperation(CollectionNamespace, batch.Requests, MessageEncoderSettings)
+            {
+                IsOrdered = IsOrdered,
+                RetryRequested = RetryRequested,
+                WriteConcern = WriteConcern
+            };
         }
 
         protected override IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateEmulator()
         {
-            throw new NotImplementedException();
+            return new BulkDeleteOperationEmulator(CollectionNamespace, Requests, MessageEncoderSettings)
+            {
+                IsOrdered = IsOrdered,
+                MaxBatchCount = MaxBatchCount,
+                MaxBatchLength = MaxBatchLength,
+                WriteConcern = WriteConcern
+            };
         }
     }
 }

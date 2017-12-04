@@ -117,8 +117,8 @@ namespace MongoDB.Driver.Core.Operations
         {
             if (attempt == 1)
             {
-                var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
-                var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
+                var maxItemSize = connectionDescription.MaxWireDocumentSize;
+                var maxBatchSize = connectionDescription.MaxMessageSize;
                 return new SizeLimitingBatchableSourceSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxItemSize, maxBatchSize);
             }
             else

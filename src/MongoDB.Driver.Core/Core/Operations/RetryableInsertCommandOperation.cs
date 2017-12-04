@@ -121,7 +121,7 @@ namespace MongoDB.Driver.Core.Operations
 
             return new BsonDocument
             {
-                { "insert", _collectionNamespace.FullName },
+                { "insert", _collectionNamespace.CollectionName },
                 { "ordered", _isOrdered },
                 { "writeConcern", WriteConcern.ToBsonDocument() },
                 { "bypassDocumentValidation", () => _bypassDocumentValidation, _bypassDocumentValidation.HasValue },

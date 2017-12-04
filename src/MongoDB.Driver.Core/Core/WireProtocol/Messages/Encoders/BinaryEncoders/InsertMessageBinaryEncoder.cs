@@ -164,7 +164,10 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     }
                 }
 
-                documentSource.SetAdjustedCount(batchCount);
+                if (batchCount != documentSource.Count)
+                {
+                    documentSource.SetAdjustedCount(batchCount);
+                }
             }
             finally
             {

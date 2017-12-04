@@ -152,7 +152,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
                 var wrappedDocument = new BsonDocumentWrapper(document, _serializer);
                 wrappedDocuments.Add(wrappedDocument);
             }
-            documentSource.SetAdjustedCount(batchCount);
+
+            if (batchCount != documentSource.Count)
+            {
+                documentSource.SetAdjustedCount(batchCount);
+            }
 
             return wrappedDocuments;
         }

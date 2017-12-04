@@ -167,7 +167,7 @@ namespace MongoDB.Driver.Core.Operations
         private BulkWriteBatchResult CreateBatchResult(Batch batch, BsonDocument writeCommandResult)
         {
             var requests = batch.Requests;
-            var requestsInBatch = requests.Items.Skip(requests.Offset).Take(requests.Count).ToList();
+            var requestsInBatch = requests.Batch;
             var indexMap = new IndexMap.RangeBased(0, requests.Offset, requests.Count);
             return BulkWriteBatchResult.Create(
                 _isOrdered,

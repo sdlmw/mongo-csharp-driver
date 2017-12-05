@@ -118,7 +118,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                 var message = subject.ReadMessage();
                 message.CollectionNamespace.Should().Be(__collectionNamespace);
                 message.ContinueOnError.Should().Be(__continueOnError);
-                message.DocumentSource.Batch.Should().Equal(__documentSource.Batch);
+                message.DocumentSource.GetItemsInAdjustedBatch().Should().Equal(__documentSource.GetItemsInAdjustedBatch());
                 message.MaxBatchCount.Should().Be(int.MaxValue);
                 message.MaxMessageSize.Should().Be(int.MaxValue);
                 message.RequestId.Should().Be(__requestId);
@@ -177,9 +177,9 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     }
 
                     numberOfBatches++;
-                    batchedDocuments.AddRange(documentSource.Batch);
+                    batchedDocuments.AddRange(documentSource.GetItemsInAdjustedBatch());
 
-                    documentSource.AdvanceOverAdjustedCount();
+                    documentSource.AdvanceOverAdjustedBatch();
                 }
 
                 numberOfBatches.Should().Be(expectedNumberOfBatches);
@@ -224,9 +224,9 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     }
 
                     numberOfBatches++;
-                    batchedDocuments.AddRange(documentSource.Batch);
+                    batchedDocuments.AddRange(documentSource.GetItemsInAdjustedBatch());
 
-                    documentSource.AdvanceOverAdjustedCount();
+                    documentSource.AdvanceOverAdjustedBatch();
                 }
 
                 numberOfBatches.Should().Be(expectedNumberOfBatches);

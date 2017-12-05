@@ -107,17 +107,6 @@ namespace MongoDB.Driver.Core.Misc
         public int AdjustedCount => _adjustedCount;
 
         /// <summary>
-        /// Gets the most recent batch.
-        /// </summary>
-        /// <value>
-        /// The most recent batch.
-        /// </value>
-        public IReadOnlyList<T> Batch
-        {
-            get { return _items.Skip(_offset).Take(_adjustedCount).ToList(); }
-        }
-
-        /// <summary>
         /// Gets a value indicating whether the batch can be adjusted.
         /// </summary>
         /// <value>
@@ -154,9 +143,9 @@ namespace MongoDB.Driver.Core.Misc
 
         // public methods
         /// <summary>
-        /// Advances over the adjusted count.
+        /// Advances over the adjusted batch.
         /// </summary>
-        public void AdvanceOverAdjustedCount()
+        public void AdvanceOverAdjustedBatch()
         {
             if (_canBeAdjusted)
             {
@@ -171,7 +160,18 @@ namespace MongoDB.Driver.Core.Misc
         }
 
         /// <summary>
-        /// Sets the adjustedcount.
+        /// Gets the items in the adjusted batch.
+        /// </summary>
+        /// <value>
+        /// The items in the adjusted batch.
+        /// </value>
+        public IReadOnlyList<T> GetItemsInAdjustedBatch()
+        {
+            return _items.Skip(_offset).Take(_adjustedCount).ToList();
+        }
+
+        /// <summary>
+        /// Sets the adjusted count.
         /// </summary>
         /// <param name="value">The value.</param>
         public void SetAdjustedCount(int value)

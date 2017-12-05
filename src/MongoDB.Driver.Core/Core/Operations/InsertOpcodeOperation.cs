@@ -395,7 +395,7 @@ namespace MongoDB.Driver.Core.Operations
 
                     _results.Add(batch.Result);
                     _hasWriteErrors |= HasWriteErrors(batch.Result);
-                    documents.AdvanceOverAdjustedCount();
+                    documents.AdvanceOverAdjustedBatch();
                 }
             }
 

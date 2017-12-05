@@ -177,7 +177,7 @@ namespace MongoDB.Driver.Core.Operations
         private BulkWriteBatchResult CreateBatchResult(Batch batch, BsonDocument writeCommandResult)
         {
             var requests = batch.Requests;
-            var requestsInBatch = requests.Batch;
+            var requestsInBatch = requests.GetItemsInAdjustedBatch();
             var indexMap = new IndexMap.RangeBased(0, requests.Offset, requests.Count);
             return BulkWriteBatchResult.Create(
                 _isOrdered,
@@ -250,7 +250,7 @@ namespace MongoDB.Driver.Core.Operations
                     _batchResults.Add(batch.Result);
                     _hasWriteErrors |= batch.Result.HasWriteErrors;
 
-                    _requests.AdvanceOverAdjustedCount();
+                    _requests.AdvanceOverAdjustedBatch();
                 }
             }
 

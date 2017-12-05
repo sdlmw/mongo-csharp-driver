@@ -377,7 +377,7 @@ namespace MongoDB.Driver.Core.Connections
                 // Plus, for this we really want BsonDocuments, not whatever the generic type is.
                 var decodedMessage = encoder.ReadMessage();
 
-                var documents = decodedMessage.DocumentSource.Batch;
+                var documents = decodedMessage.DocumentSource.GetItemsInAdjustedBatch();
                 numberOfDocuments = documents.Count;
                 try
                 {

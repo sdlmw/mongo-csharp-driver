@@ -13,6 +13,7 @@
 * limitations under the License.
 */
 
+using System;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
@@ -119,14 +120,17 @@ namespace MongoDB.Driver.Core.Operations
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
             var batchWrapper = new BsonDocumentWrapper(_documents, batchSerializer);
 
+            var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
+            var writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+
             return new BsonDocument
             {
                 { "insert", _collectionNamespace.CollectionName },
                 { "ordered", _isOrdered },
-                { "writeConcern", WriteConcern.ToBsonDocument() },
                 { "bypassDocumentValidation", () => _bypassDocumentValidation, _bypassDocumentValidation.HasValue },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
-                { "documents", new BsonArray { batchWrapper } }
+                { "documents", new BsonArray { batchWrapper } },
+                { "writeConcern", writeConcernWrapper }
             };
         }
 
@@ -138,13 +142,14 @@ namespace MongoDB.Driver.Core.Operations
 
             if (attempt == 1)
             {
+                var maxBatchCount = Math.Min(MaxBatchCount ?? int.MaxValue, connectionDescription.MaxBatchCount);
                 var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
                 var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
-                return new SizeLimitingBatchableSourceSerializer<TDocument>(_documentSerializer, elementNameValidator, maxItemSize, maxBatchSize);
+                return new SizeLimitingBatchableSourceSerializer<TDocument>(_documentSerializer, elementNameValidator, maxBatchCount, maxItemSize, maxBatchSize);
             }
             else
             {
-                var count = _documents.Count; // as adjusted by the first attempt
+                var count = _documents.AdjustedCount; // as adjusted by the first attempt
                 return new FixedCountBatchableSourceSerializer<TDocument>(_documentSerializer, elementNameValidator, count);
             }
         }

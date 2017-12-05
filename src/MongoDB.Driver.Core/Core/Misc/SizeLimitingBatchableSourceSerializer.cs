@@ -29,6 +29,7 @@ namespace MongoDB.Driver.Core.Misc
         // private fields
         private readonly IElementNameValidator _itemElementNameValidator;
         private readonly IBsonSerializer<TItem> _itemSerializer;
+        private readonly int _maxBatchCount;
         private readonly int _maxBatchSize;
         private readonly int _maxItemSize;
 
@@ -38,12 +39,19 @@ namespace MongoDB.Driver.Core.Misc
         /// </summary>
         /// <param name="itemSerializer">The item serializer.</param>
         /// <param name="itemElementNameValidator">The item element name validator.</param>
+        /// <param name="maxBatchCount">The maximum batch count.</param>
         /// <param name="maxItemSize">Maximum size of a serialized item.</param>
         /// <param name="maxBatchSize">Maximum size of the batch.</param>
-        public SizeLimitingBatchableSourceSerializer(IBsonSerializer<TItem> itemSerializer, IElementNameValidator itemElementNameValidator, int maxItemSize, int maxBatchSize)
+        public SizeLimitingBatchableSourceSerializer(
+            IBsonSerializer<TItem> itemSerializer, 
+            IElementNameValidator itemElementNameValidator, 
+            int maxBatchCount,
+            int maxItemSize, 
+            int maxBatchSize)
         {
             _itemSerializer = Ensure.IsNotNull(itemSerializer, nameof(itemSerializer));
             _itemElementNameValidator = Ensure.IsNotNull(itemElementNameValidator, nameof(itemElementNameValidator));
+            _maxBatchCount = Ensure.IsGreaterThanZero(maxBatchCount, nameof(maxBatchCount));
             _maxItemSize = Ensure.IsBetween(maxItemSize, 1, int.MaxValue, nameof(maxItemSize));
             _maxBatchSize = Ensure.IsBetween(maxBatchSize, maxItemSize, int.MaxValue, nameof(maxBatchSize));
         }
@@ -67,7 +75,13 @@ namespace MongoDB.Driver.Core.Misc
             writer.PushElementNameValidator(_itemElementNameValidator);
             try
             {
-                for (var i = 0; i < value.Items.Count; i++)
+                var batchCount = Math.Min(value.Count, _maxBatchCount);
+                if (batchCount != value.Count && !value.CanBeAdjusted)
+                {
+                    throw new ArgumentException("Batch is too large.");
+                }
+
+                for (var i = 0; i < batchCount; i++)
                 {
                     var itemPosition = binaryWriter?.Position;
 
@@ -88,6 +102,11 @@ namespace MongoDB.Driver.Core.Misc
                             throw new ArgumentException("Batch is too large.");
                         }
                     }
+                }
+
+                if (batchCount != value.Count)
+                {
+                    value.SetAdjustedCount(batchCount);
                 }
             }
             finally

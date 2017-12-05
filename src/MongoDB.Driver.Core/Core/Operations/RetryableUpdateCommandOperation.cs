@@ -13,6 +13,8 @@
 * limitations under the License.
 */
 
+using System;
+using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
@@ -101,14 +103,17 @@ namespace MongoDB.Driver.Core.Operations
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
             var batchWrapper = new BsonDocumentWrapper(_updates, batchSerializer);
 
+            var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
+            var writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+
             return new BsonDocument
             {
                 { "update", _collectionNamespace.CollectionName },
                 { "ordered", _isOrdered },
-                { "writeConcern", WriteConcern.ToBsonDocument() },
                 { "bypassDocumentValidation", () => _bypassDocumentValidation.Value, _bypassDocumentValidation.HasValue },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
-                { "updates", new BsonArray { batchWrapper } }
+                { "updates", new BsonArray { batchWrapper } },
+                { "writeConcern", writeConcernWrapper }
             };
         }
 
@@ -117,13 +122,14 @@ namespace MongoDB.Driver.Core.Operations
         {
             if (attempt == 1)
             {
+                var maxBatchCount = Math.Min(MaxBatchCount ?? int.MaxValue, connectionDescription.MaxBatchCount);
                 var maxItemSize = connectionDescription.MaxWireDocumentSize;
                 var maxBatchSize = connectionDescription.MaxMessageSize;
-                return new SizeLimitingBatchableSourceSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxItemSize, maxBatchSize);
+                return new SizeLimitingBatchableSourceSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxBatchCount, maxItemSize, maxBatchSize);
             }
             else
             {
-                var count = _updates.Count; // as adjusted by the first attempt
+                var count = _updates.AdjustedCount; // as adjusted by the first attempt
                 return new FixedCountBatchableSourceSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
             }
         }

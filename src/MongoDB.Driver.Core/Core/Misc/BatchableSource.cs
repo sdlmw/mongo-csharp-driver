@@ -55,7 +55,7 @@ namespace MongoDB.Driver.Core.Misc
         /// </remarks>
         /// <param name="batch">The single batch.</param>
         public BatchableSource(IEnumerable<T> batch)
-            : this(Ensure.IsNotNull(batch, nameof(batch)).ToList())
+            : this(Ensure.IsNotNull(batch, nameof(batch)).ToList(), true)
         {
         }
 
@@ -64,19 +64,20 @@ namespace MongoDB.Driver.Core.Misc
         /// </summary>
         /// <param name="enumerator">The enumerator that will provide the items for the batch.</param>
         public BatchableSource(IEnumerator<T> enumerator)
-            : this(ToList(Ensure.IsNotNull(enumerator, nameof(enumerator))))
+            : this(ToList(Ensure.IsNotNull(enumerator, nameof(enumerator))), true)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchableSource{T}" /> class.
         /// </summary>
-        /// <remarks>
-        /// Use this overload when you know the batch is small and won't have to be broken up into sub-batches. 
-        /// </remarks>
         /// <param name="items">The items.</param>
-        public BatchableSource(IReadOnlyList<T> items)
-            : this(Ensure.IsNotNull(items, nameof(items)), 0, items.Count, false)
+        /// <param name="canBeAdjusted">if set to <c>true</c> [can be adjusted].</param>
+        /// <remarks>
+        /// Use this overload when you know the batch is small and won't have to be broken up into sub-batches.
+        /// </remarks>
+        public BatchableSource(IReadOnlyList<T> items, bool canBeAdjusted = false)
+            : this(Ensure.IsNotNull(items, nameof(items)), 0, items.Count, canBeAdjusted)
         {
         }
 

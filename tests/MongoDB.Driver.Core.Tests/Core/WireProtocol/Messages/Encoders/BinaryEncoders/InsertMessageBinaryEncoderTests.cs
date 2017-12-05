@@ -189,7 +189,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
 
         [Theory]
         [InlineData(1, 1, 0, 1)]
-        [InlineData(1, 1, -1, 1)]
+        //[InlineData(1, 1, -1, 1)]
         [InlineData(1, 1, 1, 1)]
         [InlineData(2, 1, 0, 2)]
         [InlineData(2, 2, 0, 1)]

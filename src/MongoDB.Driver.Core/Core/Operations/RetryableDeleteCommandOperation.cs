@@ -33,27 +33,23 @@ namespace MongoDB.Driver.Core.Operations
         // private fields
         private readonly CollectionNamespace _collectionNamespace;
         private bool _isOrdered = true;
-        private readonly BatchableSource<DeleteRequest> _requests;
+        private readonly BatchableSource<DeleteRequest> _deletes;
 
         // constructors
         /// <summary>
         /// Initializes a new instance of the <see cref="RetryableDeleteCommandOperation" /> class.
         /// </summary>
         /// <param name="collectionNamespace">The collection namespace.</param>
-        /// <param name="requests">The requests.</param>
+        /// <param name="deletes">The deletes.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
         public RetryableDeleteCommandOperation(
             CollectionNamespace collectionNamespace,
-            BatchableSource<DeleteRequest> requests,
+            BatchableSource<DeleteRequest> deletes,
             MessageEncoderSettings messageEncoderSettings)
             : base(Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace)).DatabaseNamespace, messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
-            _requests = Ensure.IsNotNull(requests, nameof(requests));
-            if (requests.Items.Any(r => !(r.RequestType == WriteRequestType.Delete)))
-            {
-                throw new ArgumentException("All requests must be delete requests.");
-            }
+            _deletes = Ensure.IsNotNull(deletes, nameof(deletes));
         }
 
         // public properties
@@ -76,7 +72,7 @@ namespace MongoDB.Driver.Core.Operations
         /// </value>
         public BatchableSource<DeleteRequest> Deletes
         {
-            get { return _requests; }
+            get { return _deletes; }
         }
 
         /// <summary>
@@ -94,15 +90,18 @@ namespace MongoDB.Driver.Core.Operations
         protected override BsonDocument CreateCommand(ConnectionDescription connectionDescription, int attempt, long? transactionNumber)
         {
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
-            var batchWrapper = new BsonDocumentWrapper(_requests, batchSerializer);
+            var batchWrapper = new BsonDocumentWrapper(_deletes, batchSerializer);
+
+            var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
+            var writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
 
             return new BsonDocument
             {
                 { "delete", _collectionNamespace.CollectionName },
                 { "ordered", _isOrdered },
-                { "writeConcern", WriteConcern.ToBsonDocument() },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
-                { "deletes", new BsonArray { batchWrapper } }
+                { "deletes", new BsonArray { batchWrapper } },
+                { "writeConcern", writeConcernWrapper }
             };
         }
 
@@ -111,13 +110,14 @@ namespace MongoDB.Driver.Core.Operations
         {
             if (attempt == 1)
             {
+                var maxBatchCount = Math.Min(MaxBatchCount ?? int.MaxValue, connectionDescription.MaxBatchCount);
                 var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
                 var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
-                return new SizeLimitingBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxItemSize, maxBatchSize);
+                return new SizeLimitingBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxBatchCount, maxItemSize, maxBatchSize);
             }
             else
             {
-                var count = _requests.Count; // as adjusted by the first attempt
+                var count = _deletes.AdjustedCount; // as adjusted by the first attempt
                 return new FixedCountBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
             }
         }

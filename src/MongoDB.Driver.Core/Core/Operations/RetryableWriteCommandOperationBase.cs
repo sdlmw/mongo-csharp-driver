@@ -13,6 +13,7 @@
 * limitations under the License.
 */
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -33,9 +34,10 @@ namespace MongoDB.Driver.Core.Operations
     {
         // private fields
         private readonly DatabaseNamespace _databaseNamespace;
+        private int? _maxBatchCount;
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private bool _retryRequested;
-        private WriteConcern _writeConcern = WriteConcern.Acknowledged;
+        private Func<WriteConcern> _writeConcernFunc = () => WriteConcern.Acknowledged;
 
         // constructors
         /// <summary>
@@ -61,6 +63,18 @@ namespace MongoDB.Driver.Core.Operations
         public DatabaseNamespace DatabaseNamespace
         {
             get { return _databaseNamespace; }
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum batch count.
+        /// </summary>
+        /// <value>
+        /// The maximum batch count.
+        /// </value>
+        public int? MaxBatchCount
+        {
+            get { return _maxBatchCount; }
+            set { _maxBatchCount = Ensure.IsNullOrGreaterThanZero(value, nameof(value)); }
         }
 
         /// <summary>
@@ -90,10 +104,10 @@ namespace MongoDB.Driver.Core.Operations
         /// <value>
         /// The write concern.
         /// </value>
-        public WriteConcern WriteConcern
+        public Func<WriteConcern> WriteConcernFunc
         {
-            get { return _writeConcern; }
-            set { _writeConcern = Ensure.IsNotNull(value, nameof(value)); }
+            get { return _writeConcernFunc; }
+            set { _writeConcernFunc = Ensure.IsNotNull(value, nameof(value)); }
         }
 
         // public methods

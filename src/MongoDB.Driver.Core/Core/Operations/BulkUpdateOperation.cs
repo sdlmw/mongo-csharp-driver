@@ -13,6 +13,7 @@
 * limitations under the License.
 */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson;
@@ -34,12 +35,15 @@ namespace MongoDB.Driver.Core.Operations
         // methods
         protected override IRetryableWriteOperation<BsonDocument> CreateBatchOperation(Batch batch)
         {
+            Func<WriteConcern> writeConcernFunc = () => GetBatchWriteConcern(batch);
+
             return new RetryableUpdateCommandOperation(CollectionNamespace, batch.Requests, MessageEncoderSettings)
             {
                 BypassDocumentValidation = BypassDocumentValidation,
                 IsOrdered = IsOrdered,
+                MaxBatchCount = MaxBatchCount,
                 RetryRequested = RetryRequested,
-                WriteConcern = WriteConcern
+                WriteConcernFunc = writeConcernFunc
             };
         }
 

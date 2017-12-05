@@ -107,7 +107,7 @@ namespace MongoDB.Driver.Core.Operations
         public Func<WriteConcern> WriteConcernFunc
         {
             get { return _writeConcernFunc; }
-            set { _writeConcernFunc = Ensure.IsNotNull(value, nameof(value)); }
+            set { _writeConcernFunc = value; }
         }
 
         // public methods

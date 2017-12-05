@@ -92,8 +92,12 @@ namespace MongoDB.Driver.Core.Operations
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
             var batchWrapper = new BsonDocumentWrapper(_deletes, batchSerializer);
 
-            var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
-            var writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+            BsonDocument writeConcernWrapper = null;
+            if (WriteConcernFunc != null)
+            {
+                var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
+                writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+            }
 
             return new BsonDocument
             {
@@ -101,7 +105,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "ordered", _isOrdered },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
                 { "deletes", new BsonArray { batchWrapper } },
-                { "writeConcern", writeConcernWrapper }
+                { "writeConcern", writeConcernWrapper, writeConcernWrapper != null }
             };
         }
 
@@ -137,6 +141,7 @@ namespace MongoDB.Driver.Core.Operations
                 writer.WriteInt32(value.Limit);
                 if (value.Collation != null)
                 {
+                    writer.WriteName("collation");
                     BsonDocumentSerializer.Instance.Serialize(context, value.Collation.ToBsonDocument());
                 }
                 writer.WriteEndDocument();

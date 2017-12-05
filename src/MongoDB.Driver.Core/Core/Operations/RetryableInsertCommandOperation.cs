@@ -120,8 +120,12 @@ namespace MongoDB.Driver.Core.Operations
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
             var batchWrapper = new BsonDocumentWrapper(_documents, batchSerializer);
 
-            var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
-            var writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+            BsonDocument writeConcernWrapper = null;
+            if (WriteConcernFunc != null)
+            {
+                var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
+                writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+            }
 
             return new BsonDocument
             {
@@ -130,7 +134,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "bypassDocumentValidation", () => _bypassDocumentValidation, _bypassDocumentValidation.HasValue },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
                 { "documents", new BsonArray { batchWrapper } },
-                { "writeConcern", writeConcernWrapper }
+                { "writeConcern", writeConcernWrapper, writeConcernWrapper != null }
             };
         }
 

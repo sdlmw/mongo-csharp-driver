@@ -166,7 +166,7 @@ namespace MongoDB.Driver.Core.Operations
         protected WriteConcern GetBatchWriteConcern(Batch batch)
         {
             var writeConcern = _writeConcern;
-            if (_isOrdered && batch.Requests.AdjustedCount < batch.Requests.Count && !writeConcern.IsAcknowledged)
+            if (!writeConcern.IsAcknowledged && _isOrdered && batch.Requests.AdjustedCount < batch.Requests.Count)
             {
                 writeConcern = WriteConcern.W1;
             }

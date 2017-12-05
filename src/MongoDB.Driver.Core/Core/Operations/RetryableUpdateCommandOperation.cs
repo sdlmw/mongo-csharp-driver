@@ -103,8 +103,12 @@ namespace MongoDB.Driver.Core.Operations
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
             var batchWrapper = new BsonDocumentWrapper(_updates, batchSerializer);
 
-            var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
-            var writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+            BsonDocument writeConcernWrapper = null;
+            if (WriteConcernFunc != null)
+            {
+                var writeConcernSerializer = new DelayedEvaluationWriteConcernSerializer();
+                writeConcernWrapper = new BsonDocumentWrapper(WriteConcernFunc, writeConcernSerializer);
+            }
 
             return new BsonDocument
             {
@@ -113,7 +117,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "bypassDocumentValidation", () => _bypassDocumentValidation.Value, _bypassDocumentValidation.HasValue },
                 { "txnNumber", () => transactionNumber.Value, transactionNumber.HasValue },
                 { "updates", new BsonArray { batchWrapper } },
-                { "writeConcern", writeConcernWrapper }
+                { "writeConcern", writeConcernWrapper, writeConcernWrapper != null }
             };
         }
 
@@ -153,11 +157,13 @@ namespace MongoDB.Driver.Core.Operations
                 writer.WriteBoolean(value.IsMulti);
                 if (value.Collation != null)
                 {
+                    writer.WriteName("collation");
                     BsonDocumentSerializer.Instance.Serialize(context, value.Collation.ToBsonDocument());
                 }
                 if (value.ArrayFilters != null)
                 {
                     writer.WriteName("arrayFilters");
+                    writer.WriteStartArray();
                     foreach (var arrayFilter in value.ArrayFilters)
                     {
                         BsonDocumentSerializer.Instance.Serialize(context, arrayFilter);

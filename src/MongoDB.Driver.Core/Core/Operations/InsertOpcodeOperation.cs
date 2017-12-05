@@ -376,7 +376,7 @@ namespace MongoDB.Driver.Core.Operations
             public IEnumerable<Batch> GetBatches()
             {
                 var documents = new BatchableSource<TDocument>(_documents, 0, _documents.Count, canBeAdjusted: true);
-                while (documents.HasMore && ShouldContinue())
+                while (documents.Count > 0 && ShouldContinue())
                 {
                     var writeConcern = _writeConcern;
                     if (!writeConcern.IsAcknowledged)
@@ -388,14 +388,14 @@ namespace MongoDB.Driver.Core.Operations
                     {
                         Documents = documents,
                         WriteConcern = writeConcern,
-                        ShouldSendGetLastError = () => documents.HasMore
+                        ShouldSendGetLastError = () => documents.Count > 0
                     };
 
                     yield return batch;
 
                     _results.Add(batch.Result);
                     _hasWriteErrors |= HasWriteErrors(batch.Result);
-                    documents.AdvanceOffset();
+                    documents.AdvanceOverAdjustedCount();
                 }
             }
 

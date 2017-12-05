@@ -137,20 +137,6 @@ namespace MongoDB.Driver.Core.Misc
         }
 
         /// <summary>
-        /// Gets a value indicating whether there are more items.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if there are more items; otherwise, <c>false</c>.
-        /// </value>
-        public bool HasMore
-        {
-            get
-            {
-                return _count > 0;
-            }
-        }
-
-        /// <summary>
         /// Gets the items.
         /// </summary>
         /// <value>
@@ -168,9 +154,9 @@ namespace MongoDB.Driver.Core.Misc
 
         // public methods
         /// <summary>
-        /// Advances the offset.
+        /// Advances over the adjusted count.
         /// </summary>
-        public void AdvanceOffset()
+        public void AdvanceOverAdjustedCount()
         {
             if (_canBeAdjusted)
             {

@@ -238,7 +238,7 @@ namespace MongoDB.Driver.Core.Operations
 
             public IEnumerable<Batch> GetBatches()
             {
-                while (_requests.HasMore && ShouldContinue())
+                while (_requests.Count > 0 && ShouldContinue())
                 {
                     var batch = new Batch
                     {
@@ -250,7 +250,7 @@ namespace MongoDB.Driver.Core.Operations
                     _batchResults.Add(batch.Result);
                     _hasWriteErrors |= batch.Result.HasWriteErrors;
 
-                    _requests.AdvanceOffset();
+                    _requests.AdvanceOverAdjustedCount();
                 }
             }
 

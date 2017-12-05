@@ -168,7 +168,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                 var numberOfBatches = 0;
                 var batchedDocuments = new List<BsonDocument>();
 
-                while (documentSource.HasMore)
+                while (documentSource.Count > 0)
                 {
                     using (var stream = new MemoryStream())
                     {
@@ -179,7 +179,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     numberOfBatches++;
                     batchedDocuments.AddRange(documentSource.Batch);
 
-                    documentSource.AdvanceOffset();
+                    documentSource.AdvanceOverAdjustedCount();
                 }
 
                 numberOfBatches.Should().Be(expectedNumberOfBatches);
@@ -215,7 +215,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                 var numberOfBatches = 0;
                 var batchedDocuments = new List<BsonDocument>();
 
-                while (documentSource.HasMore)
+                while (documentSource.Count > 0)
                 {
                     using (var stream = new MemoryStream())
                     {
@@ -226,7 +226,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     numberOfBatches++;
                     batchedDocuments.AddRange(documentSource.Batch);
 
-                    documentSource.AdvanceOffset();
+                    documentSource.AdvanceOverAdjustedCount();
                 }
 
                 numberOfBatches.Should().Be(expectedNumberOfBatches);

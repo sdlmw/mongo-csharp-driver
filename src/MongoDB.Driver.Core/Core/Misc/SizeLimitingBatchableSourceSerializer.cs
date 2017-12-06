@@ -94,6 +94,7 @@ namespace MongoDB.Driver.Core.Misc
                         if (i > 0 && value.CanBeAdjusted)
                         {
                             binaryWriter.BaseStream.Position = itemPosition.Value; // remove the last item
+                            binaryWriter.BaseStream.SetLength(itemPosition.Value);
                             value.SetAdjustedCount(i);
                             return;
                         }

@@ -115,8 +115,8 @@ namespace MongoDB.Driver.Core.Operations
             if (attempt == 1)
             {
                 var maxBatchCount = Math.Min(MaxBatchCount ?? int.MaxValue, connectionDescription.MaxBatchCount);
-                var maxItemSize = connectionDescription.IsMasterResult.MaxDocumentSize;
-                var maxBatchSize = connectionDescription.IsMasterResult.MaxMessageSize;
+                var maxItemSize = connectionDescription.MaxDocumentSize;
+                var maxBatchSize = connectionDescription.MaxWireDocumentSize;
                 return new SizeLimitingBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxBatchCount, maxItemSize, maxBatchSize);
             }
             else

@@ -36,7 +36,7 @@ namespace MongoDB.Driver.Core.Operations
         private bool? _bypassDocumentValidation;
         private readonly CollectionNamespace _collectionNamespace;
         private bool _continueOnError;
-        private readonly IReadOnlyList<TDocument> _documents;
+        private readonly BatchableSource<TDocument> _documentSource;
         private int? _maxBatchCount;
         private int? _maxDocumentSize;
         private int? _maxMessageSize;
@@ -49,28 +49,16 @@ namespace MongoDB.Driver.Core.Operations
         /// Initializes a new instance of the <see cref="InsertOpcodeOperation{TDocument}"/> class.
         /// </summary>
         /// <param name="collectionNamespace">The collection namespace.</param>
-        /// <param name="documents">The documents.</param>
-        /// <param name="serializer">The serializer.</param>
-        /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        public InsertOpcodeOperation(CollectionNamespace collectionNamespace, IEnumerable<TDocument> documents, IBsonSerializer<TDocument> serializer, MessageEncoderSettings messageEncoderSettings)
-        {
-            _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
-            _documents = Ensure.IsNotNull(documents, nameof(documents)).ToList();
-            _serializer = Ensure.IsNotNull(serializer, nameof(serializer));
-            _messageEncoderSettings = Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
-            _writeConcern = WriteConcern.Acknowledged;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InsertOpcodeOperation{TDocument}"/> class.
-        /// </summary>
-        /// <param name="collectionNamespace">The collection namespace.</param>
         /// <param name="documentSource">The document source.</param>
         /// <param name="serializer">The serializer.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
         public InsertOpcodeOperation(CollectionNamespace collectionNamespace, BatchableSource<TDocument> documentSource, IBsonSerializer<TDocument> serializer, MessageEncoderSettings messageEncoderSettings)
-            : this(collectionNamespace, Ensure.IsNotNull(documentSource, nameof(documentSource)).Items.Skip(documentSource.Offset).Take(documentSource.Count), serializer, messageEncoderSettings)
         {
+            _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
+            _documentSource = Ensure.IsNotNull(documentSource, nameof(documentSource));
+            _serializer = Ensure.IsNotNull(serializer, nameof(serializer));
+            _messageEncoderSettings = Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
+            _writeConcern = WriteConcern.Acknowledged;
         }
 
         // properties
@@ -115,21 +103,9 @@ namespace MongoDB.Driver.Core.Operations
         /// <value>
         /// The document source.
         /// </value>
-        public IEnumerable<TDocument> Documents
-        {
-            get { return _documents; }
-        }
-
-        /// <summary>
-        /// Gets the document source.
-        /// </summary>
-        /// <value>
-        /// The document source.
-        /// </value>
-        [Obsolete("Use Documents instead.")]
         public BatchableSource<TDocument> DocumentSource
         {
-            get { return new BatchableSource<TDocument>(_documents); }
+            get { return _documentSource; }
         }
 
         /// <summary>
@@ -218,6 +194,8 @@ namespace MongoDB.Driver.Core.Operations
         /// <inheritdoc/>
         public IEnumerable<WriteConcernResult> Execute(RetryableWriteContext context, CancellationToken cancellationToken)
         {
+            Ensure.IsNotNull(context, nameof(context));
+
             if (Feature.WriteCommands.IsSupported(context.Channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
             {
                 var emulator = CreateEmulator();
@@ -226,7 +204,7 @@ namespace MongoDB.Driver.Core.Operations
             }
             else
             {
-                return InsertMultipleBatches(context.Channel, cancellationToken);
+                return InsertBatches(context.Channel, cancellationToken);
             }
         }
 
@@ -245,6 +223,8 @@ namespace MongoDB.Driver.Core.Operations
         /// <inheritdoc/>
         public async Task<IEnumerable<WriteConcernResult>> ExecuteAsync(RetryableWriteContext context, CancellationToken cancellationToken)
         {
+            Ensure.IsNotNull(context, nameof(context));
+
             if (Feature.WriteCommands.IsSupported(context.Channel.ConnectionDescription.ServerVersion) && _writeConcern.IsAcknowledged)
             {
                 var emulator = CreateEmulator();
@@ -253,14 +233,14 @@ namespace MongoDB.Driver.Core.Operations
             }
             else
             {
-                return await InsertMultipleBatchesAsync(context.Channel, cancellationToken).ConfigureAwait(false);
+                return await InsertBatchesAsync(context.Channel, cancellationToken).ConfigureAwait(false);
             }
         }
 
         // private methods
         private InsertOpcodeOperationEmulator<TDocument> CreateEmulator()
         {
-            return new InsertOpcodeOperationEmulator<TDocument>(_collectionNamespace, _serializer, _documents, _messageEncoderSettings)
+            return new InsertOpcodeOperationEmulator<TDocument>(_collectionNamespace, _serializer, _documentSource, _messageEncoderSettings)
             {
                 BypassDocumentValidation = _bypassDocumentValidation,
                 ContinueOnError = _continueOnError,
@@ -301,9 +281,10 @@ namespace MongoDB.Driver.Core.Operations
                 cancellationToken);
         }
 
-        private IEnumerable<WriteConcernResult> InsertMultipleBatches(IChannelHandle channel, CancellationToken cancellationToken)
+        private IEnumerable<WriteConcernResult> InsertBatches(IChannelHandle channel, CancellationToken cancellationToken)
         {
-            var helper = new BatchHelper(_documents, _writeConcern, _continueOnError);
+            var helper = new BatchHelper(_documentSource, _writeConcern, _continueOnError);
+
             foreach (var batch in helper.GetBatches())
             {
                 try
@@ -323,9 +304,10 @@ namespace MongoDB.Driver.Core.Operations
             return helper.CreateFinalResultOrThrow();
         }
 
-        private async Task<IEnumerable<WriteConcernResult>> InsertMultipleBatchesAsync(IChannelHandle channel, CancellationToken cancellationToken)
+        private async Task<IEnumerable<WriteConcernResult>> InsertBatchesAsync(IChannelHandle channel, CancellationToken cancellationToken)
         {
-            var helper = new BatchHelper(_documents, _writeConcern, _continueOnError);
+            var helper = new BatchHelper(_documentSource, _writeConcern, _continueOnError);
+
             foreach (var batch in helper.GetBatches())
             {
                 try
@@ -358,16 +340,15 @@ namespace MongoDB.Driver.Core.Operations
         {
             // private fields
             private readonly bool _continueOnError;
-            private readonly IReadOnlyList<TDocument> _documents;
+            private readonly BatchableSource<TDocument> _documentSource;
             private Exception _finalException;
-            private bool _hasWriteErrors;
             private readonly List<WriteConcernResult> _results = new List<WriteConcernResult>();
             private readonly WriteConcern _writeConcern;
 
             // constructors
-            public BatchHelper(IReadOnlyList<TDocument> documents, WriteConcern writeConcern, bool continueOnError)
+            public BatchHelper(BatchableSource<TDocument> documentSource, WriteConcern writeConcern, bool continueOnError)
             {
-                _documents = documents;
+                _documentSource = documentSource;
                 _writeConcern = writeConcern;
                 _continueOnError = continueOnError;
             }
@@ -375,27 +356,28 @@ namespace MongoDB.Driver.Core.Operations
             // public methods
             public IEnumerable<Batch> GetBatches()
             {
-                var documents = new BatchableSource<TDocument>(_documents, 0, _documents.Count, canBeAdjusted: true);
-                while (documents.Count > 0 && ShouldContinue())
-                {
+                while (_documentSource.Count > 0)
+                {			
                     var writeConcern = _writeConcern;
-                    if (!writeConcern.IsAcknowledged)
+					Func<bool> shouldSendGetLastError = null;
+                    if (!writeConcern.IsAcknowledged && !_continueOnError)
                     {
                         writeConcern = WriteConcern.W1;
+                        shouldSendGetLastError = () => _documentSource.AdjustedCount < _documentSource.Count;
                     }
 
                     var batch = new Batch
                     {
-                        Documents = documents,
+                        Documents = _documentSource,
                         WriteConcern = writeConcern,
-                        ShouldSendGetLastError = () => documents.Count > 0
+                        ShouldSendGetLastError = shouldSendGetLastError
                     };
 
                     yield return batch;
 
                     _results.Add(batch.Result);
-                    _hasWriteErrors |= HasWriteErrors(batch.Result);
-                    documents.AdvanceOverAdjustedBatch();
+
+                    _documentSource.AdvanceOverAdjustedBatch();
                 }
             }
 
@@ -419,24 +401,22 @@ namespace MongoDB.Driver.Core.Operations
 
             public IEnumerable<WriteConcernResult> CreateFinalResultOrThrow()
             {
-                if (_writeConcern.IsAcknowledged && _finalException != null)
+                if (_writeConcern.IsAcknowledged)
                 {
-                    _finalException.Data["results"] = _results;
-                    throw _finalException;
+                    if (_finalException != null)
+                    {
+                        _finalException.Data["results"] = _results;
+                        throw _finalException;
+                    }
+                    else
+                    {
+                        return _results;
+                    }
                 }
-
-                return _results;
-            }
-
-            // private methods
-            private bool HasWriteErrors(WriteConcernResult result)
-            {
-                throw new NotImplementedException();
-            }
-
-            private bool ShouldContinue()
-            {
-                return !_hasWriteErrors || _continueOnError;
+                else
+                {
+                    return null;
+                }
             }
         }
     }

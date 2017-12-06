@@ -21,6 +21,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
+using MongoDB.Driver.Core.Operations.ElementNameValidators;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
 namespace MongoDB.Driver.Core.Operations
@@ -128,7 +129,7 @@ namespace MongoDB.Driver.Core.Operations
             {
                 var maxBatchCount = Math.Min(MaxBatchCount ?? int.MaxValue, connectionDescription.MaxBatchCount);
                 var maxItemSize = connectionDescription.MaxWireDocumentSize;
-                var maxBatchSize = connectionDescription.MaxMessageSize;
+                var maxBatchSize = connectionDescription.MaxWireDocumentSize;
                 return new SizeLimitingBatchableSourceSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, maxBatchCount, maxItemSize, maxBatchSize);
             }
             else
@@ -150,7 +151,7 @@ namespace MongoDB.Driver.Core.Operations
                 writer.WriteName("q");
                 BsonDocumentSerializer.Instance.Serialize(context, value.Filter);
                 writer.WriteName("u");
-                BsonDocumentSerializer.Instance.Serialize(context, value.Update);
+                SerializeUpdate(context, args, value);
                 writer.WriteName("upsert");
                 writer.WriteBoolean(value.IsUpsert);
                 writer.WriteName("multi");
@@ -171,6 +172,26 @@ namespace MongoDB.Driver.Core.Operations
                     writer.WriteEndArray();
                 }
                 writer.WriteEndDocument();
+            }
+
+            // private methods
+            private void SerializeUpdate(BsonSerializationContext context, BsonSerializationArgs args, UpdateRequest request)
+            {
+                var writer = context.Writer;
+                writer.PushElementNameValidator(ElementNameValidatorFactory.ForUpdateType(request.UpdateType));
+                try
+                {
+                    var position = writer.Position;
+                    BsonDocumentSerializer.Instance.Serialize(context, request.Update);
+                    if (request.UpdateType == UpdateType.Update && writer.Position == position + 8)
+                    {
+                        throw new BsonSerializationException("Update documents cannot be empty.");
+                    }
+                }
+                finally
+                {
+                    writer.PopElementNameValidator();
+                }
             }
         }
     }

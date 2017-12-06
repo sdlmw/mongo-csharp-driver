@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 MongoDB Inc.
+/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ namespace MongoDB.Driver.Core.Operations
         private bool? _bypassDocumentValidation;
         private readonly CollectionNamespace _collectionNamespace;
         private bool _continueOnError;
-        private readonly IReadOnlyList<TDocument> _documents;
+        private readonly BatchableSource<TDocument> _documentSource;
         private int? _maxBatchCount;
         private int? _maxDocumentSize;
         private int? _maxMessageSize;
@@ -45,14 +45,18 @@ namespace MongoDB.Driver.Core.Operations
         public InsertOpcodeOperationEmulator(
             CollectionNamespace collectionNamespace,
             IBsonSerializer<TDocument> serializer,
-            IReadOnlyList<TDocument> documents,
+            BatchableSource<TDocument> documentSource,
             MessageEncoderSettings messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
             _serializer = Ensure.IsNotNull(serializer, nameof(serializer));
-            _documents = Ensure.IsNotNull(documents, nameof(documents));
+            _documentSource = Ensure.IsNotNull(documentSource, nameof(documentSource));
             _messageEncoderSettings = messageEncoderSettings;
-            Ensure.That(!documents.Any(d => d == null), "One ore more documents are null.", nameof(documents));
+
+            if (documentSource.Items.Skip(documentSource.Offset).Take(documentSource.Count).Any(d => d == null))
+            {
+                throw new ArgumentException("Batch contains one or more null documents.");
+            }
         }
 
         // properties
@@ -73,9 +77,9 @@ namespace MongoDB.Driver.Core.Operations
             set { _continueOnError = value; }
         }
 
-        public IReadOnlyList<TDocument> Documents
+        public BatchableSource<TDocument> DocumentSource
         {
-            get { return _documents; }
+            get { return _documentSource; }
         }
 
         public int? MaxBatchCount
@@ -156,7 +160,8 @@ namespace MongoDB.Driver.Core.Operations
         // private methods
         private BulkInsertOperation CreateOperation()
         {
-            var requests = _documents.Select(d => new InsertRequest(new BsonDocumentWrapper(d, _serializer)));
+            var requests = _documentSource.GetItemsInAdjustedBatch().Select(d => new InsertRequest(new BsonDocumentWrapper(d, _serializer)));
+
             return new BulkInsertOperation(_collectionNamespace, requests, _messageEncoderSettings)
             {
                 BypassDocumentValidation = _bypassDocumentValidation,

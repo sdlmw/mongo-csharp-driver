@@ -154,6 +154,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                         if (i > 0 && documentSource.CanBeAdjusted)
                         {
                             stream.Position = documentStartPosition;
+                            stream.SetLength(documentStartPosition);
                             documentSource.SetAdjustedCount(i);
                             return;
                         }

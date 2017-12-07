@@ -103,7 +103,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .DeleteOne("{x: 'asdfafsdf'}");
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "update");
+                var index = commands.FindIndex(x => x.GetElement(0).Name == "delete");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));

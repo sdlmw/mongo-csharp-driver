@@ -1,4 +1,4 @@
-/* Copyright 2017 MongoDB Inc.
+﻿/* Copyright 2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,17 +14,14 @@
 */
 
 using System;
-using FluentAssertions;
 using MongoDB.Bson;
 
 namespace MongoDB.Driver.Tests.Specifications.retryable_writes
 {
-    public class FindOneAndDeleteTest : RetryableWriteTestBase
+    public class InsertOneTest : RetryableWriteTestBase
     {
         // private fields
-        private BsonDocument _filter;
-        private FindOneAndDeleteOptions<BsonDocument> _options = new FindOneAndDeleteOptions<BsonDocument>();
-        private BsonDocument _result;
+        private BsonDocument _document;
 
         // public methods
         public override void Initialize(BsonDocument operation)
@@ -35,20 +32,8 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
             {
                 switch (argument.Name)
                 {
-                    case "filter":
-                        _filter = argument.Value.AsBsonDocument;
-                        break;
-
-                    case "projection":
-                        _options.Projection = argument.Value.AsBsonDocument;
-                        break;
-
-                    case "sort":
-                        _options.Sort = argument.Value.AsBsonDocument;
-                        break;
-
-                    case "collation":
-                        _options.Collation = Collation.FromBsonDocument(argument.Value.AsBsonDocument);
+                    case "document":
+                        _document = argument.Value.AsBsonDocument;
                         break;
 
                     default:
@@ -60,17 +45,17 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
         // protected methods
         protected override void ExecuteAsync(IMongoCollection<BsonDocument> collection)
         {
-            _result = collection.FindOneAndDeleteAsync(_filter, _options).GetAwaiter().GetResult();
+            collection.InsertOneAsync(_document).GetAwaiter().GetResult();
         }
 
         protected override void ExecuteSync(IMongoCollection<BsonDocument> collection)
         {
-            _result = collection.FindOneAndDelete(_filter, _options);
+            collection.InsertOne(_document);
         }
 
         protected override void VerifyResult(BsonDocument result)
         {
-            _result.Should().Be(result);
+            // test specifies a result but in the .NET driver InsertOne is a void method
         }
     }
 }

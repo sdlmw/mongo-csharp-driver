@@ -30,94 +30,136 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
 {
     public class TestRunner
     {
-        private static Dictionary<string, Func<ICrudOperationTest>> _tests;
-        private static bool __oneTimeSetupHasRun = false;
-        private static object __oneTimeSetupLock = new object();
-
-        public TestRunner()
-        {
-            lock (__oneTimeSetupLock)
-            {
-                __oneTimeSetupHasRun = __oneTimeSetupHasRun || OneTimeSetup();
-            }
-        }
-
-        public bool OneTimeSetup()
-        {
-            _tests = new Dictionary<string, Func<ICrudOperationTest>>
-            {
-                { "findOneAndDelete", () => new FindOneAndDeleteTest() },
-                { "findOneAndReplace", () => new FindOneAndReplaceTest() },
-                { "findOneAndUpdate", () => new FindOneAndUpdateTest() },
-            };
-
-            return true;
-        }
-
+        // public methods
         [SkippableTheory]
         [ClassData(typeof(TestCaseFactory))]
         public void RunTestDefinition(TestCase testCase)
         {
+            var definition = testCase.Definition;
+            var test = testCase.Test;
+            var async = testCase.Async;
+
+            VerifyServerRequirements(definition);
+            VerifyFields(definition, "path", "data", "minServerVersion", "maxServerVersion", "tests");
+
+            var collection = InitializeCollection(definition);
+            RunTest(collection, test, async);
+        }
+
+        // private methods
+        private void VerifyServerRequirements(BsonDocument definition)
+        {
             RequireServer.Check().ClusterType(ClusterType.ReplicaSet);
 
-            //BsonValue minServerVersion;
-            //if (definition.TryGetValue("minServerVersion", out minServerVersion))
-            //{
-            //    RequireServer.Check().VersionGreaterThanOrEqualTo(minServerVersion.AsString);
-            //}
+            BsonValue minServerVersion;
+            if (definition.TryGetValue("minServerVersion", out minServerVersion))
+            {
+                RequireServer.Check().VersionGreaterThanOrEqualTo(minServerVersion.AsString);
+            }
 
-            //BsonValue maxServerVersion;
-            //if (definition.TryGetValue("maxServerVersion", out maxServerVersion))
-            //{
-            //    RequireServer.Check().VersionLessThanOrEqualTo(maxServerVersion.AsString);
-            //}
+            BsonValue maxServerVersion;
+            if (definition.TryGetValue("maxServerVersion", out maxServerVersion))
+            {
+                RequireServer.Check().VersionLessThanOrEqualTo(maxServerVersion.AsString);
+            }
+        }
 
+        private void VerifyFields(BsonDocument document, params string[] expectedNames)
+        {
+            foreach (var name in document.Names)
+            {
+                if (!expectedNames.Contains(name))
+                {
+                    throw new FormatException($"Unexpected field: \"{name}\".");
+                }
+            }
+        }
+
+        private IMongoCollection<BsonDocument> InitializeCollection(BsonDocument definition)
+        {
             var connectionString = CoreTestConfiguration.ConnectionString.ToString();
             var clientSettings = MongoClientSettings.FromUrl(new MongoUrl(connectionString));
             clientSettings.RetryWrites = true;
-
             var client = new MongoClient(clientSettings);
             var database = client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName);
             var collection = database.GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName);
 
             database.DropCollection(collection.CollectionNamespace.CollectionName);
-            collection.InsertMany(testCase.Definition["data"].AsBsonArray.Cast<BsonDocument>());
+            collection.InsertMany(definition["data"].AsBsonArray.Cast<BsonDocument>());
 
-            BsonValue failPointDoc = null;
-            testCase.Test.TryGetValue("failPoint", out failPointDoc);
-
-            using (WithFailPoint((BsonDocument)failPointDoc))
-            {
-                ExecuteOperation(database, collection, (BsonDocument)testCase.Test["operation"], (BsonDocument)testCase.Test["outcome"], testCase.Async);
-            }
+            return collection;
         }
 
-        private void ExecuteOperation(IMongoDatabase database, IMongoCollection<BsonDocument> collection, BsonDocument operation, BsonDocument outcome, bool async)
+        private void RunTest(IMongoCollection<BsonDocument> collection, BsonDocument test, bool async)
         {
-            var name = (string)operation["name"];
-            Func<ICrudOperationTest> factory;
-            if (!_tests.TryGetValue(name, out factory))
-            {
-                throw new NotImplementedException("The operation " + name + " has not been implemented.");
-            }
+            VerifyFields(test, "description", "failPoint", "operation", "outcome");
+            var failPoint = (BsonDocument)test.GetValue("failPoint", null);
+            var operation = test["operation"].AsBsonDocument;
+            var outcome = test["outcome"].AsBsonDocument;
 
-            var arguments = (BsonDocument)operation.GetValue("arguments", new BsonDocument());
-            var test = factory();
-            string reason;
-            if (!test.CanExecute(DriverTestConfiguration.Client.Cluster.Description, arguments, out reason))
+            var executableTest = CreateExecutableTest(operation);
+            using (ConfigureFailPoint(failPoint))
             {
-                throw new SkipTestException(reason);
+                executableTest.Execute(collection, async);
+                executableTest.VerifyOutcome(collection, outcome);
             }
-
-            test.Execute(DriverTestConfiguration.Client.Cluster.Description, database, collection, arguments, outcome, async);
         }
 
+        private IRetryableWriteTest CreateExecutableTest(BsonDocument operation)
+        {
+            var operationName = operation["name"].AsString;
+
+            IRetryableWriteTest executableTest;
+            switch (operationName)
+            {
+                case "bulkWrite": executableTest = new BulkWriteTest(); break;
+                case "deleteOne": executableTest = new DeleteOneTest(); break;
+                case "findOneAndDelete": executableTest = new FindOneAndDeleteTest(); break;
+                case "findOneAndReplace": executableTest = new FindOneAndReplaceTest(); break;
+                case "findOneAndUpdate": executableTest = new FindOneAndUpdateTest(); break;
+                case "insertOne": executableTest = new InsertOneTest(); break;
+                case "insertMany": executableTest = new InsertManyTest(); break;
+                case "replaceOne": executableTest = new ReplaceOneTest(); break;
+                case "updateOne": executableTest = new UpdateOneTest(); break;
+                default: throw new ArgumentException($"Unexpected operation name: {operationName}.");
+            }
+            executableTest.Initialize(operation);
+
+            return executableTest;
+        }
+
+        private IDisposable ConfigureFailPoint(BsonDocument failPoint)
+        {
+            if (failPoint == null)
+            {
+                return null;
+            }
+            else
+            {
+                var adminDatabase = DriverTestConfiguration.Client.GetDatabase("admin");
+                var enableFailPointCommand = new BsonDocument
+                {
+                    { "configureFailPoint", "onPrimaryTransactionalWrite" }
+                }
+                .AddRange(failPoint);
+                adminDatabase.RunCommand<BsonDocument>(enableFailPointCommand);
+
+                var disableFailPointCommand = new BsonDocument
+                {
+                    { "configureFailPoint", "onPrimaryTransactionalWrite" },
+                    { "mode", "off" }
+                };
+                return new ActionDisposer(() => adminDatabase.RunCommand<BsonDocument>(disableFailPointCommand));
+            }
+        }
+
+        // nested types
         public class TestCase : IXunitSerializable
         {
+            public string Name;
             public BsonDocument Definition;
             public BsonDocument Test;
             public bool Async;
-            public string Name;
 
             public TestCase()
             {
@@ -149,12 +191,7 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
 
             public override string ToString()
             {
-                if (Async)
-                {
-                    return Name + "(Async)";
-                }
-
-                return Name;
+                return Async ? $"{Name}(Async)" : Name;
             }
         }
 
@@ -175,10 +212,6 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
                     {
                         foreach (var async in new[] { false, true })
                         {
-                            //var testCase = new TestCaseData(definition, test, async);
-                            //testCase.SetCategory("Specifications");
-                            //testCase.SetCategory("crud");
-                            //testCase.SetName($"{test["description"]}({async})");
                             var name = test["description"].ToString();
                             var testCase = new object[] { new TestCase(name, definition, test, async) };
                             testCases.Add(testCase);
@@ -204,33 +237,6 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
                     definition.InsertAt(0, new BsonElement("path", path));
                     return definition;
                 }
-            }
-        }
-
-        private IDisposable WithFailPoint(BsonDocument failPoint)
-        {
-            if(failPoint == null)
-            {
-                return new EmptyDisposer();
-            }
-
-            var command = new BsonDocument("configureFailPoint", "onPrimaryTransactionalWrite").Merge(failPoint, true);
-
-            DriverTestConfiguration.Client.GetDatabase("admin").RunCommand<BsonDocument>(command);
-
-            return new ActionDisposer(() => {
-                DriverTestConfiguration.Client.GetDatabase("admin").RunCommand<BsonDocument>(new BsonDocument
-                {
-                    { "configureFailPoint", "onPrimaryTransactionalWrite" },
-                    { "mode", "off" }
-                });
-            });
-        }
-
-        private class EmptyDisposer : IDisposable
-        {
-            public void Dispose()
-            {
             }
         }
 

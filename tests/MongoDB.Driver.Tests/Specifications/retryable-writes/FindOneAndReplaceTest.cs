@@ -1,4 +1,4 @@
-/* Copyright 2010-2015 MongoDB Inc.
+/* Copyright 2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,95 +14,100 @@
 */
 
 using System;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver.Tests.Specifications.retryable_writes
 {
-    public class FindOneAndReplaceTest : CrudOperationWithResultTestBase<BsonDocument>
+    public class FindOneAndReplaceTest : RetryableWriteTestBase
     {
+        // private fields
         private BsonDocument _filter;
         private BsonDocument _replacement;
         private FindOneAndReplaceOptions<BsonDocument> _options = new FindOneAndReplaceOptions<BsonDocument>();
+        private BsonDocument _result;
+        private SemanticVersion _serverVersion;
 
-        protected override bool TrySetArgument(string name, BsonValue value)
+        // public methods
+        public override void Initialize(BsonDocument operation)
         {
-            switch (name)
+            VerifyFields(operation, "name", "arguments");
+
+            foreach (var argument in operation["arguments"].AsBsonDocument)
             {
-                case "filter":
-                    _filter = (BsonDocument)value;
-                    return true;
-                case "replacement":
-                    _replacement = (BsonDocument)value;
-                    return true;
-                case "projection":
-                    _options.Projection = (BsonDocument)value;
-                    return true;
-                case "sort":
-                    _options.Sort = (BsonDocument)value;
-                    return true;
-                case "upsert":
-                    _options.IsUpsert = value.ToBoolean();
-                    return true;
-                case "returnDocument":
-                    _options.ReturnDocument = (ReturnDocument)Enum.Parse(typeof(ReturnDocument), value.ToString());
-                    return true;
-                case "collation":
-                    _options.Collation = Collation.FromBsonDocument(value.AsBsonDocument);
-                    return true;
-            }
-
-            return false;
-        }
-
-        protected override BsonDocument ConvertExpectedResult(BsonValue expectedResult)
-        {
-            if (expectedResult.IsBsonNull)
-            {
-                return null;
-            }
-
-            return (BsonDocument)expectedResult;
-        }
-
-        protected override BsonDocument ExecuteAndGetResult(IMongoCollection<BsonDocument> collection, bool async)
-        {
-            if (async)
-            {
-                return collection.FindOneAndReplaceAsync(_filter, _replacement, _options).GetAwaiter().GetResult();
-            }
-            else
-            {
-                return collection.FindOneAndReplace(_filter, _replacement, _options);
-            }
-        }
-
-        protected override void VerifyResult(BsonDocument actualResult, BsonDocument expectedResult)
-        {
-            actualResult.Should().Be(expectedResult);
-        }
-
-        protected override void VerifyCollection(IMongoCollection<BsonDocument> collection, BsonArray expectedData)
-        {
-            var data = collection.FindSync("{}").ToList();
-
-            if (ClusterDescription.Servers[0].Version < new SemanticVersion(2, 6, 0) && _options.IsUpsert)
-            {
-                foreach(var doc in data)
+                switch (argument.Name)
                 {
-                    doc.Remove("_id");
-                }
+                    case "filter":
+                        _filter = argument.Value.AsBsonDocument;
+                        break;
 
-                foreach(var doc in expectedData.Cast<BsonDocument>())
-                {
-                    doc.Remove("_id");
+                    case "replacement":
+                        _replacement = argument.Value.AsBsonDocument;
+                        break;
+
+                    case "projection":
+                        _options.Projection = argument.Value.AsBsonDocument;
+                        break;
+
+                    case "sort":
+                        _options.Sort = argument.Value.AsBsonDocument;
+                        break;
+
+                    case "upsert":
+                        _options.IsUpsert = argument.Value.ToBoolean();
+                        break;
+
+                    case "returnDocument":
+                        _options.ReturnDocument = (ReturnDocument)Enum.Parse(typeof(ReturnDocument), argument.Value.AsString);
+                        break;
+
+                    case "collation":
+                        _options.Collation = Collation.FromBsonDocument(argument.Value.AsBsonDocument);
+                        break;
+
+                    default:
+                        throw new ArgumentException($"Unexpected argument: {argument.Name}.");
                 }
             }
+        }
 
-            data.Should().BeEquivalentTo(expectedData);
+        // protected methods
+        protected override void ExecuteAsync(IMongoCollection<BsonDocument> collection)
+        {
+            _result = collection.FindOneAndReplaceAsync(_filter, _replacement, _options).GetAwaiter().GetResult();
+            _serverVersion = collection.Database.Client.Cluster.Description.Servers[0].Version;
+        }
+
+        protected override void ExecuteSync(IMongoCollection<BsonDocument> collection)
+        {
+            _result = collection.FindOneAndReplace(_filter, _replacement, _options);
+            _serverVersion = collection.Database.Client.Cluster.Description.Servers[0].Version;
+        }
+
+        protected override void VerifyCollectionContents(List<BsonDocument> actualContents, List<BsonDocument> expectedContents)
+        {
+            if (_serverVersion < new SemanticVersion(2, 6, 0) && _options.IsUpsert)
+            {
+                RemoveIds(actualContents);
+                RemoveIds(expectedContents);
+            }
+            base.VerifyCollectionContents(actualContents, expectedContents);
+        }
+
+        protected override void VerifyResult(BsonDocument result)
+        {
+            _result.Should().Be(result);
+        }
+
+        // private methods
+        private void RemoveIds(List<BsonDocument> documents)
+        {
+            foreach (var document in documents)
+            {
+                document.Remove("_id");
+            }
         }
     }
 }

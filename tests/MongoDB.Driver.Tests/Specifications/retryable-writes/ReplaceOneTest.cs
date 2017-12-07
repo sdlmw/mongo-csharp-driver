@@ -1,4 +1,4 @@
-/* Copyright 2017 MongoDB Inc.
+﻿/* Copyright 2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ using MongoDB.Bson;
 
 namespace MongoDB.Driver.Tests.Specifications.retryable_writes
 {
-    public class FindOneAndDeleteTest : RetryableWriteTestBase
+    public class ReplaceOneTest : RetryableWriteTestBase
     {
         // private fields
-        private BsonDocument _filter;
-        private FindOneAndDeleteOptions<BsonDocument> _options = new FindOneAndDeleteOptions<BsonDocument>();
-        private BsonDocument _result;
+        FilterDefinition<BsonDocument> _filter;
+        BsonDocument _replacement;
+        ReplaceOneResult _result;
 
         // public methods
         public override void Initialize(BsonDocument operation)
@@ -39,16 +39,8 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
                         _filter = argument.Value.AsBsonDocument;
                         break;
 
-                    case "projection":
-                        _options.Projection = argument.Value.AsBsonDocument;
-                        break;
-
-                    case "sort":
-                        _options.Sort = argument.Value.AsBsonDocument;
-                        break;
-
-                    case "collation":
-                        _options.Collation = Collation.FromBsonDocument(argument.Value.AsBsonDocument);
+                    case "replacement":
+                        _replacement = argument.Value.AsBsonDocument;
                         break;
 
                     default:
@@ -57,20 +49,35 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
             }
         }
 
+
         // protected methods
         protected override void ExecuteAsync(IMongoCollection<BsonDocument> collection)
         {
-            _result = collection.FindOneAndDeleteAsync(_filter, _options).GetAwaiter().GetResult();
+            _result = collection.ReplaceOneAsync(_filter, _replacement).GetAwaiter().GetResult();
         }
 
         protected override void ExecuteSync(IMongoCollection<BsonDocument> collection)
         {
-            _result = collection.FindOneAndDelete(_filter, _options);
+            _result = collection.ReplaceOne(_filter, _replacement);
         }
 
         protected override void VerifyResult(BsonDocument result)
         {
-            _result.Should().Be(result);
+            var expectedResult = ParseResult(result);
+            _result.MatchedCount.Should().Be(expectedResult.MatchedCount);
+            _result.ModifiedCount.Should().Be(expectedResult.ModifiedCount);
+        }
+
+        // private methods
+        private ReplaceOneResult ParseResult(BsonValue result)
+        {
+            VerifyFields((BsonDocument)result, "matchedCount", "modifiedCount", "upsertedCount");
+            var matchedCount = result["matchedCount"].ToInt64();
+            var modifiedCount = result["modifiedCount"].ToInt64();
+            var upsertedCount = result["upsertedCount"].ToInt64();
+            upsertedCount.Should().Be(0);
+
+            return new ReplaceOneResult.Acknowledged(matchedCount, modifiedCount, null);
         }
     }
 }

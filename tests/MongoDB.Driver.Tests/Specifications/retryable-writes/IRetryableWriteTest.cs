@@ -1,4 +1,4 @@
-/* Copyright 2010-2015 MongoDB Inc.
+/* Copyright 2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
 */
 
 using MongoDB.Bson;
-using MongoDB.Driver.Core.Clusters;
 
 namespace MongoDB.Driver.Tests.Specifications.retryable_writes
 {
-    public interface ICrudOperationTest
+    public interface IRetryableWriteTest
     {
-        bool CanExecute(ClusterDescription clusterDescription, BsonDocument arguments, out string reason);
-
-        void Execute(ClusterDescription clusterDescription, IMongoDatabase database, IMongoCollection<BsonDocument> collection, BsonDocument arguments, BsonDocument outcome, bool async);
+        void Execute(IMongoCollection<BsonDocument> collection, bool async);
+        void Initialize(BsonDocument operation);
+        void VerifyOutcome(IMongoCollection<BsonDocument> collection, BsonDocument outcome);
     }
 }

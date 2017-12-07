@@ -1,4 +1,4 @@
-/* Copyright 2017 MongoDB Inc.
+﻿/* Copyright 2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,19 +14,17 @@
 */
 
 using System;
-using System.Collections.Generic;
 using FluentAssertions;
 using MongoDB.Bson;
 
 namespace MongoDB.Driver.Tests.Specifications.retryable_writes
 {
-    public class FindOneAndUpdateTest : RetryableWriteTestBase
+    public class UpdateOneTest : RetryableWriteTestBase
     {
-        // private fields
-        private BsonDocument _filter;
-        private BsonDocument _update;
-        private FindOneAndUpdateOptions<BsonDocument> _options = new FindOneAndUpdateOptions<BsonDocument>();
-        private BsonDocument _result;
+        FilterDefinition<BsonDocument> _filter;
+        UpdateDefinition<BsonDocument> _update;
+        UpdateOptions _options = new UpdateOptions();
+        UpdateResult _result;
 
         // public methods
         public override void Initialize(BsonDocument operation)
@@ -45,34 +43,8 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
                         _update = argument.Value.AsBsonDocument;
                         break;
 
-                    case "projection":
-                        _options.Projection = argument.Value.AsBsonDocument;
-                        break;
-
-                    case "sort":
-                        _options.Sort = argument.Value.AsBsonDocument;
-                        break;
-
                     case "upsert":
                         _options.IsUpsert = argument.Value.ToBoolean();
-                        break;
-
-                    case "returnDocument":
-                        _options.ReturnDocument = (ReturnDocument)Enum.Parse(typeof(ReturnDocument), argument.Value.AsString);
-                        break;
-
-                    case "collation":
-                        _options.Collation = Collation.FromBsonDocument(argument.Value.AsBsonDocument);
-                        break;
-
-                    case "arrayFilters":
-                        var arrayFilters = new List<ArrayFilterDefinition>();
-                        foreach (var arrayFilter in argument.Value.AsBsonArray)
-                        {
-                            var arrayFilterDefinition = new BsonDocumentArrayFilterDefinition<BsonDocument>(arrayFilter.AsBsonDocument);
-                            arrayFilters.Add(arrayFilterDefinition);
-                        }
-                        _options.ArrayFilters = arrayFilters;
                         break;
 
                     default:
@@ -84,17 +56,34 @@ namespace MongoDB.Driver.Tests.Specifications.retryable_writes
         // protected methods
         protected override void ExecuteAsync(IMongoCollection<BsonDocument> collection)
         {
-            _result = collection.FindOneAndUpdateAsync(_filter, _update, _options).GetAwaiter().GetResult();
+            _result = collection.UpdateOneAsync(_filter, _update, _options).GetAwaiter().GetResult();
         }
 
         protected override void ExecuteSync(IMongoCollection<BsonDocument> collection)
         {
-            _result = collection.FindOneAndUpdate(_filter, _update, _options);
+            _result = collection.UpdateOne(_filter, _update, _options);
         }
 
         protected override void VerifyResult(BsonDocument result)
         {
-            _result.Should().Be(result);
+            var expectedResult = ParseResult(result);
+            _result.MatchedCount.Should().Be(expectedResult.MatchedCount);
+            _result.ModifiedCount.Should().Be(expectedResult.ModifiedCount);
+            _result.UpsertedId.Should().Be(expectedResult.UpsertedId);
+        }
+
+        // private methods
+        private UpdateResult ParseResult(BsonDocument result)
+        {
+            VerifyFields(result, "matchedCount", "modifiedCount", "upsertedCount", "upsertedId");
+
+            var matchedCount = result["matchedCount"].ToInt64();
+            var modifiedCount = result["modifiedCount"].ToInt64();
+            var upsertedCount = result["upsertedCount"].ToInt32();
+            var upsertedId = result.GetValue("upsertedId", null);
+            upsertedCount.Should().Be(upsertedId == null ? 0 : 1);
+
+            return new UpdateResult.Acknowledged(matchedCount, modifiedCount, upsertedId);
         }
     }
 }

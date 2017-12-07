@@ -14,6 +14,7 @@
 */
 
 using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.TestHelpers.XunitExtensions;
@@ -40,7 +41,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .FindOneAndDelete("{x: 'asdfafsdf'}");
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "findAndModify");
+                var index = commands.FindIndex(x => x.Names.FirstOrDefault() == "findAndModify");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
@@ -61,7 +62,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .FindOneAndReplace("{x: 'asdfafsdf'}", new BsonDocument("x", 1));
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "findAndModify");
+                var index = commands.FindIndex(x => x.Names.FirstOrDefault() == "findAndModify");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
@@ -82,7 +83,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .FindOneAndUpdate("{x: 'asdfafsdf'}", new BsonDocument("$set", new BsonDocument("x", 1)));
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "findAndModify");
+                var index = commands.FindIndex(x => x.Names.FirstOrDefault() == "findAndModify");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
@@ -103,7 +104,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .DeleteOne("{x: 'asdfafsdf'}");
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "delete");
+                var index = commands.FindIndex(x => x.Names.FirstOrDefault() == "delete");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
@@ -124,7 +125,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .InsertOne(new BsonDocument("x", 1));
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "insert");
+                var index = commands.FindIndex(x => x.Names.FirstOrDefault() == "insert");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
@@ -145,7 +146,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .ReplaceOne("{x: 'asdfafsdf'}", new BsonDocument("x", 1));
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "update");
+                var index = commands.FindIndex(x => x.Names.FirstOrDefault() == "update");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
@@ -166,7 +167,7 @@ namespace MongoDB.Driver.Tests
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .UpdateOne("{x: 'asdfafsdf'}", new BsonDocument("$set", new BsonDocument("x", 1)));
 
-                var index = commands.FindIndex(x => x.GetElement(0).Name == "update");
+                var index = commands.FindIndex(x => x.Names.FirstOrDefault() == "update");
                 var command = commands[index];
 
                 command.GetValue("txnNumber").Should().Be(new BsonInt64(1));

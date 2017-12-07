@@ -89,6 +89,14 @@ namespace MongoDB.Driver.Core.Operations
         /// <inheritdoc />
         protected override BsonDocument CreateCommand(ConnectionDescription connectionDescription, int attempt, long? transactionNumber)
         {
+            if (!Feature.Collation.IsSupported(connectionDescription.ServerVersion))
+            {
+                if (_deletes.Items.Skip(_deletes.Offset).Take(_deletes.Count).Any(d => d.Collation != null))
+                {
+                    throw new NotSupportedException($"Server version {connectionDescription.ServerVersion} does not support collations.");
+                }
+            }
+
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
             var batchWrapper = new BsonDocumentWrapper(_deletes, batchSerializer);
 

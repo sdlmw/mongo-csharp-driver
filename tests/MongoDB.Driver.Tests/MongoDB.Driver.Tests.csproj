@@ -366,11 +366,11 @@
     <EmbeddedResource Include="Specifications\retryable-writes\tests\deleteOne.json" />
     <None Include="Specifications\retryable-writes\tests\deleteOne.yml" />
     <EmbeddedResource Include="Specifications\retryable-writes\tests\findOneAndDelete.json" />
-    <EmbeddedResource Include="Specifications\retryable-writes\tests\findOneAndDelete.yml" />
+    <None Include="Specifications\retryable-writes\tests\findOneAndDelete.yml" />
     <EmbeddedResource Include="Specifications\retryable-writes\tests\findOneAndReplace.json" />
-    <EmbeddedResource Include="Specifications\retryable-writes\tests\findOneAndReplace.yml" />
+    <None Include="Specifications\retryable-writes\tests\findOneAndReplace.yml" />
     <EmbeddedResource Include="Specifications\retryable-writes\tests\findOneAndUpdate.json" />
-    <EmbeddedResource Include="Specifications\retryable-writes\tests\findOneAndUpdate.yml" />
+    <None Include="Specifications\retryable-writes\tests\findOneAndUpdate.yml" />
     <EmbeddedResource Include="Specifications\retryable-writes\tests\insertMany.json" />
     <None Include="Specifications\retryable-writes\tests\insertMany.yml" />
     <EmbeddedResource Include="Specifications\retryable-writes\tests\insertOne.json" />

@@ -415,7 +415,7 @@ namespace MongoDB.Driver.Core.Operations
                 }
 
                 var writeConcern = _writeConcern;
-                if (_isOrdered && _unprocessed.Count > 0 && !writeConcern.IsAcknowledged)
+                if (!writeConcern.IsAcknowledged && _isOrdered && _unprocessed.Count > 0)
                 {
                     writeConcern = WriteConcern.W1; // explicitly do not use the server's default
                 }

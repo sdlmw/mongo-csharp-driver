@@ -21,7 +21,7 @@ using MongoDB.Bson.Serialization.Serializers;
 namespace MongoDB.Driver.Core.Misc
 {
     /// <summary>
-    /// A serializer for BatchableSource that serializes as much of the BatchableSource as fits in the max batch size.
+    /// A serializer for BatchableSource that serializes as much of the BatchableSource as fits in the max batch count and size.
     /// </summary>
     /// <typeparam name="TItem">The type of the items.</typeparam>
     public class SizeLimitingBatchableSourceSerializer<TItem> : SerializerBase<BatchableSource<TItem>>
@@ -40,8 +40,8 @@ namespace MongoDB.Driver.Core.Misc
         /// <param name="itemSerializer">The item serializer.</param>
         /// <param name="itemElementNameValidator">The item element name validator.</param>
         /// <param name="maxBatchCount">The maximum batch count.</param>
-        /// <param name="maxItemSize">Maximum size of a serialized item.</param>
-        /// <param name="maxBatchSize">Maximum size of the batch.</param>
+        /// <param name="maxItemSize">The maximum size of a serialized item.</param>
+        /// <param name="maxBatchSize">The maximum size of the batch.</param>
         public SizeLimitingBatchableSourceSerializer(
             IBsonSerializer<TItem> itemSerializer, 
             IElementNameValidator itemElementNameValidator, 

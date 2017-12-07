@@ -141,6 +141,7 @@ namespace MongoDB.Driver.Core.Operations
         // private methods
         private IBsonSerializer<BatchableSource<TDocument>> CreateBatchSerializer(ConnectionDescription connectionDescription, int attempt)
         {
+            var itemSerializer = new InsertSerializer(_documentSerializer);
             var isSystemIndexesCollection = _collectionNamespace.Equals(CollectionNamespace.DatabaseNamespace.SystemIndexesCollection);
             var elementNameValidator = isSystemIndexesCollection ? (IElementNameValidator)NoOpElementNameValidator.Instance : CollectionElementNameValidator.Instance;
 
@@ -149,12 +150,49 @@ namespace MongoDB.Driver.Core.Operations
                 var maxBatchCount = Math.Min(MaxBatchCount ?? int.MaxValue, connectionDescription.MaxBatchCount);
                 var maxItemSize = connectionDescription.MaxDocumentSize;
                 var maxBatchSize = connectionDescription.MaxWireDocumentSize;
-                return new SizeLimitingBatchableSourceSerializer<TDocument>(_documentSerializer, elementNameValidator, maxBatchCount, maxItemSize, maxBatchSize);
+                return new SizeLimitingBatchableSourceSerializer<TDocument>(itemSerializer, elementNameValidator, maxBatchCount, maxItemSize, maxBatchSize);
             }
             else
             {
                 var count = _documents.AdjustedCount; // as adjusted by the first attempt
-                return new FixedCountBatchableSourceSerializer<TDocument>(_documentSerializer, elementNameValidator, count);
+                return new FixedCountBatchableSourceSerializer<TDocument>(itemSerializer, elementNameValidator, count);
+            }
+        }
+
+        // nested types
+        private class InsertSerializer : SerializerBase<TDocument>
+        {
+            // private fields
+            private IBsonSerializer _cachedSerializer;
+            private readonly IBsonSerializer<TDocument> _documentSerializer;
+
+            // constructors
+            public InsertSerializer(IBsonSerializer<TDocument> documentSerializer)
+            {
+                _documentSerializer = documentSerializer;
+                _cachedSerializer = documentSerializer;
+            }
+
+            // public methods
+            public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, TDocument value)
+            {
+                IBsonSerializer serializer;
+
+                var actualType = value.GetType();
+                if (actualType == typeof(TDocument))
+                {
+                    serializer = _documentSerializer;
+                }
+                else
+                {
+                    if (_cachedSerializer.ValueType != actualType)
+                    {
+                        _cachedSerializer = BsonSerializer.LookupSerializer(actualType);
+                    }
+                    serializer = _cachedSerializer;
+                }
+
+                serializer.Serialize(context, value);
             }
         }
     }

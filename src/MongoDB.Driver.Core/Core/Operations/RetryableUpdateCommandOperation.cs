@@ -101,6 +101,22 @@ namespace MongoDB.Driver.Core.Operations
         /// <inheritdoc />
         protected override BsonDocument CreateCommand(ConnectionDescription connectionDescription, int attempt, long? transactionNumber)
         {
+            var serverVersion = connectionDescription.ServerVersion;
+            if (!Feature.Collation.IsSupported(serverVersion))
+            {
+                if (_updates.Items.Skip(_updates.Offset).Take(_updates.Count).Any(u => u.Collation != null))
+                {
+                    throw new NotSupportedException($"Server version {serverVersion} does not support collations.");
+                }
+            }
+            if (!Feature.ArrayFilters.IsSupported(serverVersion))
+            {
+                if (_updates.Items.Skip(_updates.Offset).Take(_updates.Count).Any(u => u.ArrayFilters != null))
+                {
+                    throw new NotSupportedException($"Server version {serverVersion} does not support arrayFilters.");
+                }
+            }
+
             var batchSerializer = CreateBatchSerializer(connectionDescription, attempt);
             var batchWrapper = new BsonDocumentWrapper(_updates, batchSerializer);
 
@@ -152,10 +168,16 @@ namespace MongoDB.Driver.Core.Operations
                 BsonDocumentSerializer.Instance.Serialize(context, value.Filter);
                 writer.WriteName("u");
                 SerializeUpdate(context, args, value);
-                writer.WriteName("upsert");
-                writer.WriteBoolean(value.IsUpsert);
-                writer.WriteName("multi");
-                writer.WriteBoolean(value.IsMulti);
+                if (value.IsMulti)
+                {
+                    writer.WriteName("multi");
+                    writer.WriteBoolean(value.IsMulti);
+                }
+                if (value.IsUpsert)
+                {
+                    writer.WriteName("upsert");
+                    writer.WriteBoolean(value.IsUpsert);
+                }
                 if (value.Collation != null)
                 {
                     writer.WriteName("collation");

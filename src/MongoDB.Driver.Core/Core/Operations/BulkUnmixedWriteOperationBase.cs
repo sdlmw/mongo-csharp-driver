@@ -257,7 +257,7 @@ namespace MongoDB.Driver.Core.Operations
             public BulkWriteOperationResult CreateFinalResultOrThrow(IChannelHandle channel)
             {
                 var combiner = new BulkWriteBatchResultCombiner(_batchResults, _writeConcern.IsAcknowledged);
-                var remainingRequests = _requests.Items.Skip(_requests.Offset).Take(_requests.Count).ToList();
+                var remainingRequests = _requests.GetItemsInAdjustedBatch();
                 return combiner.CreateResultOrThrowIfHasErrors(channel.ConnectionDescription.ConnectionId, remainingRequests);
             }
 

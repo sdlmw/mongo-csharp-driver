@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver.Core.Bindings;
@@ -135,13 +136,9 @@ namespace MongoDB.Driver.Core.Operations
         {
             if (_retryRequested)
             {
-                foreach (var request in requests)
+                if (requests.Any(r => !r.IsRetryable(_channel.ConnectionDescription)))
                 {
-                    if (!request.IsRetryable(_channel.ConnectionDescription))
-                    {
-                        _retryRequested = false;
-                        return;
-                    }
+                    _retryRequested = false;
                 }
             }
         }

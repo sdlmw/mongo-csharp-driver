@@ -121,7 +121,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
                 var message = subject.ReadMessage();
                 message.CollectionNamespace.Should().Be(__collectionNamespace);
                 message.ContinueOnError.Should().Be(__continueOnError);
-                message.DocumentSource.GetItemsInAdjustedBatch().Should().Equal(__documentSource.GetItemsInAdjustedBatch());
+                message.DocumentSource.Items.Should().Equal(__documentSource.GetProcessedItems());
                 message.MaxBatchCount.Should().Be(__maxBatchCount);
                 message.MaxMessageSize.Should().Be(__maxMessageSize);
                 message.RequestId.Should().Be(__requestId);

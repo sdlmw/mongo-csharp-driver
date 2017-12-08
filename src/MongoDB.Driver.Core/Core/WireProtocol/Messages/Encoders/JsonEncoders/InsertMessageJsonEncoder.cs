@@ -140,7 +140,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
         {
             var documentSource = message.DocumentSource;
             var batchCount = Math.Min(documentSource.Count, message.MaxBatchCount);
-            if (batchCount < documentSource.Count && !documentSource.CanBeAdjusted)
+            if (batchCount < documentSource.Count && !documentSource.CanBeSplit)
             {
                 throw new BsonSerializationException("Batch is too large.");
             }
@@ -152,11 +152,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
                 var wrappedDocument = new BsonDocumentWrapper(document, _serializer);
                 wrappedDocuments.Add(wrappedDocument);
             }
-
-            if (batchCount != documentSource.Count)
-            {
-                documentSource.SetAdjustedCount(batchCount);
-            }
+            documentSource.SetProcessedCount(batchCount);
 
             return wrappedDocuments;
         }

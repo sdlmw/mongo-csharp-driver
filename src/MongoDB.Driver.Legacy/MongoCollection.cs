@@ -1504,23 +1504,19 @@ namespace MongoDB.Driver
                 documents = documents.Select(d => { AssignId(d, null); return d; });
             }
 
-            using (var enumerator = documents.GetEnumerator())
+            var serializer = BsonSerializer.LookupSerializer<TNominalType>();
+            var messageEncoderSettings = GetMessageEncoderSettings();
+            var continueOnError = (options.Flags & InsertFlags.ContinueOnError) == InsertFlags.ContinueOnError;
+            var writeConcern = options.WriteConcern ?? _settings.WriteConcern;
+
+            var operation = new InsertOpcodeOperation<TNominalType>(_collectionNamespace, documents, serializer, messageEncoderSettings)
             {
-                var documentSource = new BatchableSource<TNominalType>(enumerator);
-                var serializer = BsonSerializer.LookupSerializer<TNominalType>();
-                var messageEncoderSettings = GetMessageEncoderSettings();
-                var continueOnError = (options.Flags & InsertFlags.ContinueOnError) == InsertFlags.ContinueOnError;
-                var writeConcern = options.WriteConcern ?? _settings.WriteConcern;
+                BypassDocumentValidation = options.BypassDocumentValidation,
+                ContinueOnError = continueOnError,
+                WriteConcern = writeConcern
+            };
 
-                var operation = new InsertOpcodeOperation<TNominalType>(_collectionNamespace, documentSource, serializer, messageEncoderSettings)
-                {
-                    BypassDocumentValidation = options.BypassDocumentValidation,
-                    ContinueOnError = continueOnError,
-                    WriteConcern = writeConcern
-                };
-
-                return ExecuteWriteOperation(session, operation);
-            }
+            return ExecuteWriteOperation(session, operation);
         }
 
         /// <summary>

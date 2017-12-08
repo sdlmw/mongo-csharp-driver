@@ -150,7 +150,7 @@ namespace MongoDB.Driver.Core.Operations
             }
             else
             {
-                var count = _updates.AdjustedCount; // as adjusted by the first attempt
+                var count = _updates.ProcessedCount; // as set by the first attempt
                 return new FixedCountBatchableSourceSerializer<UpdateRequest>(UpdateRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
             }
         }

@@ -53,7 +53,13 @@ namespace MongoDB.Driver.Core.Operations
 
         protected override IExecutableInRetryableWriteContext<BulkWriteOperationResult> CreateEmulator()
         {
-            throw new System.NotImplementedException();
+            return new BulkUpdateOperationEmulator(CollectionNamespace, Requests, MessageEncoderSettings)
+            {
+                IsOrdered = IsOrdered,
+                MaxBatchCount = MaxBatchCount,
+                MaxBatchLength = MaxBatchLength,
+                WriteConcern = WriteConcern
+            };
         }
     }
 }

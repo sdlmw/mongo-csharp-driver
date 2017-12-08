@@ -62,7 +62,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
             var fullCollectionName = stream.ReadCString(Encoding);
             var documents = ReadDocuments(reader, messageStartPosition, messageSize);
 
-            var documentSource = new BatchableSource<TDocument>(documents);
+            var documentSource = new BatchableSource<TDocument>(documents, canBeSplit: false);
             var maxBatchCount = int.MaxValue;
             var maxMessageSize = int.MaxValue;
             var continueOnError = (flags & InsertFlags.ContinueOnError) == InsertFlags.ContinueOnError;
@@ -136,7 +136,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
             {
                 var documentSource = message.DocumentSource;
                 var batchCount = Math.Min(documentSource.Count, message.MaxBatchCount);
-                if (batchCount < documentSource.Count && !documentSource.CanBeAdjusted)
+                if (batchCount < documentSource.Count && !documentSource.CanBeSplit)
                 {
                     throw new BsonSerializationException("Batch is too large.");
                 }
@@ -151,11 +151,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                     var messageSize = stream.Position - messageStartPosition;
                     if (messageSize > message.MaxMessageSize)
                     {
-                        if (i > 0 && documentSource.CanBeAdjusted)
+                        if (i > 0 && documentSource.CanBeSplit)
                         {
                             stream.Position = documentStartPosition;
                             stream.SetLength(documentStartPosition);
-                            documentSource.SetAdjustedCount(i);
+                            documentSource.SetProcessedCount(i);
                             return;
                         }
                         else
@@ -164,11 +164,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                         }
                     }
                 }
-
-                if (batchCount != documentSource.Count)
-                {
-                    documentSource.SetAdjustedCount(batchCount);
-                }
+                documentSource.SetProcessedCount(batchCount);
             }
             finally
             {

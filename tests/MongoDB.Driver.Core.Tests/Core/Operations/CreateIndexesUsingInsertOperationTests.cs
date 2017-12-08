@@ -80,7 +80,7 @@ namespace MongoDB.Driver.Core.Operations
             result.BypassDocumentValidation.Should().NotHaveValue();
             result.CollectionNamespace.CollectionName.Should().Be("system.indexes");
             result.ContinueOnError.Should().BeFalse();
-            result.DocumentSource.Count.Should().Be(requests.Length);
+            result.Documents.Count.Should().Be(requests.Length);
             result.MaxBatchCount.Should().NotHaveValue();
             result.MaxDocumentSize.Should().NotHaveValue();
             result.MaxMessageSize.Should().NotHaveValue();

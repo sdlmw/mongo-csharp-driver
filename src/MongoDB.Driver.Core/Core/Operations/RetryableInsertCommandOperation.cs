@@ -154,7 +154,7 @@ namespace MongoDB.Driver.Core.Operations
             }
             else
             {
-                var count = _documents.AdjustedCount; // as adjusted by the first attempt
+                var count = _documents.ProcessedCount; // as set by the first attempt
                 return new FixedCountBatchableSourceSerializer<TDocument>(itemSerializer, elementNameValidator, count);
             }
         }

@@ -160,7 +160,7 @@ namespace MongoDB.Driver.Core.Operations
         // private methods
         private BulkInsertOperation CreateOperation()
         {
-            var requests = _documentSource.GetItemsInAdjustedBatch().Select(d => new InsertRequest(new BsonDocumentWrapper(d, _serializer)));
+            var requests = _documentSource.GetBatchItems().Select(d => new InsertRequest(new BsonDocumentWrapper(d, _serializer)));
 
             return new BulkInsertOperation(_collectionNamespace, requests, _messageEncoderSettings)
             {

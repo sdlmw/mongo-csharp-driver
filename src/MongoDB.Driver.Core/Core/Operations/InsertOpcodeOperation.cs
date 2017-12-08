@@ -36,6 +36,7 @@ namespace MongoDB.Driver.Core.Operations
         private bool? _bypassDocumentValidation;
         private readonly CollectionNamespace _collectionNamespace;
         private bool _continueOnError;
+        private readonly IReadOnlyList<TDocument> _documents;
         private readonly BatchableSource<TDocument> _documentSource;
         private int? _maxBatchCount;
         private int? _maxDocumentSize;
@@ -49,9 +50,28 @@ namespace MongoDB.Driver.Core.Operations
         /// Initializes a new instance of the <see cref="InsertOpcodeOperation{TDocument}"/> class.
         /// </summary>
         /// <param name="collectionNamespace">The collection namespace.</param>
+        /// <param name="documents">The documents.</param>
+        /// <param name="serializer">The serializer.</param>
+        /// <param name="messageEncoderSettings">The message encoder settings.</param>
+        public InsertOpcodeOperation(CollectionNamespace collectionNamespace, IEnumerable<TDocument> documents, IBsonSerializer<TDocument> serializer, MessageEncoderSettings messageEncoderSettings)
+        {
+            _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
+            _documents =  Ensure.IsNotNull(documents, nameof(documents)).ToList();
+            _serializer = Ensure.IsNotNull(serializer, nameof(serializer));
+            _messageEncoderSettings = Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
+            _writeConcern = WriteConcern.Acknowledged;
+
+            _documentSource = new BatchableSource<TDocument>(_documents, canBeSplit: true);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InsertOpcodeOperation{TDocument}"/> class.
+        /// </summary>
+        /// <param name="collectionNamespace">The collection namespace.</param>
         /// <param name="documentSource">The document source.</param>
         /// <param name="serializer">The serializer.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
+        [Obsolete("Use the constructor that takes an IEnumerable<TDocument> instead of a BatchableSource<TDocument>.")]
         public InsertOpcodeOperation(CollectionNamespace collectionNamespace, BatchableSource<TDocument> documentSource, IBsonSerializer<TDocument> serializer, MessageEncoderSettings messageEncoderSettings)
         {
             _collectionNamespace = Ensure.IsNotNull(collectionNamespace, nameof(collectionNamespace));
@@ -59,6 +79,8 @@ namespace MongoDB.Driver.Core.Operations
             _serializer = Ensure.IsNotNull(serializer, nameof(serializer));
             _messageEncoderSettings = Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
             _writeConcern = WriteConcern.Acknowledged;
+
+            _documents = _documentSource.GetBatchItems();
         }
 
         // properties
@@ -95,6 +117,17 @@ namespace MongoDB.Driver.Core.Operations
         {
             get { return _continueOnError; }
             set { _continueOnError = value; }
+        }
+
+        /// <summary>
+        /// Gets the documents.
+        /// </summary>
+        /// <value>
+        /// The documents.
+        /// </value>
+        public IReadOnlyList<TDocument> Documents
+        {
+            get { return _documents; }
         }
 
         /// <summary>
@@ -359,11 +392,11 @@ namespace MongoDB.Driver.Core.Operations
                 while (_documentSource.Count > 0)
                 {			
                     var writeConcern = _writeConcern;
-					Func<bool> shouldSendGetLastError = null;
+                    Func<bool> shouldSendGetLastError = null;
                     if (!writeConcern.IsAcknowledged && !_continueOnError)
                     {
                         writeConcern = WriteConcern.W1;
-                        shouldSendGetLastError = () => _documentSource.AdjustedCount < _documentSource.Count;
+                        shouldSendGetLastError = () => !_documentSource.AllItemsWereProcessed;
                     }
 
                     var batch = new Batch
@@ -377,7 +410,7 @@ namespace MongoDB.Driver.Core.Operations
 
                     _results.Add(batch.Result);
 
-                    _documentSource.AdvanceOverAdjustedBatch();
+                    _documentSource.AdvancePastProcessedItems();
                 }
             }
 

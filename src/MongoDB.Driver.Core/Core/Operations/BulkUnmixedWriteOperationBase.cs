@@ -166,7 +166,7 @@ namespace MongoDB.Driver.Core.Operations
         protected WriteConcern GetBatchWriteConcern(Batch batch)
         {
             var writeConcern = _writeConcern;
-            if (!writeConcern.IsAcknowledged && _isOrdered && batch.Requests.AdjustedCount < batch.Requests.Count)
+            if (!writeConcern.IsAcknowledged && _isOrdered && !batch.Requests.AllItemsWereProcessed)
             {
                 writeConcern = WriteConcern.W1;
             }
@@ -177,7 +177,7 @@ namespace MongoDB.Driver.Core.Operations
         private BulkWriteBatchResult CreateBatchResult(Batch batch, BsonDocument writeCommandResult)
         {
             var requests = batch.Requests;
-            var requestsInBatch = requests.GetItemsInAdjustedBatch();
+            var requestsInBatch = requests.GetProcessedItems();
             var indexMap = new IndexMap.RangeBased(0, requests.Offset, requests.Count);
             return BulkWriteBatchResult.Create(
                 _isOrdered,
@@ -231,7 +231,7 @@ namespace MongoDB.Driver.Core.Operations
 
             public BatchHelper(IReadOnlyList<TWriteRequest> requests, WriteConcern writeConcern, bool isOrdered)
             {
-                _requests = new BatchableSource<TWriteRequest>(requests, 0, requests.Count, canBeAdjusted: true);
+                _requests = new BatchableSource<TWriteRequest>(requests, 0, requests.Count, canBeSplit: true);
                 _writeConcern = writeConcern;
                 _isOrdered = isOrdered;
             }
@@ -250,14 +250,14 @@ namespace MongoDB.Driver.Core.Operations
                     _batchResults.Add(batch.Result);
                     _hasWriteErrors |= batch.Result.HasWriteErrors;
 
-                    _requests.AdvanceOverAdjustedBatch();
+                    _requests.AdvancePastProcessedItems();
                 }
             }
 
             public BulkWriteOperationResult CreateFinalResultOrThrow(IChannelHandle channel)
             {
                 var combiner = new BulkWriteBatchResultCombiner(_batchResults, _writeConcern.IsAcknowledged);
-                var remainingRequests = _requests.GetItemsInAdjustedBatch();
+                var remainingRequests = _requests.GetUnprocessedItems();
                 return combiner.CreateResultOrThrowIfHasErrors(channel.ConnectionDescription.ConnectionId, remainingRequests);
             }
 

@@ -129,7 +129,7 @@ namespace MongoDB.Driver.Core.Operations
             }
             else
             {
-                var count = _deletes.AdjustedCount; // as adjusted by the first attempt
+                var count = _deletes.ProcessedCount; // as set by the first attempt
                 return new FixedCountBatchableSourceSerializer<DeleteRequest>(DeleteRequestSerializer.Instance, NoOpElementNameValidator.Instance, count);
             }
         }

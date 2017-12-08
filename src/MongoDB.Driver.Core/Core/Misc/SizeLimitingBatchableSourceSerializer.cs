@@ -76,7 +76,7 @@ namespace MongoDB.Driver.Core.Misc
             try
             {
                 var batchCount = Math.Min(value.Count, _maxBatchCount);
-                if (batchCount != value.Count && !value.CanBeAdjusted)
+                if (batchCount != value.Count && !value.CanBeSplit)
                 {
                     throw new ArgumentException("Batch is too large.");
                 }
@@ -91,11 +91,11 @@ namespace MongoDB.Driver.Core.Misc
                     var batchSize = binaryWriter?.Position - startPosition;
                     if (batchSize > _maxBatchSize)
                     {
-                        if (i > 0 && value.CanBeAdjusted)
+                        if (i > 0 && value.CanBeSplit)
                         {
                             binaryWriter.BaseStream.Position = itemPosition.Value; // remove the last item
                             binaryWriter.BaseStream.SetLength(itemPosition.Value);
-                            value.SetAdjustedCount(i);
+                            value.SetProcessedCount(i);
                             return;
                         }
                         else
@@ -104,11 +104,7 @@ namespace MongoDB.Driver.Core.Misc
                         }
                     }
                 }
-
-                if (batchCount != value.Count)
-                {
-                    value.SetAdjustedCount(batchCount);
-                }
+                value.SetProcessedCount(batchCount);
             }
             finally
             {

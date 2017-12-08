@@ -13,12 +13,10 @@
 * limitations under the License.
 */
 
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.TestHelpers.XunitExtensions;
+using MongoDB.Driver.Core;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Events;
 using MongoDB.Driver.Core.TestHelpers.XunitExtensions;
@@ -33,18 +31,17 @@ namespace MongoDB.Driver.Tests
         {
             RequireSupportForRetryableWrites();
 
-            var commands = new ConcurrentQueue<BsonDocument>();
-
-            using (var client = GetClient(commands))
+            var events = new EventCapturer().Capture<CommandStartedEvent>(x => x.CommandName == "findAndModify");
+            using (var client = GetClient(events))
             using (var session = client.StartSession())
             {
                 client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName)
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .FindOneAndDelete("{x: 'asdfafsdf'}");
 
-                var command = commands.First(x => x.Names.FirstOrDefault() == "findAndModify");
+                var commandStartedEvent = (CommandStartedEvent)events.Next();
 
-                command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
+                commandStartedEvent.Command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
             }
         }
 
@@ -53,18 +50,17 @@ namespace MongoDB.Driver.Tests
         {
             RequireSupportForRetryableWrites();
 
-            var commands = new ConcurrentQueue<BsonDocument>();
-
-            using (var client = GetClient(commands))
+            var events = new EventCapturer().Capture<CommandStartedEvent>(x => x.CommandName == "findAndModify");
+            using (var client = GetClient(events))
             using (var session = client.StartSession())
             {
                 client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName)
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .FindOneAndReplace("{x: 'asdfafsdf'}", new BsonDocument("x", 1));
 
-                var command = commands.First(x => x.Names.FirstOrDefault() == "findAndModify");
+                var commandStartedEvent = (CommandStartedEvent)events.Next();
 
-                command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
+                commandStartedEvent.Command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
             }
         }
 
@@ -73,18 +69,17 @@ namespace MongoDB.Driver.Tests
         {
             RequireSupportForRetryableWrites();
 
-            var commands = new ConcurrentQueue<BsonDocument>();
-
-            using (var client = GetClient(commands))
+            var events = new EventCapturer().Capture<CommandStartedEvent>(x => x.CommandName == "findAndModify");
+            using (var client = GetClient(events))
             using (var session = client.StartSession())
             {
                 client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName)
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .FindOneAndUpdate("{x: 'asdfafsdf'}", new BsonDocument("$set", new BsonDocument("x", 1)));
 
-                var command = commands.First(x => x.Names.FirstOrDefault() == "findAndModify");
+                var commandStartedEvent = (CommandStartedEvent)events.Next();
 
-                command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
+                commandStartedEvent.Command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
             }
         }
 
@@ -93,18 +88,17 @@ namespace MongoDB.Driver.Tests
         {
             RequireSupportForRetryableWrites();
 
-            var commands = new ConcurrentQueue<BsonDocument>();
-
-            using (var client = GetClient(commands))
+            var events = new EventCapturer().Capture<CommandStartedEvent>(x => x.CommandName == "delete");
+            using (var client = GetClient(events))
             using (var session = client.StartSession())
             {
                 client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName)
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .DeleteOne("{x: 'asdfafsdf'}");
 
-                var command = commands.First(x => x.Names.FirstOrDefault() == "delete");
+                var commandStartedEvent = (CommandStartedEvent)events.Next();
 
-                command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
+                commandStartedEvent.Command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
             }
         }
 
@@ -113,18 +107,17 @@ namespace MongoDB.Driver.Tests
         {
             RequireSupportForRetryableWrites();
 
-            var commands = new ConcurrentQueue<BsonDocument>();
-
-            using (var client = GetClient(commands))
+            var events = new EventCapturer().Capture<CommandStartedEvent>(x => x.CommandName == "insert");
+            using (var client = GetClient(events))
             using (var session = client.StartSession())
             {
                 client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName)
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .InsertOne(new BsonDocument("x", 1));
 
-                var command = commands.First(x => x.Names.FirstOrDefault() == "insert");
+                var commandStartedEvent = (CommandStartedEvent)events.Next();
 
-                command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
+                commandStartedEvent.Command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
             }
         }
 
@@ -133,18 +126,17 @@ namespace MongoDB.Driver.Tests
         {
             RequireSupportForRetryableWrites();
 
-            var commands = new ConcurrentQueue<BsonDocument>();
-
-            using (var client = GetClient(commands))
+            var events = new EventCapturer().Capture<CommandStartedEvent>(x => x.CommandName == "update");
+            using (var client = GetClient(events))
             using (var session = client.StartSession())
             {
                 client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName)
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .ReplaceOne("{x: 'asdfafsdf'}", new BsonDocument("x", 1));
 
-                var command = commands.First(x => x.Names.FirstOrDefault() == "update");
+                var commandStartedEvent = (CommandStartedEvent)events.Next();
 
-                command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
+                commandStartedEvent.Command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
             }
         }
 
@@ -153,31 +145,26 @@ namespace MongoDB.Driver.Tests
         {
             RequireSupportForRetryableWrites();
 
-            var commands = new ConcurrentQueue<BsonDocument>();
-
-            using (var client = GetClient(commands))
+            var events = new EventCapturer().Capture<CommandStartedEvent>(x => x.CommandName == "update");
+            using (var client = GetClient(events))
             using (var session = client.StartSession())
             {
                 client.GetDatabase(DriverTestConfiguration.DatabaseNamespace.DatabaseName)
                     .GetCollection<BsonDocument>(DriverTestConfiguration.CollectionNamespace.CollectionName)
                     .UpdateOne("{x: 'asdfafsdf'}", new BsonDocument("$set", new BsonDocument("x", 1)));
 
-                var command = commands.First(x => x.Names.FirstOrDefault() == "update");
+                var commandStartedEvent = (CommandStartedEvent)events.Next();
 
-                command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
+                commandStartedEvent.Command.GetValue("txnNumber").Should().Be(new BsonInt64(1));
             }
         }
 
-        private DisposableMongoClient GetClient(ConcurrentQueue<BsonDocument> commands)
+        private DisposableMongoClient GetClient(EventCapturer capturer)
         {
             var connectionString = CoreTestConfiguration.ConnectionString.ToString();
             var clientSettings = MongoClientSettings.FromUrl(new MongoUrl(connectionString));
             clientSettings.RetryWrites = true;
-
-            clientSettings.ClusterConfigurator = cb =>
-            {
-                cb.Subscribe<CommandStartedEvent>(x => commands.Enqueue((BsonDocument)x.Command.DeepClone()));
-            };
+            clientSettings.ClusterConfigurator = cb => cb.Subscribe(capturer);
 
             return new DisposableMongoClient(new MongoClient(clientSettings));
         }

@@ -27,6 +27,7 @@ namespace MongoDB.Driver.Core.Operations
         private readonly CollectionNamespace _collectionNamespace;
         private readonly DeleteRequest _request;
         private readonly MessageEncoderSettings _messageEncoderSettings;
+        private bool _retryRequested;
         private WriteConcern _writeConcern = WriteConcern.Acknowledged;
 
         // constructors
@@ -54,6 +55,12 @@ namespace MongoDB.Driver.Core.Operations
         public MessageEncoderSettings MessageEncoderSettings
         {
             get { return _messageEncoderSettings; }
+        }
+
+        public bool RetryRequested
+        {
+            get { return _retryRequested; }
+            set { _retryRequested = value; }
         }
 
         public WriteConcern WriteConcern
@@ -109,6 +116,7 @@ namespace MongoDB.Driver.Core.Operations
             var requests = new[] { _request };
             return new BulkDeleteOperation(_collectionNamespace, requests, _messageEncoderSettings)
             {
+                RetryRequested = _retryRequested,
                 WriteConcern = _writeConcern
             };
         }

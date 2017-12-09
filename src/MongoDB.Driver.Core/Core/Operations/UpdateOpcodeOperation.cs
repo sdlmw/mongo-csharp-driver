@@ -37,6 +37,7 @@ namespace MongoDB.Driver.Core.Operations
         private int? _maxDocumentSize;
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly UpdateRequest _request;
+        private bool _retryRequested;
         private WriteConcern _writeConcern = WriteConcern.Acknowledged;
 
         // constructors
@@ -115,6 +116,16 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether retry is enabled for the operation.
+        /// </summary>
+        /// <value>A value indicating whether retry is enabled.</value>
+        public bool RetryRequested
+        {
+            get { return _retryRequested; }
+            set { _retryRequested = value; }
+        }
+
+        /// <summary>
         /// Gets or sets the write concern.
         /// </summary>
         /// <value>
@@ -186,6 +197,7 @@ namespace MongoDB.Driver.Core.Operations
             {
                 BypassDocumentValidation = _bypassDocumentValidation,
                 MaxDocumentSize = _maxDocumentSize,
+                RetryRequested = _retryRequested,
                 WriteConcern = _writeConcern
             };
         }

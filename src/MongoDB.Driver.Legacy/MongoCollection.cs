@@ -649,6 +649,7 @@ namespace MongoDB.Driver
                     IsUpsert = args.Upsert,
                     MaxTime = args.MaxTime,
                     Projection = projection,
+                    RetryRequested = _server.Settings.RetryWrites,
                     ReturnDocument = returnDocument,
                     Sort = sort,
                     WriteConcern = _settings.WriteConcern
@@ -714,6 +715,7 @@ namespace MongoDB.Driver
                 Collation = args.Collation,
                 MaxTime = args.MaxTime,
                 Projection = projection,
+                RetryRequested = _server.Settings.RetryWrites,
                 Sort = sort,
                 WriteConcern = _settings.WriteConcern
             };
@@ -1513,6 +1515,7 @@ namespace MongoDB.Driver
             {
                 BypassDocumentValidation = options.BypassDocumentValidation,
                 ContinueOnError = continueOnError,
+                RetryRequested = _server.Settings.RetryWrites,
                 WriteConcern = writeConcern
             };
 
@@ -1831,6 +1834,7 @@ namespace MongoDB.Driver
             };
             var operation = new DeleteOpcodeOperation(_collectionNamespace, request, messageEncoderSettings)
             {
+                RetryRequested = _database.Server.Settings.RetryWrites,
                 WriteConcern = writeConcern
             };
 
@@ -2057,6 +2061,7 @@ namespace MongoDB.Driver
             var operation = new UpdateOpcodeOperation(_collectionNamespace, request, messageEncoderSettings)
             {
                 BypassDocumentValidation = options.BypassDocumentValidation,
+                RetryRequested = _server.Settings.RetryWrites,
                 WriteConcern = writeConcern
             };
 

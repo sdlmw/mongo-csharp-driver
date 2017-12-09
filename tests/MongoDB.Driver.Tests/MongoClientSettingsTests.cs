@@ -232,10 +232,6 @@ namespace MongoDB.Driver.Tests
             Assert.False(clone.Equals(settings));
 
             clone = settings.Clone();
-            clone.RetryWrites = true;
-            Assert.False(clone.Equals(settings));
-
-            clone = settings.Clone();
             clone.LocalThreshold = new TimeSpan(1, 2, 3);
             Assert.False(clone.Equals(settings));
 

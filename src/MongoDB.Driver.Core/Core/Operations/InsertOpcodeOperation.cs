@@ -42,6 +42,7 @@ namespace MongoDB.Driver.Core.Operations
         private int? _maxDocumentSize;
         private int? _maxMessageSize;
         private readonly MessageEncoderSettings _messageEncoderSettings;
+        private bool _retryRequested;
         private readonly IBsonSerializer<TDocument> _serializer;
         private WriteConcern _writeConcern;
 
@@ -189,6 +190,16 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether retry is enabled for the operation.
+        /// </summary>
+        /// <value>A value indicating whether retry is enabled.</value>
+        public bool RetryRequested
+        {
+            get { return _retryRequested; }
+            set { _retryRequested = value; }
+        }
+
+        /// <summary>
         /// Gets the serializer.
         /// </summary>
         /// <value>
@@ -280,6 +291,7 @@ namespace MongoDB.Driver.Core.Operations
                 MaxBatchCount = _maxBatchCount,
                 MaxDocumentSize = _maxDocumentSize,
                 MaxMessageSize = _maxMessageSize,
+                RetryRequested = _retryRequested,
                 WriteConcern = _writeConcern
             };
         }

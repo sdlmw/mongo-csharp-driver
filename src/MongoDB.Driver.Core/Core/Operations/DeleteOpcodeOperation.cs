@@ -32,6 +32,7 @@ namespace MongoDB.Driver.Core.Operations
         private readonly CollectionNamespace _collectionNamespace;
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly DeleteRequest _request;
+        private bool _retryRequested;
         private WriteConcern _writeConcern = WriteConcern.Acknowledged;
 
         // constructors
@@ -83,6 +84,16 @@ namespace MongoDB.Driver.Core.Operations
         public MessageEncoderSettings MessageEncoderSettings
         {
             get { return _messageEncoderSettings; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether retry is enabled for the operation.
+        /// </summary>
+        /// <value>A value indicating whether retry is enabled.</value>
+        public bool RetryRequested
+        {
+            get { return _retryRequested; }
+            set { _retryRequested = value; }
         }
 
         /// <summary>
@@ -160,6 +171,7 @@ namespace MongoDB.Driver.Core.Operations
         {
             return new DeleteOpcodeOperationEmulator(_collectionNamespace, _request, _messageEncoderSettings)
             {
+                RetryRequested = _retryRequested,
                 WriteConcern = _writeConcern
             };
         }

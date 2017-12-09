@@ -38,6 +38,7 @@ namespace MongoDB.Driver.Core.Operations
         private int? _maxDocumentSize;
         private int? _maxMessageSize;
         private readonly MessageEncoderSettings _messageEncoderSettings;
+        private bool _retryRequested;
         private readonly IBsonSerializer<TDocument> _serializer;
         private WriteConcern _writeConcern = WriteConcern.Acknowledged;
 
@@ -105,6 +106,12 @@ namespace MongoDB.Driver.Core.Operations
             get { return _messageEncoderSettings; }
         }
 
+        public bool RetryRequested
+        {
+            get { return _retryRequested; }
+            set { _retryRequested = value; }
+        }
+
         public IBsonSerializer<TDocument> Serializer
         {
             get { return _serializer; }
@@ -169,6 +176,7 @@ namespace MongoDB.Driver.Core.Operations
                 MaxBatchCount = _maxBatchCount,
                 MaxBatchLength = _maxMessageSize,
                 // ReaderSettings = ?
+                RetryRequested = _retryRequested,
                 WriteConcern = _writeConcern,
                 // WriteSettings = ?
             };

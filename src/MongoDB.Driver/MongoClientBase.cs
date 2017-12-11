@@ -57,22 +57,30 @@ namespace MongoDB.Driver
         public abstract IMongoDatabase GetDatabase(string name, MongoDatabaseSettings settings = null);
 
         /// <inheritdoc />
-        public virtual IAsyncCursor<BsonDocument> ListDatabases(CancellationToken cancellationToken = default(CancellationToken))
+        public virtual IAsyncCursor<BsonDocument> ListDatabases(
+                ListDatabaseOptions options = null,                                                
+                CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public virtual IAsyncCursor<BsonDocument> ListDatabases(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual IAsyncCursor<BsonDocument> ListDatabases(
+                IClientSessionHandle session, ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public abstract Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(CancellationToken cancellationToken = default(CancellationToken));
+        public abstract Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                ListDatabaseOptions option = null,
+                CancellationToken cancellationToken = default(CancellationToken));
 
         /// <inheritdoc />
-        public virtual Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                IClientSessionHandle session, ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }

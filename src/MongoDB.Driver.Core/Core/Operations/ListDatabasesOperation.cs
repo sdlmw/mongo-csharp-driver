@@ -32,6 +32,7 @@ namespace MongoDB.Driver.Core.Operations
     public class ListDatabasesOperation : IReadOperation<IAsyncCursor<BsonDocument>>
     {
         // fields
+        private BsonDocument _filter;
         private MessageEncoderSettings _messageEncoderSettings;
 
         // constructors
@@ -45,6 +46,17 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         // properties
+        /// <summary>
+        /// Gets or sets the filter.
+        /// </summary>
+        /// <value>
+        /// The filter.
+        /// </value>
+        public BsonDocument Filter
+        {
+            get { return _filter; }
+            set { _filter = value; }
+        }
         /// <summary>
         /// Gets the message encoder settings.
         /// </summary>
@@ -78,7 +90,7 @@ namespace MongoDB.Driver.Core.Operations
         // private methods
         internal BsonDocument CreateCommand()
         {
-            return new BsonDocument { { "listDatabases", 1 } };
+            return new BsonDocument { { "listDatabases", 1 } , { "filter", _filter} };
         }
 
         private IAsyncCursor<BsonDocument> CreateCursor(BsonDocument reply)

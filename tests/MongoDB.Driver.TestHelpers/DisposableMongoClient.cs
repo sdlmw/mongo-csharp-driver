@@ -59,24 +59,32 @@ namespace MongoDB.Driver.TestHelpers
             return wrapped.GetDatabase(name, settings);
         }
 
-        public IAsyncCursor<BsonDocument> ListDatabases(CancellationToken cancellationToken = default(CancellationToken))
+        public IAsyncCursor<BsonDocument> ListDatabases(
+                ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
-            return wrapped.ListDatabases(cancellationToken);
+            return wrapped.ListDatabases(options, cancellationToken);
         }
 
-        public IAsyncCursor<BsonDocument> ListDatabases(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
+        public IAsyncCursor<BsonDocument> ListDatabases(
+                IClientSessionHandle session, ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
-            return wrapped.ListDatabases(session, cancellationToken);
+            return wrapped.ListDatabases(session, options, cancellationToken);
         }
 
-        public Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
-            return wrapped.ListDatabasesAsync(cancellationToken);
+            return wrapped.ListDatabasesAsync(options, cancellationToken);
         }
 
-        public Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                IClientSessionHandle session, ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
-            return wrapped.ListDatabasesAsync(session, cancellationToken);
+            return wrapped.ListDatabasesAsync(session, options, cancellationToken);
         }
 
         public IClientSessionHandle StartSession(ClientSessionOptions options = null, CancellationToken cancellationToken = default(CancellationToken))

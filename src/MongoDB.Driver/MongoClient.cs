@@ -160,7 +160,7 @@ namespace MongoDB.Driver
 
         /// <inheritdoc/>
         public sealed override IAsyncCursor<BsonDocument> ListDatabases(
-                DatabaseCollection options,
+                ListDatabaseOptions options,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             return UsingImplicitSession(session => ListDatabases(session, options, cancellationToken),
@@ -170,11 +170,11 @@ namespace MongoDB.Driver
         /// <inheritdoc/>
         public sealed override IAsyncCursor<BsonDocument> ListDatabases(
                 IClientSessionHandle session,
-                ListDatbaseOptions options,
+                ListDatabaseOptions options,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));
-            options = options ?? new ListCollectionsOptions();
+            options = options ?? new ListDatabaseOptions();
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = new ListDatabasesOperation(messageEncoderSettings);
             return ExecuteReadOperation(session, operation, cancellationToken);
@@ -182,7 +182,7 @@ namespace MongoDB.Driver
 
         /// <inheritdoc/>
         public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                ListDatbaseOptions options
+                ListDatabaseOptions options,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             return UsingImplicitSessionAsync(
@@ -193,11 +193,11 @@ namespace MongoDB.Driver
         /// <inheritdoc/>
         public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
                 IClientSessionHandle session,
-                ListDatbaseOptions options,
+                ListDatabaseOptions options,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));
-            options = options ?? new ListCollectionsOptions();            
+            options = options ?? new ListDatabaseOptions();            
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = new ListDatabasesOperation(messageEncoderSettings);
             return ExecuteReadOperationAsync(session, operation, cancellationToken);

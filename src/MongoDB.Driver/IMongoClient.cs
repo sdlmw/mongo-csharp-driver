@@ -88,35 +88,48 @@ namespace MongoDB.Driver
         /// Lists the databases on the server.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
+        /// <param name="options">The options.</param>
         /// <returns>A cursor.</returns>
-        IAsyncCursor<BsonDocument> ListDatabases(CancellationToken cancellationToken = default(CancellationToken));
+        IAsyncCursor<BsonDocument> ListDatabases(
+                ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Lists the databases on the server.
         /// </summary>
         /// <param name="session">The session.</param>
+        /// <param name="options">The options.</param>    
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// A cursor.
         /// </returns>
-        IAsyncCursor<BsonDocument> ListDatabases(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken));
+        IAsyncCursor<BsonDocument> ListDatabases(
+                IClientSessionHandle session, ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Lists the databases on the server.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
+        /// <param name="options">The options.</param>
         /// <returns>A Task whose result is a cursor.</returns>
-        Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Lists the databases on the server.
         /// </summary>
         /// <param name="session">The session.</param>
+        /// <param name="options">The options.</param>        
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// A Task whose result is a cursor.
         /// </returns>
-        Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                IClientSessionHandle session,
+                ListDatabaseOptions options = null,
+                CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Starts a client sesssion.

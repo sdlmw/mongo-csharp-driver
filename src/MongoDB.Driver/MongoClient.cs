@@ -159,30 +159,45 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc/>
-        public sealed override IAsyncCursor<BsonDocument> ListDatabases(CancellationToken cancellationToken = default(CancellationToken))
+        public sealed override IAsyncCursor<BsonDocument> ListDatabases(
+                DatabaseCollection options,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
-            return UsingImplicitSession(session => ListDatabases(session, cancellationToken), cancellationToken);
+            return UsingImplicitSession(session => ListDatabases(session, options, cancellationToken),
+                                        cancellationToken);
         }
 
         /// <inheritdoc/>
-        public sealed override IAsyncCursor<BsonDocument> ListDatabases(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
+        public sealed override IAsyncCursor<BsonDocument> ListDatabases(
+                IClientSessionHandle session,
+                ListDatbaseOptions options,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));
+            options = options ?? new ListCollectionsOptions();
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = new ListDatabasesOperation(messageEncoderSettings);
             return ExecuteReadOperation(session, operation, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                ListDatbaseOptions options
+                CancellationToken cancellationToken = default(CancellationToken))
         {
-            return UsingImplicitSessionAsync(session => ListDatabasesAsync(session, cancellationToken), cancellationToken);
+            return UsingImplicitSessionAsync(
+                    session => ListDatabasesAsync(session, options, cancellationToken),
+                    cancellationToken);
         }
 
         /// <inheritdoc/>
-        public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
+        public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
+                IClientSessionHandle session,
+                ListDatbaseOptions options,
+                CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));
+            options = options ?? new ListCollectionsOptions();            
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = new ListDatabasesOperation(messageEncoderSettings);
             return ExecuteReadOperationAsync(session, operation, cancellationToken);

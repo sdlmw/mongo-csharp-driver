@@ -120,27 +120,31 @@ namespace MongoDB.Driver.Tests
             var subject = new MongoClient(operationExecutor, DriverTestConfiguration.GetClientSettings());
             var session = CreateClientSession();
             var cancellationToken = new CancellationTokenSource().Token;
+            var filterDocument = BsonDocument.Parse("{ name : \"awesome\" }");
+            var filterDefinition = (FilterDefinition<BsonDocument>)filterDocument;
+            var options = new ListDatabaseOptions { Filter = filterDefinition };
 
             if (usingSession)
             {
                 if (async)
                 {
-                    subject.ListDatabasesAsync(session, cancellationToken).GetAwaiter().GetResult();
+                    subject.ListDatabasesAsync(session, options, cancellationToken)
+                           .GetAwaiter().GetResult();
                 }
                 else
                 {
-                    subject.ListDatabases(session, cancellationToken);
+                    subject.ListDatabases(session, options, cancellationToken);
                 }
             }
             else
             {
                 if (async)
                 {
-                    subject.ListDatabasesAsync(cancellationToken).GetAwaiter().GetResult();
+                    subject.ListDatabasesAsync(options, cancellationToken).GetAwaiter().GetResult();
                 }
                 else
                 {
-                    subject.ListDatabases(cancellationToken);
+                    subject.ListDatabases(options, cancellationToken);
                 }
             }
 
@@ -155,7 +159,8 @@ namespace MongoDB.Driver.Tests
             }
             call.CancellationToken.Should().Be(cancellationToken);
 
-            call.Operation.Should().BeOfType<ListDatabasesOperation>();
+            var op= call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
+            op.Filter.Should().Be(filterDocument);
         }
 
         [Fact]

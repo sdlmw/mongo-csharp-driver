@@ -37,7 +37,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <param name="binding">The binding.</param>
         /// <param name="retryRequested">if set to <c>true</c> [retry requested].</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A retryable write context.</returns>
         public static RetryableWriteContext Create(IWriteBinding binding, bool retryRequested, CancellationToken cancellationToken)
         {
             var context = new RetryableWriteContext(binding, retryRequested);
@@ -59,7 +59,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <param name="binding">The binding.</param>
         /// <param name="retryRequested">if set to <c>true</c> [retry requested].</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A retryable write context.</returns>
         public static async Task<RetryableWriteContext> CreateAsync(IWriteBinding binding, bool retryRequested, CancellationToken cancellationToken)
         {
             var context = new RetryableWriteContext(binding, retryRequested);
@@ -132,6 +132,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <summary>
         /// Disables retries.
         /// </summary>
+        /// <param name="requests">The requests.</param>
         public void DisableRetriesIfAnyWriteRequestIsNotRetryable(IEnumerable<WriteRequest> requests)
         {
             if (_retryRequested)

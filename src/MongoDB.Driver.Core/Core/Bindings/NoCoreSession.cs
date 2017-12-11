@@ -40,7 +40,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// <summary>
         /// Returns a new handle to a NoCoreSession object.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A new handle to the NoCoreSession object.</returns>
         public static ICoreSessionHandle NewHandle()
         {
             return new CoreSessionHandle(__instance);

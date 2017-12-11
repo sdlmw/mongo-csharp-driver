@@ -606,6 +606,7 @@ namespace MongoDB.Driver
         /// Resolves a connection string. If the connection string indicates more information is available
         /// in the DNS system, it will acquire that information as well.
         /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A resolved MongoURL.</returns>
         public async Task<MongoUrl> ResolveAsync(CancellationToken cancellationToken = default(CancellationToken))
         {

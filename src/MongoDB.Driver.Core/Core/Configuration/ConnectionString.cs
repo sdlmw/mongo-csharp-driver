@@ -473,6 +473,7 @@ namespace MongoDB.Driver.Core.Configuration
         /// Resolves a connection string. If the connection string indicates more information is available
         /// in the DNS system, it will acquire that information as well.
         /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A resolved ConnectionString.</returns>
         public async Task<ConnectionString> ResolveAsync(CancellationToken cancellationToken = default(CancellationToken))
         {

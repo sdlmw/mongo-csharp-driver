@@ -162,9 +162,9 @@ namespace MongoDB.Driver.Core.Misc
         /// <summary>
         /// Gets the items in the batch.
         /// </summary>
-        /// <value>
+        /// <returns>
         /// The items in the batch.
-        /// </value>
+        /// </returns>
         public IReadOnlyList<T> GetBatchItems()
         {
             return _items.Skip(_offset).Take(_count).ToList();
@@ -173,9 +173,9 @@ namespace MongoDB.Driver.Core.Misc
         /// <summary>
         /// Gets the items that were processed.
         /// </summary>
-        /// <value>
+        /// <returns>
         /// The items that were processed.
-        /// </value>
+        /// </returns>
         public IReadOnlyList<T> GetProcessedItems()
         {
             return _items.Skip(_offset).Take(_processedCount).ToList();
@@ -184,9 +184,9 @@ namespace MongoDB.Driver.Core.Misc
         /// <summary>
         /// Gets the items that were not processed.
         /// </summary>
-        /// <value>
+        /// <returns>
         /// The items that were not processed.
-        /// </value>
+        /// </returns>
         public IReadOnlyList<T> GetUnprocessedItems()
         {
             return _items.Skip(_offset + _processedCount).Take(_count - _processedCount).ToList();

@@ -47,7 +47,10 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
         }
 
         // public methods
-        /// <inheritdoc />
+        /// <summary>
+        /// Reads the message.
+        /// </summary>
+        /// <returns>A message.</returns>
         public InsertMessage<TDocument> ReadMessage()
         {
             var reader = CreateBinaryReader();
@@ -77,7 +80,10 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
                 continueOnError);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Writes the message.
+        /// </summary>
+        /// <param name="message">The message.</param>
         public void WriteMessage(InsertMessage<TDocument> message)
         {
             Ensure.IsNotNull(message, nameof(message));

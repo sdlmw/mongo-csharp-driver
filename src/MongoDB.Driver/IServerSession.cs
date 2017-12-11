@@ -43,9 +43,7 @@ namespace MongoDB.Driver
         /// <summary>
         /// Gets the next transaction number.
         /// </summary>
-        /// <value>
-        /// The transaction number.
-        /// </value>
+        /// <returns>The transaction number.</returns>
         long AdvanceTransactionNumber();
 
         // methods

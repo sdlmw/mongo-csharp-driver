@@ -275,7 +275,7 @@ namespace MongoDB.Driver
                 Filter = options.Filter?.Render(
                     BsonSerializer.SerializerRegistry.GetSerializer<BsonDocument>(),
                     BsonSerializer.SerializerRegistry),
-                NameOnly= options.NameOnly
+                NameOnly = options.NameOnly
             };
         }
         private IServerSession AcquireServerSession()

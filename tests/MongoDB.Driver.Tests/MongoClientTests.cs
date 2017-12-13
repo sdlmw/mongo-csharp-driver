@@ -122,8 +122,9 @@ namespace MongoDB.Driver.Tests
             var cancellationToken = new CancellationTokenSource().Token;
             var filterDocument = BsonDocument.Parse("{ name : \"awesome\" }");
             var filterDefinition = (FilterDefinition<BsonDocument>)filterDocument;
-            var options = new ListDatabaseOptions { Filter = filterDefinition };
-
+            var nameOnly = true;
+            var options = new ListDatabaseOptions { Filter = filterDefinition,
+                                                    NameOnly = nameOnly };
             if (usingSession)
             {
                 if (async)
@@ -161,6 +162,7 @@ namespace MongoDB.Driver.Tests
 
             var op= call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
             op.Filter.Should().Be(filterDocument);
+            op.NameOnly.Should().Be(nameOnly);
         }
 
         [Fact]

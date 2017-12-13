@@ -44,6 +44,18 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         [Fact]
+        public void Filter_get_and_set_should_work()
+        {
+            var subject = new ListDatabasesOperation(_messageEncoderSettings);
+            var filter = new BsonDocument("name", "abc");
+
+            subject.Filter = filter;
+            var result = subject.Filter;
+
+            result.Should().BeSameAs(filter);
+        }
+
+        [Fact]
         public void CreateCommand_should_return_expected_result()
         {
             var subject = new ListDatabasesOperation(_messageEncoderSettings);
@@ -72,6 +84,26 @@ namespace MongoDB.Driver.Core.Operations
 
             list.Should().Contain(x => x["name"] == _databaseNamespace.DatabaseName);
         }
+
+        [SkippableTheory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Execute_should_return_the_expected_result_when_filter_is_used(bool async)
+        {
+            RequireServer.Check();
+            var filterString = $"{{name: \"{_databaseNamespace.DatabaseName}\"}}";
+            var filter = BsonDocument.Parse(filterString);
+            var subject = new ListDatabasesOperation(_messageEncoderSettings) { Filter = filter };
+            EnsureDatabaseExists(async);
+
+            var result = ExecuteOperation(subject, async);
+            var list = ReadCursorToEnd(result, async);
+
+            list.Should().HaveCount(1);
+
+            list[0]["name"].AsString.Should().Be(_databaseNamespace.DatabaseName);
+        }
+
 
         [Theory]
         [ParameterAttributeData]

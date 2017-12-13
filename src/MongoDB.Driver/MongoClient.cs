@@ -20,6 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Clusters.ServerSelectors;
@@ -176,7 +177,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(session, nameof(session));
             options = options ?? new ListDatabaseOptions();
             var messageEncoderSettings = GetMessageEncoderSettings();
-            var operation = new ListDatabasesOperation(messageEncoderSettings);
+            var operation = CreateListDatabaseOperation(options, messageEncoderSettings);
             return ExecuteReadOperation(session, operation, cancellationToken);
         }
 
@@ -199,7 +200,7 @@ namespace MongoDB.Driver
             Ensure.IsNotNull(session, nameof(session));
             options = options ?? new ListDatabaseOptions();            
             var messageEncoderSettings = GetMessageEncoderSettings();
-            var operation = new ListDatabasesOperation(messageEncoderSettings);
+            var operation = CreateListDatabaseOperation(options, messageEncoderSettings);
             return ExecuteReadOperationAsync(session, operation, cancellationToken);
         }
 
@@ -265,6 +266,18 @@ namespace MongoDB.Driver
         }
 
         // private methods
+
+        private static ListDatabasesOperation CreateListDatabaseOperation(
+                ListDatabaseOptions options, MessageEncoderSettings messageEncoderSettings)
+        {
+            return new ListDatabasesOperation(messageEncoderSettings)
+            {
+                Filter = options.Filter?.Render(
+                    BsonSerializer.SerializerRegistry.GetSerializer<BsonDocument>(),
+                    BsonSerializer.SerializerRegistry),
+                NameOnly= options.NameOnly
+            };
+        }
         private IServerSession AcquireServerSession()
         {
             return _serverSessionPool.AcquireSession();

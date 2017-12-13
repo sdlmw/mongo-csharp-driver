@@ -128,11 +128,13 @@ namespace MongoDB.Driver.Core.Operations
         {
             RequireServer.Check().Supports(Feature.ListDatabasesNameOnlyOption);
 
-            var subject = new ListDatabasesOperation(_messageEncoderSettings) { NameOnly= nameOnly};
+            var subject = new ListDatabasesOperation(_messageEncoderSettings)
+                                                    { NameOnly = nameOnly };
             EnsureDatabaseExists(async);
 
             var result = ExecuteOperation(subject, async);
             var list = ReadCursorToEnd(result, async);
+
             foreach (var db in list)
             {
                 db.IndexOfName("name").Should().NotBe(-1);
@@ -143,8 +145,7 @@ namespace MongoDB.Driver.Core.Operations
                 else
                 {
                     db.ElementCount.Should().BeGreaterThan(1);
-                }
-                    
+                }       
             }
         }
 

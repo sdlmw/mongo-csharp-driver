@@ -47,6 +47,7 @@ namespace MongoDB.Driver.Core.Misc
         private static readonly Feature __findAndModifyWriteConcern = new Feature("FindAndModifyWriteConcern", new SemanticVersion(3, 2, 0));
         private static readonly Feature __findCommand = new Feature("FindCommand", new SemanticVersion(3, 2, 0));
         private static readonly Feature __listCollectionsCommand = new Feature("ListCollectionsCommand", new SemanticVersion(3, 0, 0));
+        private static readonly Feature __listDatabasesNameOnlyOption = new Feature("ListDatabasesNameOnlyOption", new SemanticVersion(3, 6, 0));
         private static readonly Feature __listIndexesCommand = new Feature("ListIndexesCommand", new SemanticVersion(3, 0, 0));
         private static readonly Feature __indexOptionsDefaults = new Feature("IndexOptionsDefaults", new SemanticVersion(3, 2, 0));
         private static readonly Feature __maxStaleness = new Feature("MaxStaleness", new SemanticVersion(3, 3, 12));
@@ -178,6 +179,11 @@ namespace MongoDB.Driver.Core.Misc
         /// Gets the index options defaults feature.
         /// </summary>
         public static Feature IndexOptionsDefaults => __indexOptionsDefaults;
+
+        /// <summary>
+        /// Get the list databases nameOnly feature.
+        /// </summary>
+        public static Feature ListDatabasesNameOnlyOption => __listDatabasesNameOnlyOption;
 
         /// <summary>
         /// Gets the list collections command feature.

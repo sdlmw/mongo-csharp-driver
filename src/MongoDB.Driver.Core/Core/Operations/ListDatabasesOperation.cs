@@ -32,7 +32,9 @@ namespace MongoDB.Driver.Core.Operations
     public class ListDatabasesOperation : IReadOperation<IAsyncCursor<BsonDocument>>
     {
         // fields
-        private BsonDocument _filter;
+        private BsonDocument _filter= new BsonDocument();
+
+        private bool _nameOnly = false;
         private MessageEncoderSettings _messageEncoderSettings;
 
         // constructors
@@ -68,6 +70,18 @@ namespace MongoDB.Driver.Core.Operations
             get { return _messageEncoderSettings; }
         }
 
+        /// <summary>
+        /// Gets or sets the nameOnly flag.
+        /// </summary>
+        /// <value>
+        /// The NameOnly flag.
+        /// </value>
+        public bool NameOnly
+        {
+            get { return _nameOnly; }
+            set { _nameOnly = value; }
+        }
+
         // public methods
         /// <inheritdoc/>
         public IAsyncCursor<BsonDocument> Execute(IReadBinding binding, CancellationToken cancellationToken)
@@ -90,7 +104,8 @@ namespace MongoDB.Driver.Core.Operations
         // private methods
         internal BsonDocument CreateCommand()
         {
-            return new BsonDocument { { "listDatabases", 1 } , { "filter", _filter} };
+            return new BsonDocument { { "listDatabases", 1 } , { "filter", _filter},
+                                      { "nameOnly", _nameOnly} };
         }
 
         private IAsyncCursor<BsonDocument> CreateCursor(BsonDocument reply)

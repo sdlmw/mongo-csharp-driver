@@ -20,6 +20,7 @@ using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.Bindings;
+using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 using Xunit;
@@ -56,12 +57,26 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         [Fact]
+        [ParameterAttributeData]
+        public void NameOnly_get_and_set_should_work(
+            [Values(false,true)]
+            bool nameOnly)
+        {
+            var subject = new ListDatabasesOperation(_messageEncoderSettings);
+   
+            subject.NameOnly = nameOnly;
+            var result = subject.NameOnly;
+
+            result.Should().Be(nameOnly);
+        }
+
+        [Fact]
         public void CreateCommand_should_return_expected_result()
         {
             var subject = new ListDatabasesOperation(_messageEncoderSettings);
             var expectedResult = new BsonDocument
             {
-                { "listDatabases", 1 }
+                { "listDatabases", 1 }, {"filter", new BsonDocument()}, {"nameOnly", false} 
             };
 
             var result = subject.CreateCommand();
@@ -91,6 +106,7 @@ namespace MongoDB.Driver.Core.Operations
         public void Execute_should_return_the_expected_result_when_filter_is_used(bool async)
         {
             RequireServer.Check();
+            
             var filterString = $"{{name: \"{_databaseNamespace.DatabaseName}\"}}";
             var filter = BsonDocument.Parse(filterString);
             var subject = new ListDatabasesOperation(_messageEncoderSettings) { Filter = filter };
@@ -104,6 +120,36 @@ namespace MongoDB.Driver.Core.Operations
             list[0]["name"].AsString.Should().Be(_databaseNamespace.DatabaseName);
         }
 
+        [SkippableTheory]
+        [ParameterAttributeData]
+        public void Execute_should_return_the_expected_result_when_nameOnly_is_used(
+            [Values(false,true)] bool nameOnly,
+            [Values(false,true)] bool async)
+        {
+            RequireServer.Check().Supports(Feature.ListDatabasesNameOnlyOption);
+
+            var subject = new ListDatabasesOperation(_messageEncoderSettings) { NameOnly= nameOnly};
+            EnsureDatabaseExists(async);
+
+            var result = ExecuteOperation(subject, async);
+            var list = ReadCursorToEnd(result, async);
+            foreach (var db in list)
+            {
+                db.IndexOfName("name").Should().NotBe(-1);
+                if (nameOnly)
+                {
+                    db.ElementCount.Should().Be(1);
+                }
+                else
+                {
+                    db.ElementCount.Should().BeGreaterThan(1);
+                }
+                    
+            }
+           
+
+            list[0]["name"].AsString.Should().Be(_databaseNamespace.DatabaseName);
+        }
 
         [Theory]
         [ParameterAttributeData]

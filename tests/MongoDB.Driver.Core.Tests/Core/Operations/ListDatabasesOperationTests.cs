@@ -146,9 +146,6 @@ namespace MongoDB.Driver.Core.Operations
                 }
                     
             }
-           
-
-            list[0]["name"].AsString.Should().Be(_databaseNamespace.DatabaseName);
         }
 
         [Theory]

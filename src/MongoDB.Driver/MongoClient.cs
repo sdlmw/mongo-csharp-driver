@@ -162,7 +162,8 @@ namespace MongoDB.Driver
         /// <inheritdoc/>
         public sealed override IEnumerable<string> ListDatabaseNames()
         {
-            foreach (var db in ListDatabases().ToList()) yield return db["name"].ToString();
+            var options = new ListDatabaseOptions { NameOnly = true };
+            foreach (var db in ListDatabases(options).ToList()) yield return db["name"].ToString();
         }
         /// <inheritdoc/>
         public sealed override IAsyncCursor<BsonDocument> ListDatabases(

@@ -397,7 +397,7 @@ namespace MongoDB.Driver
             var messageEncoderSettings = GetMessageEncoderSettings();
             return new ListCollectionsOperation(_databaseNamespace, messageEncoderSettings)
             {
-                Filter = options.Filter?.Render(_settings.SerializerRegistry.GetSerializer<BsonDocument>(), _settings.SerializerRegistry)
+                Filter = options.Filter?.Render(BsonSerializer.SerializerRegistry.GetSerializer<BsonDocument>(), _settings.SerializerRegistry)
             };
         }
 

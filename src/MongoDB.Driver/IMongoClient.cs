@@ -13,6 +13,7 @@
 * limitations under the License.
 */
 
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -130,6 +131,12 @@ namespace MongoDB.Driver
                 IClientSessionHandle session,
                 ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// Returns the names of the databases on the server
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<string> ListDatabaseNames();
 
         /// <summary>
         /// Starts a client sesssion.

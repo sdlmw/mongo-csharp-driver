@@ -14,6 +14,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -81,6 +82,12 @@ namespace MongoDB.Driver
         public virtual Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
                 IClientSessionHandle session, ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken))
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IEnumerable<string> ListDatabaseNames()
         {
             throw new NotImplementedException();
         }

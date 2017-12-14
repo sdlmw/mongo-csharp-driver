@@ -160,8 +160,13 @@ namespace MongoDB.Driver
         }
 
         /// <inheritdoc/>
+        public sealed override IEnumerable<string> ListDatabaseNames()
+        {
+            foreach (var db in ListDatabases().ToList()) yield return db["name"].ToString();
+        }
+        /// <inheritdoc/>
         public sealed override IAsyncCursor<BsonDocument> ListDatabases(
-                ListDatabaseOptions options,
+                ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             return UsingImplicitSession(session => ListDatabases(session, options, cancellationToken),

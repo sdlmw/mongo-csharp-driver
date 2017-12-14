@@ -14,6 +14,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -85,6 +86,11 @@ namespace MongoDB.Driver.TestHelpers
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             return wrapped.ListDatabasesAsync(session, options, cancellationToken);
+        }
+
+        public IEnumerable<string> ListDatabaseNames()
+        {
+            return wrapped.ListDatabaseNames();
         }
 
         public IClientSessionHandle StartSession(ClientSessionOptions options = null, CancellationToken cancellationToken = default(CancellationToken))

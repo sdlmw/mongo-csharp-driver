@@ -1,5 +1,5 @@
 /* Copyright 2010-2017 MongoDB Inc.
-*
+*q
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -123,8 +123,12 @@ namespace MongoDB.Driver.Tests
             var filterDocument = BsonDocument.Parse("{ name : \"awesome\" }");
             var filterDefinition = (FilterDefinition<BsonDocument>)filterDocument;
             var nameOnly = true;
-            var options = new ListDatabaseOptions { Filter = filterDefinition,
-                                                    NameOnly = nameOnly };
+            var options = new ListDatabaseOptions
+            {
+                Filter = filterDefinition,
+                NameOnly = nameOnly
+            };
+            
             if (usingSession)
             {
                 if (async)
@@ -160,7 +164,7 @@ namespace MongoDB.Driver.Tests
             }
             call.CancellationToken.Should().Be(cancellationToken);
 
-            var op= call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
+            var op = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
             op.Filter.Should().Be(filterDocument);
             op.NameOnly.Should().Be(nameOnly);
         }

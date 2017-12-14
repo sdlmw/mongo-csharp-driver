@@ -86,6 +86,12 @@ namespace MongoDB.Driver
         IMongoDatabase GetDatabase(string name, MongoDatabaseSettings settings = null);
 
         /// <summary>
+        /// Returns the names of the databases on the server
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<string> ListDatabaseNames();
+
+        /// <summary>
         /// Lists the databases on the server.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
@@ -105,7 +111,8 @@ namespace MongoDB.Driver
         /// A cursor.
         /// </returns>
         IAsyncCursor<BsonDocument> ListDatabases(
-                IClientSessionHandle session, ListDatabaseOptions options = null,
+                IClientSessionHandle session,
+                ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
@@ -131,12 +138,6 @@ namespace MongoDB.Driver
                 IClientSessionHandle session,
                 ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// Returns the names of the databases on the server
-        /// </summary>
-        /// <returns></returns>
-        IEnumerable<string> ListDatabaseNames();
 
         /// <summary>
         /// Starts a client sesssion.

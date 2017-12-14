@@ -129,7 +129,10 @@ namespace MongoDB.Driver.Core.Operations
             RequireServer.Check().Supports(Feature.ListDatabasesNameOnlyOption);
 
             var subject = new ListDatabasesOperation(_messageEncoderSettings)
-                                                    { NameOnly = nameOnly };
+            {
+                NameOnly = nameOnly
+            };
+            
             EnsureDatabaseExists(async);
 
             var result = ExecuteOperation(subject, async);

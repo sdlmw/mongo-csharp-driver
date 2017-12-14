@@ -104,8 +104,11 @@ namespace MongoDB.Driver.Core.Operations
         // private methods
         internal BsonDocument CreateCommand()
         {
-            return new BsonDocument { { "listDatabases", 1 } , { "filter", _filter},
-                                      { "nameOnly", _nameOnly} };
+            return new BsonDocument {
+                { "listDatabases", 1 },
+                { "filter", _filter, _filter != null},
+                { "nameOnly", true, _nameOnly}
+            };
         }
 
         private IAsyncCursor<BsonDocument> CreateCursor(BsonDocument reply)

@@ -163,8 +163,12 @@ namespace MongoDB.Driver
         public sealed override IEnumerable<string> ListDatabaseNames()
         {
             var options = new ListDatabaseOptions { NameOnly = true };
-            foreach (var db in ListDatabases(options).ToList()) yield return db["name"].ToString();
+            foreach (var db in ListDatabases(options).ToList())
+            {
+                yield return db["name"].ToString();
+            }
         }
+        
         /// <inheritdoc/>
         public sealed override IAsyncCursor<BsonDocument> ListDatabases(
                 ListDatabaseOptions options = null,
@@ -272,18 +276,6 @@ namespace MongoDB.Driver
         }
 
         // private methods
-
-        private static ListDatabasesOperation CreateListDatabaseOperation(
-                ListDatabaseOptions options, MessageEncoderSettings messageEncoderSettings)
-        {
-            return new ListDatabasesOperation(messageEncoderSettings)
-            {
-                Filter = options.Filter?.Render(
-                    BsonSerializer.SerializerRegistry.GetSerializer<BsonDocument>(),
-                    BsonSerializer.SerializerRegistry),
-                NameOnly = options.NameOnly
-            };
-        }
         private IServerSession AcquireServerSession()
         {
             return _serverSessionPool.AcquireSession();
@@ -323,6 +315,19 @@ namespace MongoDB.Driver
             var selector = new AreSessionsSupportedServerSelector();
             var selectedServer = await _cluster.SelectServerAsync(selector, cancellationToken).ConfigureAwait(false);
             return AreSessionsSupported(selector.ClusterDescription) ?? false;
+        }
+
+        private static ListDatabasesOperation CreateListDatabaseOperation(
+                ListDatabaseOptions options,
+                MessageEncoderSettings messageEncoderSettings)
+        {
+            return new ListDatabasesOperation(messageEncoderSettings)
+            {
+                Filter = options.Filter?.Render(
+                    BsonDocumentSerializer.Instance,
+                    BsonSerializer.SerializerRegistry),
+                NameOnly = options.NameOnly
+            };
         }
 
         private TResult ExecuteReadOperation<TResult>(IClientSessionHandle session, IReadOperation<TResult> operation, CancellationToken cancellationToken = default(CancellationToken))

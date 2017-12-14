@@ -70,11 +70,29 @@ namespace MongoDB.Driver.Core.Operations
             result.Should().Be(nameOnly);
         }
 
-        [Fact]
-        public void CreateCommand_should_return_expected_result()
+        [SkippableTheory]
+        [ParameterAttributeData]
+        public void CreateCommand_should_return_expected_result(
+            [Values(null, "cake")] string filterString,
+            [Values(null, false, true)] bool? nameOnly)
         {
-            var subject = new ListDatabasesOperation(_messageEncoderSettings);
-            var expectedResult = new BsonDocument { { "listDatabases", 1 } };
+            var filter = filterString != null
+                ? BsonDocument.Parse($"{{name: \"{filterString}\"}}")
+                : null;
+
+            var subject = new ListDatabasesOperation(_messageEncoderSettings)
+            {
+                NameOnly = nameOnly,
+                Filter = filter
+            };
+            
+            var expectedResult = new BsonDocument
+            {
+                {"listDatabases", 1},
+                {"filter", filter, filterString!=null },
+                {"nameOnly", nameOnly, nameOnly!=null }
+            };
+            
 
             var result = subject.CreateCommand();
 
@@ -84,8 +102,7 @@ namespace MongoDB.Driver.Core.Operations
         [SkippableTheory]
         [ParameterAttributeData]
         public void Execute_should_return_expected_result(
-            [Values(false, true)]
-            bool async)
+            [Values(false, true)] bool async)
         {
             RequireServer.Check();
             var subject = new ListDatabasesOperation(_messageEncoderSettings);

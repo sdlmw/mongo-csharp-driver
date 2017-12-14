@@ -32,7 +32,7 @@ namespace MongoDB.Driver.Core.Operations
     public class ListDatabasesOperation : IReadOperation<IAsyncCursor<BsonDocument>>
     {
         // fields
-        private BsonDocument _filter= new BsonDocument();
+        private BsonDocument _filter;
 
         private bool? _nameOnly;
         private MessageEncoderSettings _messageEncoderSettings;
@@ -107,7 +107,7 @@ namespace MongoDB.Driver.Core.Operations
             return new BsonDocument {
                 { "listDatabases", 1 },
                 { "filter", _filter, _filter != null},
-                { "nameOnly", true, _nameOnly != null}
+                { "nameOnly", _nameOnly, _nameOnly != null}
             };
         }
 

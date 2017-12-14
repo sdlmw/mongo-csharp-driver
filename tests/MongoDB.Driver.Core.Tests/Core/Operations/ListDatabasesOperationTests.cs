@@ -74,10 +74,7 @@ namespace MongoDB.Driver.Core.Operations
         public void CreateCommand_should_return_expected_result()
         {
             var subject = new ListDatabasesOperation(_messageEncoderSettings);
-            var expectedResult = new BsonDocument
-            {
-                { "listDatabases", 1 }, {"filter", new BsonDocument()}, {"nameOnly", false} 
-            };
+            var expectedResult = new BsonDocument { { "listDatabases", 1 } };
 
             var result = subject.CreateCommand();
 
@@ -101,9 +98,9 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         [SkippableTheory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void Execute_should_return_the_expected_result_when_filter_is_used(bool async)
+        [ParameterAttributeData]
+        public void Execute_should_return_the_expected_result_when_filter_is_used(
+            [Values(false, true)] bool async)
         {
             RequireServer.Check();
             
@@ -123,8 +120,8 @@ namespace MongoDB.Driver.Core.Operations
         [SkippableTheory]
         [ParameterAttributeData]
         public void Execute_should_return_the_expected_result_when_nameOnly_is_used(
-            [Values(false,true)] bool nameOnly,
-            [Values(false,true)] bool async)
+            [Values(false, true)] bool nameOnly,
+            [Values(false, true)] bool async)
         {
             RequireServer.Check().Supports(Feature.ListDatabasesNameOnlyOption);
 
@@ -155,8 +152,7 @@ namespace MongoDB.Driver.Core.Operations
         [Theory]
         [ParameterAttributeData]
         public void Execute_should_throw_when_binding_is_null(
-            [Values(false, true)]
-            bool async)
+            [Values(false, true)] bool async)
         {
             var subject = new ListDatabasesOperation(_messageEncoderSettings);
             IReadBinding binding = null;

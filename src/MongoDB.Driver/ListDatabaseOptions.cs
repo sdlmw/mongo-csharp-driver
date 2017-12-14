@@ -23,7 +23,7 @@ namespace MongoDB.Driver
     {
         // fields
         private FilterDefinition<BsonDocument> _filter;
-        private bool _nameOnly = false;
+        private bool? _nameOnly;
 
         // properties
         /// <summary>
@@ -38,7 +38,7 @@ namespace MongoDB.Driver
         /// <summary>
         /// Sets the NameOnly flag
         /// </summary>
-        public bool NameOnly
+        public bool? NameOnly
         {
             get { return _nameOnly; }
             set {_nameOnly = value; }

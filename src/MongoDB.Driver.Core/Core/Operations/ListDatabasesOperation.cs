@@ -34,7 +34,7 @@ namespace MongoDB.Driver.Core.Operations
         // fields
         private BsonDocument _filter= new BsonDocument();
 
-        private bool _nameOnly = false;
+        private bool? _nameOnly;
         private MessageEncoderSettings _messageEncoderSettings;
 
         // constructors
@@ -76,7 +76,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <value>
         /// The NameOnly flag.
         /// </value>
-        public bool NameOnly
+        public bool? NameOnly
         {
             get { return _nameOnly; }
             set { _nameOnly = value; }
@@ -107,7 +107,7 @@ namespace MongoDB.Driver.Core.Operations
             return new BsonDocument {
                 { "listDatabases", 1 },
                 { "filter", _filter, _filter != null},
-                { "nameOnly", true, _nameOnly}
+                { "nameOnly", true, _nameOnly != null}
             };
         }
 

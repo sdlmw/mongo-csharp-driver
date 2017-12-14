@@ -182,7 +182,7 @@ namespace MongoDB.Driver
         /// <inheritdoc/>
         public sealed override IAsyncCursor<BsonDocument> ListDatabases(
                 IClientSessionHandle session,
-                ListDatabaseOptions options,
+                ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));
@@ -194,7 +194,7 @@ namespace MongoDB.Driver
 
         /// <inheritdoc/>
         public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                ListDatabaseOptions options,
+                ListDatabaseOptions options =  null,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             return UsingImplicitSessionAsync(
@@ -205,7 +205,7 @@ namespace MongoDB.Driver
         /// <inheritdoc/>
         public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
                 IClientSessionHandle session,
-                ListDatabaseOptions options,
+                ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));

@@ -168,15 +168,17 @@ namespace MongoDB.Driver.Tests
                 return ListDatabasesOperation.CreateCursor(operationResult).ToList();
             };
             mockCursor.Setup(x => x.Current).Returns(returnResult);
-            operationExecutor.EnqueueResult<IAsyncCursor<BsonDocument>>(mockCursor.Object);
+
+            operationExecutor.EnqueueResult(ListDatabasesOperation.CreateCursor(operationResult));
+            // operationExecutor.EnqueueResult<IAsyncCursor<BsonDocument>>(mockCursor.Object);
             // operationExecutor.EnqueueResult(operationResult);
-            IEnumerable<string> results; 
+            IEnumerable<string> results = null; 
             if (usingSession)
             {
                 if (async)
                 {
-                    // subject.ListDatabasesAsync(session, options, cancellationToken)
-                    //       .GetAwaiter().GetResult();
+                    //  results = subject.ListDatabasesAsync(session, options, cancellationToken)
+                    //         .GetAwaiter().GetResult();
                 }
                 else
                 {
@@ -191,7 +193,7 @@ namespace MongoDB.Driver.Tests
                 }
                 else
                 {
-                    results = subject.ListDatabaseNames().ToList();
+                    results = subject.ListDatabaseNames();
                 }
             }
 
@@ -208,6 +210,9 @@ namespace MongoDB.Driver.Tests
 
             var op = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
             op.NameOnly.Should().Be(true);
+            results.Should().Equal(
+                operationResult["databases"].AsBsonArray.Select(
+                    record => record["name"].ToString()));
         }
 
         [Theory]

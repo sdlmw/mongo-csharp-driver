@@ -60,6 +60,32 @@ namespace MongoDB.Driver.TestHelpers
             return wrapped.GetDatabase(name, settings);
         }
 
+        public IEnumerable<string> ListDatabaseNames(
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return wrapped.ListDatabaseNames(cancellationToken);
+        }
+
+        public IEnumerable<string> ListDatabaseNames(
+            IClientSessionHandle session,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return wrapped.ListDatabaseNames(session,cancellationToken);
+        }
+
+        public Task<IEnumerable<string>> ListDatabaseNamesAsync(
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return wrapped.ListDatabaseNamesAsync(cancellationToken);
+        }
+
+        public Task<IEnumerable<string>> ListDatabaseNamesAsync(
+            IClientSessionHandle session,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return wrapped.ListDatabaseNamesAsync(session, cancellationToken);
+        }
+
         public IAsyncCursor<BsonDocument> ListDatabases(
                 ListDatabaseOptions options = null,
                 CancellationToken cancellationToken = default(CancellationToken))
@@ -86,11 +112,6 @@ namespace MongoDB.Driver.TestHelpers
                 CancellationToken cancellationToken = default(CancellationToken))
         {
             return wrapped.ListDatabasesAsync(session, options, cancellationToken);
-        }
-
-        public IEnumerable<string> ListDatabaseNames()
-        {
-            return wrapped.ListDatabaseNames();
         }
 
         public IClientSessionHandle StartSession(ClientSessionOptions options = null, CancellationToken cancellationToken = default(CancellationToken))

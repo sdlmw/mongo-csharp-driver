@@ -58,6 +58,36 @@ namespace MongoDB.Driver
         public abstract IMongoDatabase GetDatabase(string name, MongoDatabaseSettings settings = null);
 
         /// <inheritdoc />
+        public virtual IEnumerable<string> ListDatabaseNames(
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IEnumerable<string> ListDatabaseNames(
+            IClientSessionHandle session,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual Task<IEnumerable<string>> ListDatabaseNamesAsync(
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public virtual Task<IEnumerable<string>> ListDatabaseNamesAsync(
+            IClientSessionHandle session,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
         public virtual IAsyncCursor<BsonDocument> ListDatabases(
                 ListDatabaseOptions options = null,                                                
                 CancellationToken cancellationToken = default(CancellationToken))

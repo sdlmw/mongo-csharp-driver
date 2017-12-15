@@ -160,14 +160,41 @@ namespace MongoDB.Driver
             return new MongoDatabaseImpl(this, new DatabaseNamespace(name), settings, _cluster, _operationExecutor);
         }
 
-        /// <inheritdoc/>
-        public sealed override IEnumerable<string> ListDatabaseNames()
+        /// <inheritdoc />
+        public sealed override IEnumerable<string> ListDatabaseNames(
+                CancellationToken cancellationToken = default(CancellationToken))
         {
             var options = new ListDatabaseOptions { NameOnly = true };
-            foreach (var db in ListDatabases(options).ToList())
-            {
-                yield return db["name"].ToString();
-            }
+            return GetDatabaseNames(ListDatabases(options, cancellationToken).ToList());
+
+        }
+
+        /// <inheritdoc />
+        public sealed override IEnumerable<string> ListDatabaseNames(
+                IClientSessionHandle session,
+                CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var options = new ListDatabaseOptions { NameOnly = true };
+            return GetDatabaseNames(ListDatabases(session, options, cancellationToken).ToList());
+        }
+
+        /// <inheritdoc />
+        public sealed override Task<IEnumerable<string>> ListDatabaseNamesAsync(
+                CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var options = new ListDatabaseOptions { NameOnly = true };
+            var databases = ListDatabasesAsync(options, cancellationToken);
+            return GetDatabaseNamesAsync(databases);
+        }
+
+        /// <inheritdoc />
+        public sealed override Task<IEnumerable<string>> ListDatabaseNamesAsync(
+                IClientSessionHandle session,
+                CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var options = new ListDatabaseOptions { NameOnly = true };
+            var databases = ListDatabasesAsync(session, options, cancellationToken);
+            return GetDatabaseNamesAsync(databases);
         }
         
         /// <inheritdoc/>
@@ -361,6 +388,28 @@ namespace MongoDB.Driver
             {
                 return await _operationExecutor.ExecuteWriteOperationAsync(binding, operation, cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        /// <summary>
+        /// Get the database names from the ListDataBases output
+        /// </summary>
+        /// <param name="databases">Output from ListDatabases</param>
+        /// <returns></returns>
+        private static IEnumerable<string> GetDatabaseNames(IEnumerable<BsonDocument> databases)
+        {
+            return databases.Select(databaseRecord => databaseRecord["name"].ToString());
+        }
+
+        /// <summary>
+        /// Get the database names from the ListDataBases output
+        /// </summary>
+        /// <param name="getDatabasesTask">Output from ListDatabases</param>
+        /// <returns></returns>
+        private static async Task<IEnumerable<string>> GetDatabaseNamesAsync(
+                Task<IAsyncCursor<BsonDocument>> getDatabasesTask)
+        {
+            var databases = await Task.Run(() => getDatabasesTask).ConfigureAwait(false);
+            return GetDatabaseNames(databases.ToList());
         }
 
         private MessageEncoderSettings GetMessageEncoderSettings()

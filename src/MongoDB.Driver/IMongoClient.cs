@@ -88,8 +88,38 @@ namespace MongoDB.Driver
         /// <summary>
         /// Returns the names of the databases on the server
         /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        IEnumerable<string> ListDatabaseNames();
+        IEnumerable<string> ListDatabaseNames(
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// Returns the names of the databases on the server
+        /// </summary>
+        /// <param name="session">The session.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        IEnumerable<string> ListDatabaseNames(
+            IClientSessionHandle session,                                              
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// Returns the names of the databases on the server
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        Task<IEnumerable<string>> ListDatabaseNamesAsync(
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// Returns the names of the databases on the server
+        /// </summary>
+        /// <param name="session">The session.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        Task<IEnumerable<string>> ListDatabaseNamesAsync(
+            IClientSessionHandle session,                                              
+            CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Lists the databases on the server.
@@ -105,7 +135,7 @@ namespace MongoDB.Driver
         /// Lists the databases on the server.
         /// </summary>
         /// <param name="session">The session.</param>
-        /// <param name="options">The options.</param>    
+        /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// A cursor.

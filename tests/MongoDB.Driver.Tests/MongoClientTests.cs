@@ -18,6 +18,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.TestHelpers.XunitExtensions;
@@ -115,104 +116,71 @@ namespace MongoDB.Driver.Tests
 
         [Theory]
         [ParameterAttributeData]
-        public void ListDatabaseNames_should_invoke_the_correct_operation(
-                [Values(false)] bool usingSession,
-                [Values(false)] bool async)
+        public async Task ListDatabaseNames_should_invoke_the_correct_operation(
+                [Values(false, true)] bool usingSession,
+                [Values(false, true)] bool async)
         {
 
             var operationExecutor = new MockOperationExecutor();
             var subject = new MongoClient(operationExecutor, DriverTestConfiguration.GetClientSettings());
             var session = CreateClientSession();
-            var cancellationToken = new CancellationTokenSource().Token;
+            var cancelToken = new CancellationTokenSource().Token;
             var listDatabaseNamesResult = @"
-{
-	""databases"" : [
-		{
-			""name"" : ""admin"",
-			""sizeOnDisk"" : 131072,
-			""empty"" : false
-		},
-		{
-			""name"" : ""blog"",
-			""sizeOnDisk"" : 11669504,
-			""empty"" : false
-		},
-		{
-			""name"" : ""test-chambers"",
-			""sizeOnDisk"" : 222883840,
-			""empty"" : false
-		},
-		{
-			""name"" : ""recipes"",
-			""sizeOnDisk"" : 73728,
-			""empty"" : false
-		},
-		{
-			""name"" : ""employees"",
-			""sizeOnDisk"" : 225280,
-			""empty"" : false
-		}
-	],
-	""totalSize"" : 252534784,
-	""ok"" : 1
-}";
+            {
+            	""databases"" : [
+            		{
+            			""name"" : ""admin"",
+            			""sizeOnDisk"" : 131072,
+            			""empty"" : false
+            		},
+            		{
+            			""name"" : ""blog"",
+            			""sizeOnDisk"" : 11669504,
+            			""empty"" : false
+            		},
+            		{
+            			""name"" : ""test-chambers"",
+            			""sizeOnDisk"" : 222883840,
+            			""empty"" : false
+            		},
+            		{
+            			""name"" : ""recipes"",
+            			""sizeOnDisk"" : 73728,
+            			""empty"" : false
+            		},
+            		{
+            			""name"" : ""employees"",
+            			""sizeOnDisk"" : 225280,
+            			""empty"" : false
+            		}
+            	],
+            	""totalSize"" : 252534784,
+            	""ok"" : 1
+            }";
             var operationResult = BsonDocument.Parse(listDatabaseNamesResult);
-            var mockCursor = new Mock<IAsyncCursor<BsonDocument>>();
-
-            var seen = false;
-            Func<bool> hasNext = () => seen;
-            mockCursor.Setup(x => x.MoveNext(It.IsAny<CancellationToken>())).Returns(hasNext);
-            Func<IEnumerable<BsonDocument>> returnResult = () =>
-            {
-                seen = true;
-                return ListDatabasesOperation.CreateCursor(operationResult).ToList();
-            };
-            mockCursor.Setup(x => x.Current).Returns(returnResult);
-
             operationExecutor.EnqueueResult(ListDatabasesOperation.CreateCursor(operationResult));
-            // operationExecutor.EnqueueResult<IAsyncCursor<BsonDocument>>(mockCursor.Object);
-            // operationExecutor.EnqueueResult(operationResult);
-            IEnumerable<string> results = null; 
-            if (usingSession)
-            {
-                if (async)
-                {
-                    //  results = subject.ListDatabasesAsync(session, options, cancellationToken)
-                    //         .GetAwaiter().GetResult();
-                }
-                else
-                {
-                    // subject.ListDatabases(session, options, cancellationToken);
-                }
-            }
-            else
-            {
-                if (async)
-                {
-                    // subject.ListDatabasesAsync(options, cancellationToken).GetAwaiter().GetResult();
-                }
-                else
-                {
-                    results = subject.ListDatabaseNames();
-                }
-            }
+            
+            // function alias for clarity in ternary
+            Func<IClientSessionHandle, Task<IEnumerable<string>>> listDatabaseNamesWithCancelAsync
+                = clientSession => subject.ListDatabaseNamesAsync(clientSession, cancelToken);
 
+            IEnumerable<string> databaseNames = 
+                 async &&  usingSession ?  await listDatabaseNamesWithCancelAsync(session)      :
+                 async && !usingSession ?  await subject.ListDatabaseNamesAsync(cancelToken)    :
+                !async &&  usingSession ?  subject.ListDatabaseNames(session, cancelToken)      :
+             /* !async && !usingSession */ subject.ListDatabaseNames(cancelToken)               ;
+            
             var call = operationExecutor.GetReadCall<IAsyncCursor<BsonDocument>>();
-            if (usingSession)
-            {
-                call.SessionId.Should().BeSameAs(session.ServerSession.Id);
-            }
-            else
-            {
-                call.UsedImplicitSession.Should().BeTrue();
-            }
-            // call.CancellationToken.Should().Be(cancellationToken);
+
+            if (usingSession) call.SessionId.Should().BeSameAs(session.ServerSession.Id);
+            else call.UsedImplicitSession.Should().BeTrue();
+
+            call.CancellationToken.Should().Be(cancelToken);
 
             var op = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
             op.NameOnly.Should().Be(true);
-            results.Should().Equal(
-                operationResult["databases"].AsBsonArray.Select(
-                    record => record["name"].ToString()));
+            databaseNames.Should().Equal(
+                operationResult["databases"].AsBsonArray.Select(record => record["name"].ToString()));
         }
 
         [Theory]

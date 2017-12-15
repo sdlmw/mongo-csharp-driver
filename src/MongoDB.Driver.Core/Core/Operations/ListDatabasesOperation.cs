@@ -111,7 +111,7 @@ namespace MongoDB.Driver.Core.Operations
             };
         }
 
-        private IAsyncCursor<BsonDocument> CreateCursor(BsonDocument reply)
+        internal static IAsyncCursor<BsonDocument> CreateCursor(BsonDocument reply)
         {
             var databases = reply["databases"].AsBsonArray.OfType<BsonDocument>();
             return new SingleBatchAsyncCursor<BsonDocument>(databases.ToList());

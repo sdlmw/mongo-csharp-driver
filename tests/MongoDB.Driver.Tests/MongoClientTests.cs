@@ -14,6 +14,9 @@
 */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using FluentAssertions;
 using MongoDB.Bson;
@@ -108,6 +111,103 @@ namespace MongoDB.Driver.Tests
             var dropDatabaseOperation = call.Operation.Should().BeOfType<DropDatabaseOperation>().Subject;
             dropDatabaseOperation.DatabaseNamespace.Should().Be(new DatabaseNamespace("awesome"));
             dropDatabaseOperation.WriteConcern.Should().BeSameAs(writeConcern);
+        }
+
+        [Theory]
+        [ParameterAttributeData]
+        public void ListDatabaseNames_should_invoke_the_correct_operation(
+                [Values(false)] bool usingSession,
+                [Values(false)] bool async)
+        {
+
+            var operationExecutor = new MockOperationExecutor();
+            var subject = new MongoClient(operationExecutor, DriverTestConfiguration.GetClientSettings());
+            var session = CreateClientSession();
+            var cancellationToken = new CancellationTokenSource().Token;
+            var listDatabaseNamesResult = @"
+{
+	""databases"" : [
+		{
+			""name"" : ""admin"",
+			""sizeOnDisk"" : 131072,
+			""empty"" : false
+		},
+		{
+			""name"" : ""blog"",
+			""sizeOnDisk"" : 11669504,
+			""empty"" : false
+		},
+		{
+			""name"" : ""test-chambers"",
+			""sizeOnDisk"" : 222883840,
+			""empty"" : false
+		},
+		{
+			""name"" : ""recipes"",
+			""sizeOnDisk"" : 73728,
+			""empty"" : false
+		},
+		{
+			""name"" : ""employees"",
+			""sizeOnDisk"" : 225280,
+			""empty"" : false
+		}
+	],
+	""totalSize"" : 252534784,
+	""ok"" : 1
+}";
+            var operationResult = BsonDocument.Parse(listDatabaseNamesResult);
+            var mockCursor = new Mock<IAsyncCursor<BsonDocument>>();
+
+            var seen = false;
+            Func<bool> hasNext = () => seen;
+            mockCursor.Setup(x => x.MoveNext(It.IsAny<CancellationToken>())).Returns(hasNext);
+            Func<IEnumerable<BsonDocument>> returnResult = () =>
+            {
+                seen = true;
+                return ListDatabasesOperation.CreateCursor(operationResult).ToList();
+            };
+            mockCursor.Setup(x => x.Current).Returns(returnResult);
+            operationExecutor.EnqueueResult<IAsyncCursor<BsonDocument>>(mockCursor.Object);
+            // operationExecutor.EnqueueResult(operationResult);
+            IEnumerable<string> results; 
+            if (usingSession)
+            {
+                if (async)
+                {
+                    // subject.ListDatabasesAsync(session, options, cancellationToken)
+                    //       .GetAwaiter().GetResult();
+                }
+                else
+                {
+                    // subject.ListDatabases(session, options, cancellationToken);
+                }
+            }
+            else
+            {
+                if (async)
+                {
+                    // subject.ListDatabasesAsync(options, cancellationToken).GetAwaiter().GetResult();
+                }
+                else
+                {
+                    results = subject.ListDatabaseNames().ToList();
+                }
+            }
+
+            var call = operationExecutor.GetReadCall<IAsyncCursor<BsonDocument>>();
+            if (usingSession)
+            {
+                call.SessionId.Should().BeSameAs(session.ServerSession.Id);
+            }
+            else
+            {
+                call.UsedImplicitSession.Should().BeTrue();
+            }
+            // call.CancellationToken.Should().Be(cancellationToken);
+
+            var op = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
+            op.NameOnly.Should().Be(true);
         }
 
         [Theory]

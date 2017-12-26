@@ -1,5 +1,5 @@
 /* Copyright 2010-2017 MongoDB Inc.
-*q
+*
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -116,15 +116,14 @@ namespace MongoDB.Driver.Tests
 
         [Theory]
         [ParameterAttributeData]
-        public async Task ListDatabaseNames_should_invoke_the_correct_operation(
-                [Values(false, true)] bool usingSession,
-                [Values(false, true)] bool async)
+        public void ListDatabaseNames_should_invoke_the_correct_operation(
+            [Values(false, true)] bool usingSession,
+            [Values(false, true)] bool async)
         {
-
             var operationExecutor = new MockOperationExecutor();
             var subject = new MongoClient(operationExecutor, DriverTestConfiguration.GetClientSettings());
             var session = CreateClientSession();
-            var cancelToken = new CancellationTokenSource().Token;
+            var cancellationToken = new CancellationTokenSource().Token;
             var listDatabaseNamesResult = @"
             {
             	""databases"" : [
@@ -160,27 +159,46 @@ namespace MongoDB.Driver.Tests
             var operationResult = BsonDocument.Parse(listDatabaseNamesResult);
             operationExecutor.EnqueueResult(ListDatabasesOperation.CreateCursor(operationResult));
             
-            // function alias for clarity in ternary
-            Func<IClientSessionHandle, Task<IEnumerable<string>>> listDatabaseNamesWithCancelAsync
-                = clientSession => subject.ListDatabaseNamesAsync(clientSession, cancelToken);
+            IEnumerable<string> databaseNames;
+            if (async)
+            {
+                if (usingSession)
+                {
+                    databaseNames = subject.ListDatabaseNamesAsync(session, cancellationToken).GetAwaiter().GetResult();
+                }
+                else
+                {
+                    databaseNames = subject.ListDatabaseNamesAsync(cancellationToken).GetAwaiter().GetResult();
+                }
+            }
+            else
+            {
+                if (usingSession)
+                {
+                    databaseNames = subject.ListDatabaseNames(session, cancellationToken);
+                }
+                else
+                {
+                    databaseNames = subject.ListDatabaseNames(cancellationToken);
+                }
+            }
 
-            IEnumerable<string> databaseNames = 
-                 async &&  usingSession ?  await listDatabaseNamesWithCancelAsync(session)      :
-                 async && !usingSession ?  await subject.ListDatabaseNamesAsync(cancelToken)    :
-                !async &&  usingSession ?  subject.ListDatabaseNames(session, cancelToken)      :
-             /* !async && !usingSession */ subject.ListDatabaseNames(cancelToken)               ;
-            
             var call = operationExecutor.GetReadCall<IAsyncCursor<BsonDocument>>();
 
-            if (usingSession) call.SessionId.Should().BeSameAs(session.ServerSession.Id);
-            else call.UsedImplicitSession.Should().BeTrue();
+            if (usingSession)
+            {
+                call.SessionId.Should().BeSameAs(session.ServerSession.Id);
+            }
+            else
+            {
+                call.UsedImplicitSession.Should().BeTrue();
+            }
 
-            call.CancellationToken.Should().Be(cancelToken);
+            call.CancellationToken.Should().Be(cancellationToken);
 
-            var op = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
-            op.NameOnly.Should().Be(true);
-            databaseNames.Should().Equal(
-                operationResult["databases"].AsBsonArray.Select(record => record["name"].ToString()));
+            var operation = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
+            operation.NameOnly.Should().Be(true);
+            databaseNames.Should().Equal(operationResult["databases"].AsBsonArray.Select(record => record["name"].AsString));
         }
 
         [Theory]
@@ -196,7 +214,7 @@ namespace MongoDB.Driver.Tests
             var filterDocument = BsonDocument.Parse("{ name : \"awesome\" }");
             var filterDefinition = (FilterDefinition<BsonDocument>)filterDocument;
             var nameOnly = true;
-            var options = new ListDatabaseOptions
+            var options = new ListDatabasesOptions
             {
                 Filter = filterDefinition,
                 NameOnly = nameOnly
@@ -206,8 +224,7 @@ namespace MongoDB.Driver.Tests
             {
                 if (async)
                 {
-                    subject.ListDatabasesAsync(session, options, cancellationToken)
-                           .GetAwaiter().GetResult();
+                    subject.ListDatabasesAsync(session, options, cancellationToken).GetAwaiter().GetResult();
                 }
                 else
                 {
@@ -237,9 +254,9 @@ namespace MongoDB.Driver.Tests
             }
             call.CancellationToken.Should().Be(cancellationToken);
 
-            var op = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
-            op.Filter.Should().Be(filterDocument);
-            op.NameOnly.Should().Be(nameOnly);
+            var operation = call.Operation.Should().BeOfType<ListDatabasesOperation>().Subject;
+            operation.Filter.Should().Be(filterDocument);
+            operation.NameOnly.Should().Be(nameOnly);
         }
 
         [Fact]

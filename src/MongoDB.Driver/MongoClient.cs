@@ -162,58 +162,56 @@ namespace MongoDB.Driver
 
         /// <inheritdoc />
         public sealed override IEnumerable<string> ListDatabaseNames(
-                CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            var options = new ListDatabaseOptions { NameOnly = true };
-            return GetDatabaseNames(ListDatabases(options, cancellationToken).ToList());
-
+            return UsingImplicitSession(session => ListDatabaseNames(session, cancellationToken), cancellationToken);
         }
 
         /// <inheritdoc />
         public sealed override IEnumerable<string> ListDatabaseNames(
-                IClientSessionHandle session,
-                CancellationToken cancellationToken = default(CancellationToken))
+            IClientSessionHandle session,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            var options = new ListDatabaseOptions { NameOnly = true };
-            return GetDatabaseNames(ListDatabases(session, options, cancellationToken).ToList());
+            var options = new ListDatabasesOptions { NameOnly = true };
+            var cursor = ListDatabases(session, options, cancellationToken);
+            var databases = cursor.ToList();
+            return GetDatabaseNames(databases);
         }
 
         /// <inheritdoc />
         public sealed override Task<IEnumerable<string>> ListDatabaseNamesAsync(
-                CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            var options = new ListDatabaseOptions { NameOnly = true };
-            var databases = ListDatabasesAsync(options, cancellationToken);
-            return GetDatabaseNamesAsync(databases);
+            return UsingImplicitSessionAsync(session => ListDatabaseNamesAsync(session, cancellationToken), cancellationToken);
         }
 
         /// <inheritdoc />
-        public sealed override Task<IEnumerable<string>> ListDatabaseNamesAsync(
-                IClientSessionHandle session,
-                CancellationToken cancellationToken = default(CancellationToken))
+        public sealed override async Task<IEnumerable<string>> ListDatabaseNamesAsync(
+            IClientSessionHandle session,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            var options = new ListDatabaseOptions { NameOnly = true };
-            var databases = ListDatabasesAsync(session, options, cancellationToken);
-            return GetDatabaseNamesAsync(databases);
-        }
-        
-        /// <inheritdoc/>
-        public sealed override IAsyncCursor<BsonDocument> ListDatabases(
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return UsingImplicitSession(session => ListDatabases(session, options, cancellationToken),
-                                        cancellationToken);
+            var options = new ListDatabasesOptions { NameOnly = true };
+            var cursor = await ListDatabasesAsync(session, options, cancellationToken).ConfigureAwait(false);
+            var databases = await cursor.ToListAsync(cancellationToken).ConfigureAwait(false);
+            return GetDatabaseNames(databases);
         }
 
         /// <inheritdoc/>
         public sealed override IAsyncCursor<BsonDocument> ListDatabases(
-                IClientSessionHandle session,
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return UsingImplicitSession(session => ListDatabases(session, options, cancellationToken), cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public sealed override IAsyncCursor<BsonDocument> ListDatabases(
+            IClientSessionHandle session,
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));
-            options = options ?? new ListDatabaseOptions();
+            options = options ?? new ListDatabasesOptions();
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = CreateListDatabaseOperation(options, messageEncoderSettings);
             return ExecuteReadOperation(session, operation, cancellationToken);
@@ -221,22 +219,20 @@ namespace MongoDB.Driver
 
         /// <inheritdoc/>
         public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                ListDatabaseOptions options =  null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            ListDatabasesOptions options =  null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            return UsingImplicitSessionAsync(
-                    session => ListDatabasesAsync(session, options, cancellationToken),
-                    cancellationToken);
+            return UsingImplicitSessionAsync(session => ListDatabasesAsync(session, options, cancellationToken), cancellationToken);
         }
 
         /// <inheritdoc/>
         public sealed override Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                IClientSessionHandle session,
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            IClientSessionHandle session,
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.IsNotNull(session, nameof(session));
-            options = options ?? new ListDatabaseOptions();            
+            options = options ?? new ListDatabasesOptions();            
             var messageEncoderSettings = GetMessageEncoderSettings();
             var operation = CreateListDatabaseOperation(options, messageEncoderSettings);
             return ExecuteReadOperationAsync(session, operation, cancellationToken);
@@ -346,14 +342,12 @@ namespace MongoDB.Driver
         }
 
         private static ListDatabasesOperation CreateListDatabaseOperation(
-                ListDatabaseOptions options,
-                MessageEncoderSettings messageEncoderSettings)
+            ListDatabasesOptions options,
+            MessageEncoderSettings messageEncoderSettings)
         {
             return new ListDatabasesOperation(messageEncoderSettings)
             {
-                Filter = options.Filter?.Render(
-                    BsonDocumentSerializer.Instance,
-                    BsonSerializer.SerializerRegistry),
+                Filter = options.Filter?.Render(BsonDocumentSerializer.Instance, BsonSerializer.SerializerRegistry),
                 NameOnly = options.NameOnly
             };
         }
@@ -390,26 +384,9 @@ namespace MongoDB.Driver
             }
         }
 
-        /// <summary>
-        /// Get the database names from the ListDataBases output
-        /// </summary>
-        /// <param name="databases">Output from ListDatabases</param>
-        /// <returns></returns>
         private static IEnumerable<string> GetDatabaseNames(IEnumerable<BsonDocument> databases)
         {
-            return databases.Select(databaseRecord => databaseRecord["name"].ToString());
-        }
-
-        /// <summary>
-        /// Get the database names from the ListDataBases output
-        /// </summary>
-        /// <param name="getDatabasesTask">Output from ListDatabases</param>
-        /// <returns></returns>
-        private static async Task<IEnumerable<string>> GetDatabaseNamesAsync(
-                Task<IAsyncCursor<BsonDocument>> getDatabasesTask)
-        {
-            var databases = await Task.Run(() => getDatabasesTask).ConfigureAwait(false);
-            return GetDatabaseNames(databases.ToList());
+            return databases.Select(database => database["name"].ToString());
         }
 
         private MessageEncoderSettings GetMessageEncoderSettings()

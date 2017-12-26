@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 MongoDB Inc.
+/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -56,11 +56,10 @@ namespace MongoDB.Driver.Core.Operations
             result.Should().BeSameAs(filter);
         }
 
-        [Fact]
+        [Theory]
         [ParameterAttributeData]
         public void NameOnly_get_and_set_should_work(
-            [Values(false,true)]
-            bool nameOnly)
+            [Values(false,true)] bool nameOnly)
         {
             var subject = new ListDatabasesOperation(_messageEncoderSettings);
    
@@ -70,14 +69,14 @@ namespace MongoDB.Driver.Core.Operations
             result.Should().Be(nameOnly);
         }
 
-        [SkippableTheory]
+        [Theory]
         [ParameterAttributeData]
         public void CreateCommand_should_return_expected_result(
             [Values(null, "cake")] string filterString,
             [Values(null, false, true)] bool? nameOnly)
         {
             var filter = filterString != null
-                ? BsonDocument.Parse($"{{name: \"{filterString}\"}}")
+                ? BsonDocument.Parse($"{{ name : \"{filterString}\" }}")
                 : null;
 
             var subject = new ListDatabasesOperation(_messageEncoderSettings)
@@ -88,9 +87,9 @@ namespace MongoDB.Driver.Core.Operations
             
             var expectedResult = new BsonDocument
             {
-                {"listDatabases", 1},
-                {"filter", filter, filterString!=null },
-                {"nameOnly", nameOnly, nameOnly!=null }
+                { "listDatabases", 1 },
+                { "filter", filter, filterString != null },
+                { "nameOnly", nameOnly, nameOnly != null }
             };
             
 
@@ -121,17 +120,16 @@ namespace MongoDB.Driver.Core.Operations
         {
             RequireServer.Check();
             
-            var filterString = $"{{name: \"{_databaseNamespace.DatabaseName}\"}}";
+            var filterString = $"{{ name : \"{_databaseNamespace.DatabaseName}\" }}";
             var filter = BsonDocument.Parse(filterString);
             var subject = new ListDatabasesOperation(_messageEncoderSettings) { Filter = filter };
             EnsureDatabaseExists(async);
 
             var result = ExecuteOperation(subject, async);
-            var list = ReadCursorToEnd(result, async);
 
-            list.Should().HaveCount(1);
-
-            list[0]["name"].AsString.Should().Be(_databaseNamespace.DatabaseName);
+            var databases = ReadCursorToEnd(result, async);
+            databases.Should().HaveCount(1);
+            databases[0]["name"].AsString.Should().Be(_databaseNamespace.DatabaseName);
         }
 
         [SkippableTheory]
@@ -150,18 +148,18 @@ namespace MongoDB.Driver.Core.Operations
             EnsureDatabaseExists(async);
 
             var result = ExecuteOperation(subject, async);
-            var list = ReadCursorToEnd(result, async);
+            var databases = ReadCursorToEnd(result, async);
 
-            foreach (var db in list)
+            foreach (var database in databases)
             {
-                db.IndexOfName("name").Should().NotBe(-1);
+                database.Contains("name").Should().BeTrue();
                 if (nameOnly)
                 {
-                    db.ElementCount.Should().Be(1);
+                    database.ElementCount.Should().Be(1);
                 }
                 else
                 {
-                    db.ElementCount.Should().BeGreaterThan(1);
+                    database.ElementCount.Should().BeGreaterThan(1);
                 }       
             }
         }

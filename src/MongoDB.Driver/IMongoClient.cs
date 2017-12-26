@@ -86,10 +86,10 @@ namespace MongoDB.Driver
         IMongoDatabase GetDatabase(string name, MongoDatabaseSettings settings = null);
 
         /// <summary>
-        /// Returns the names of the databases on the server
+        /// Returns the names of the databases on the server.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>The database names.</returns>
         IEnumerable<string> ListDatabaseNames(
             CancellationToken cancellationToken = default(CancellationToken));
 
@@ -98,7 +98,7 @@ namespace MongoDB.Driver
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>The database names.</returns>
         IEnumerable<string> ListDatabaseNames(
             IClientSessionHandle session,                                              
             CancellationToken cancellationToken = default(CancellationToken));
@@ -107,7 +107,7 @@ namespace MongoDB.Driver
         /// Returns the names of the databases on the server
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>The database names.</returns>
         Task<IEnumerable<string>> ListDatabaseNamesAsync(
             CancellationToken cancellationToken = default(CancellationToken));
 
@@ -116,7 +116,7 @@ namespace MongoDB.Driver
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>The database names.</returns>
         Task<IEnumerable<string>> ListDatabaseNamesAsync(
             IClientSessionHandle session,                                              
             CancellationToken cancellationToken = default(CancellationToken));
@@ -128,8 +128,8 @@ namespace MongoDB.Driver
         /// <param name="options">The options.</param>
         /// <returns>A cursor.</returns>
         IAsyncCursor<BsonDocument> ListDatabases(
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken));
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Lists the databases on the server.
@@ -141,9 +141,9 @@ namespace MongoDB.Driver
         /// A cursor.
         /// </returns>
         IAsyncCursor<BsonDocument> ListDatabases(
-                IClientSessionHandle session,
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken));
+            IClientSessionHandle session,
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Lists the databases on the server.
@@ -152,8 +152,8 @@ namespace MongoDB.Driver
         /// <param name="options">The options.</param>
         /// <returns>A Task whose result is a cursor.</returns>
         Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken));
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Lists the databases on the server.
@@ -165,9 +165,9 @@ namespace MongoDB.Driver
         /// A Task whose result is a cursor.
         /// </returns>
         Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                IClientSessionHandle session,
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken));
+            IClientSessionHandle session,
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Starts a client sesssion.

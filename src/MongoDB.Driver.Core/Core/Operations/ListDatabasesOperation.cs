@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 MongoDB Inc.
+/* Copyright 2013-2017 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -33,9 +33,8 @@ namespace MongoDB.Driver.Core.Operations
     {
         // fields
         private BsonDocument _filter;
-
-        private bool? _nameOnly;
         private MessageEncoderSettings _messageEncoderSettings;
+        private bool? _nameOnly;
 
         // constructors
         /// <summary>
@@ -59,6 +58,7 @@ namespace MongoDB.Driver.Core.Operations
             get { return _filter; }
             set { _filter = value; }
         }
+
         /// <summary>
         /// Gets the message encoder settings.
         /// </summary>
@@ -71,7 +71,7 @@ namespace MongoDB.Driver.Core.Operations
         }
 
         /// <summary>
-        /// Gets or sets the nameOnly flag.
+        /// Gets or sets the NameOnly flag.
         /// </summary>
         /// <value>
         /// The NameOnly flag.
@@ -104,10 +104,11 @@ namespace MongoDB.Driver.Core.Operations
         // private methods
         internal BsonDocument CreateCommand()
         {
-            return new BsonDocument {
+            return new BsonDocument
+            {
                 { "listDatabases", 1 },
-                { "filter", _filter, _filter != null},
-                { "nameOnly", _nameOnly, _nameOnly != null}
+                { "filter", _filter, _filter != null },
+                { "nameOnly", _nameOnly, _nameOnly != null }
             };
         }
 

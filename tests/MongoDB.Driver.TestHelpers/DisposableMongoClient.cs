@@ -87,29 +87,29 @@ namespace MongoDB.Driver.TestHelpers
         }
 
         public IAsyncCursor<BsonDocument> ListDatabases(
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             return wrapped.ListDatabases(options, cancellationToken);
         }
 
         public IAsyncCursor<BsonDocument> ListDatabases(
-                IClientSessionHandle session, ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            IClientSessionHandle session, ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             return wrapped.ListDatabases(session, options, cancellationToken);
         }
 
         public Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             return wrapped.ListDatabasesAsync(options, cancellationToken);
         }
 
         public Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                IClientSessionHandle session, ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            IClientSessionHandle session, ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             return wrapped.ListDatabasesAsync(session, options, cancellationToken);
         }

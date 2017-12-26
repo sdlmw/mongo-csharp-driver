@@ -89,29 +89,31 @@ namespace MongoDB.Driver
 
         /// <inheritdoc />
         public virtual IAsyncCursor<BsonDocument> ListDatabases(
-                ListDatabaseOptions options = null,                                                
-                CancellationToken cancellationToken = default(CancellationToken))
+            ListDatabasesOptions options = null,                                                
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
         public virtual IAsyncCursor<BsonDocument> ListDatabases(
-                IClientSessionHandle session, ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            IClientSessionHandle session, 
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
         public abstract Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                ListDatabaseOptions option = null,
-                CancellationToken cancellationToken = default(CancellationToken));
+            ListDatabasesOptions option = null,
+            CancellationToken cancellationToken = default(CancellationToken));
 
         /// <inheritdoc />
         public virtual Task<IAsyncCursor<BsonDocument>> ListDatabasesAsync(
-                IClientSessionHandle session, ListDatabaseOptions options = null,
-                CancellationToken cancellationToken = default(CancellationToken))
+            IClientSessionHandle session, 
+            ListDatabasesOptions options = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }

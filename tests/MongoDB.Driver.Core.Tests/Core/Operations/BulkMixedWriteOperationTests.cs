@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 MongoDB Inc.
+/* Copyright 2013-2018 MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -165,6 +165,43 @@ namespace MongoDB.Driver.Core.Operations
             Action act = () => ExecuteOperation(subject, async);
 
             act.ShouldThrow<InvalidOperationException>();
+        }
+
+        [Theory]
+        [ParameterAttributeData]
+        public void Execute_with_collation_should_throw_when_collation_is_not_supported(
+            [Values(1, 2)] int requestWithCollation,
+            [Values(false, true)] bool async)
+        {
+            var collation = new Collation("en_US");
+            var requests = new List<WriteRequest>
+            {
+                new DeleteRequest(new BsonDocument("x", 1)),
+                new InsertRequest(new BsonDocument("x", 1)),
+                new UpdateRequest(UpdateType.Update, new BsonDocument("x", 1), new BsonDocument("$set", new BsonDocument("x", 2)))
+            };
+            switch (requestWithCollation)
+            {
+                case 1:
+                    requests.Add(new DeleteRequest(new BsonDocument("x", 1)) { Collation = collation });
+                    break;
+
+                case 2:
+                    requests.Add(new UpdateRequest(UpdateType.Update, new BsonDocument("x", 1), new BsonDocument("$set", new BsonDocument("x", 2))) { Collation = collation });
+                    break;
+            }
+            var subject = new BulkMixedWriteOperation(_collectionNamespace, requests, _messageEncoderSettings);
+
+            var exception = Record.Exception(() => ExecuteOperation(subject, async));
+
+            if (Feature.Collation.IsSupported(CoreTestConfiguration.ServerVersion))
+            {
+                exception.Should().BeNull();
+            }
+            else
+            {
+                exception.Should().BeOfType<NotSupportedException>();
+            }
         }
 
         [SkippableTheory]

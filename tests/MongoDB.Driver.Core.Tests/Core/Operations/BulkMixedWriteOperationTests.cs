@@ -170,7 +170,7 @@ namespace MongoDB.Driver.Core.Operations
         [Theory]
         [ParameterAttributeData]
         public void Execute_with_collation_should_throw_when_collation_is_not_supported(
-            [Values(1, 2)] int requestWithCollation,
+            [Values(typeof(DeleteRequest), typeof(UpdateRequest))] Type requestWithCollationType,
             [Values(false, true)] bool async)
         {
             var collation = new Collation("en_US");
@@ -180,15 +180,13 @@ namespace MongoDB.Driver.Core.Operations
                 new InsertRequest(new BsonDocument("x", 1)),
                 new UpdateRequest(UpdateType.Update, new BsonDocument("x", 1), new BsonDocument("$set", new BsonDocument("x", 2)))
             };
-            switch (requestWithCollation)
+            if (requestWithCollationType == typeof(DeleteRequest))
             {
-                case 1:
-                    requests.Add(new DeleteRequest(new BsonDocument("x", 1)) { Collation = collation });
-                    break;
-
-                case 2:
-                    requests.Add(new UpdateRequest(UpdateType.Update, new BsonDocument("x", 1), new BsonDocument("$set", new BsonDocument("x", 2))) { Collation = collation });
-                    break;
+                requests.Add(new DeleteRequest(new BsonDocument("x", 1)) { Collation = collation });
+            }
+            if (requestWithCollationType == typeof(UpdateRequest))
+            {
+                requests.Add(new UpdateRequest(UpdateType.Update, new BsonDocument("x", 1), new BsonDocument("$set", new BsonDocument("x", 2))) { Collation = collation });
             }
             var subject = new BulkMixedWriteOperation(_collectionNamespace, requests, _messageEncoderSettings);
 

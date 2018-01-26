@@ -250,16 +250,18 @@ namespace MongoDB.Driver.Core.Operations
         public void Execute_should_throw_when_maxTime_is_exceeded(
             [Values(false, true)] bool async)
         {
+            RequireServer.Check().Supports(Feature.FailPoints);
             var indexName = "x_1";
-            var failPoint = new FailPoint(FailPointName.MaxTimeAlwaysTimeout, CoreTestConfiguration.Cluster, _session, _messageEncoderSettings);
+            var failPoint = new FailPoint(FailPointName.MaxTimeAlwaysTimeout, CoreTestConfiguration.Cluster, _session.Fork(), _messageEncoderSettings);
+            var subject = new DropIndexOperation(_collectionNamespace, indexName, _messageEncoderSettings) { MaxTime = TimeSpan.FromTicks(1) };
+            Exception exception;
+
             using (var failPointContext = failPoint.CreateAlwaysOnContext())
             {
-                var subject = new DropIndexOperation(_collectionNamespace, indexName, _messageEncoderSettings);
-                var exception = Record.Exception(() => ExecuteOperation(subject, failPointContext.Binding, async));
-
-                exception.Should().BeOfType<TimeoutException>();
+                exception = Record.Exception(() => ExecuteOperation(subject, failPointContext.Binding, async));
             }
 
+            exception.Should().BeOfType<MongoExecutionTimeoutException>();
         }
 
         [SkippableTheory]

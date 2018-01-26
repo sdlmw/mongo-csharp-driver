@@ -27,32 +27,22 @@ using MongoDB.Driver.Core.Operations;
 using MongoDB.Driver.Core.Servers;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
-namespace MongoDB.Driver.Tests
+namespace MongoDB.Driver.Core.Tests
 {
     public static class FailPointName
     {
         // public constants
         public const string MaxTimeAlwaysTimeout = "maxTimeAlwaysTimeOut";
+        public const string OnPrimaryTransactionalWrite = "onPrimaryTransactionalWrite";
     }
 
-    public class FailPoint : IDisposable
+    public class FailPoint
     {
         // private readonly fields
-        private readonly SingleServerReadWriteBinding _binding;
         private readonly string _name;
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly ICoreSessionHandle _session;
         private readonly IServer _server;
-
-        // private fields
-        private bool _disposed;
-        private bool _wasSet;
-
-        /// <summary>
-        /// Binding associated with the FailPoint.
-        /// </summary>
-        /// <value>The binding.</value>
-        public SingleServerReadWriteBinding Binding => _binding;
 
         /// <summary>
         /// Whether or not the FailPoint will work on the cluster.
@@ -72,45 +62,31 @@ namespace MongoDB.Driver.Tests
             _messageEncoderSettings = messageEncoderSettings;
             _server = GetWriteableServer(cluster);
             _session = session;
-            
-            _binding = new SingleServerReadWriteBinding(_server, session);
         }
 
-        // public methods
         /// <summary>
-        /// Dispose of the FailPoint, turning off the FailPoint on the server if it was set.
+        /// Creates a context in which the FailPoint is always on. 
         /// </summary>
-        public void Dispose()
+        public IFailPointContext CreateAlwaysOnContext()
         {
-            if (_disposed) return;
-            try
-            {   
-                if (_wasSet) SetMode("off");
-            }
-            finally
-            {
-                _disposed = true;
-                _binding.Dispose();
-            }
+            return CreateFailPointContext(mode: "alwaysOn");
         }
 
         /// <summary>
-        /// Set the FailPoint's mode to alwaysOn.
-        /// </summary>
-        public void SetAlwaysOn()
-        {
-            SetMode("alwaysOn");
-            _wasSet = true;
-        }
-
-        /// <summary>
-        /// Set the number of times the FailPoint should occur.
+        /// Create a context in which the FailPoint occurs a set number of times. 
         /// </summary>
         /// <param name="n">The number of times the FailPoint happen.</param>
-        public void SetTimes(int n)
+        public IFailPointContext CreateSetTimesContext(int n)
         {
-            SetMode(new BsonDocument("times", n));
-            _wasSet = true;
+            return CreateFailPointContext(mode: new BsonDocument("times", n));
+        }
+
+        private FailPointContext CreateFailPointContext(BsonValue mode)
+        {
+            return new FailPointContext(
+                binding => SetMode(mode, binding),
+                binding => SetMode("off", binding),
+                () => new SingleServerReadWriteBinding(_server, _session));
         }
 
         private bool IsThisFailPointSupported()
@@ -125,30 +101,65 @@ namespace MongoDB.Driver.Tests
             }
         }
 
-        private void SetMode(BsonValue mode)
+        private IServer GetWriteableServer(ICluster cluster)
+        {
+            var selector = WritableServerSelector.Instance;
+            return cluster.SelectServer(selector, CancellationToken.None);
+        }
+
+        private void SetMode(BsonValue mode, SingleServerReadWriteBinding binding)
         {
             var command = new BsonDocument
             {
                 { "configureFailPoint", _name },
                 { "mode", mode }
             };
-            // _adminDatabase.RunCommand(command);
-
 
             var operation = new WriteCommandOperation<BsonDocument>(
-                databaseNamespace: new DatabaseNamespace("admin"), 
-                command: command, 
-                resultSerializer: new BsonDocumentSerializer(), 
+                databaseNamespace: new DatabaseNamespace("admin"),
+                command: command,
+                resultSerializer: new BsonDocumentSerializer(),
                 messageEncoderSettings: _messageEncoderSettings);
 
-            operation.Execute(_binding, CancellationToken.None);
-            
+            operation.Execute(binding, CancellationToken.None);
         }
 
-        private IServer GetWriteableServer(ICluster cluster)
+
+        private class FailPointContext : IFailPointContext
         {
-            var selector = WritableServerSelector.Instance;
-            return cluster.SelectServer(selector, CancellationToken.None);
+            private readonly Action<SingleServerReadWriteBinding> _failPointOff;
+
+            private bool _disposed;
+            
+            public FailPointContext(
+                Action<SingleServerReadWriteBinding> failPointOn, 
+                Action<SingleServerReadWriteBinding> failPointOff,
+                Func<SingleServerReadWriteBinding> createBinding)
+            {
+                _failPointOff = failPointOff;
+                Binding = createBinding();
+                failPointOn(Binding);
+            }
+
+            public void Dispose()
+            {
+                if (_disposed) return;
+                try { _failPointOff(Binding); }
+                finally
+                {
+                    _disposed = true;
+                    Binding.Dispose();
+                }
+            }
+
+            public SingleServerReadWriteBinding Binding { get; }
+        }
+
+        public interface IFailPointContext : IDisposable
+        {
+            SingleServerReadWriteBinding Binding { get; }
         }
     }
+
+    
 }

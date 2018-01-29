@@ -138,6 +138,7 @@ namespace MongoDB.Driver.Core.Tests
             {
                 _failPointOff = failPointOff;
                 Binding = createBinding();
+
                 failPointOn(Binding);
             }
 

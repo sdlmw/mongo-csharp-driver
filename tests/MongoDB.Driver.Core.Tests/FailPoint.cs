@@ -42,13 +42,9 @@ namespace MongoDB.Driver.Core.Tests
         private readonly string _name;
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly ICoreSessionHandle _session;
-        private readonly IServer _server;
+        private readonly Lazy<IServer> _server;
 
-        /// <summary>
-        /// Whether or not the FailPoint will work on the cluster.
-        /// </summary>
-        /// <value>Whether or not the FailPoint is supported.</value>
-        public bool Supported => IsThisFailPointSupported();
+        
 
         // constructors
         public FailPoint(string name, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
@@ -60,7 +56,7 @@ namespace MongoDB.Driver.Core.Tests
 
             _name = name;
             _messageEncoderSettings = messageEncoderSettings;
-            _server = GetWriteableServer(cluster);
+            _server = new Lazy<IServer>(()=> GetWriteableServer(cluster));
             _session = session;
         }
 
@@ -81,25 +77,31 @@ namespace MongoDB.Driver.Core.Tests
             return CreateFailPointContext(mode: new BsonDocument("times", n));
         }
 
-        private FailPointContext CreateFailPointContext(BsonValue mode)
-        {
-            return new FailPointContext(
-                binding => SetMode(mode, binding),
-                binding => SetMode("off", binding),
-                () => new SingleServerReadWriteBinding(_server, _session));
-        }
-
-        private bool IsThisFailPointSupported()
+        // <summary>
+        /// Whether or not the FailPoint will work on the cluster.
+        /// </summary>
+        /// <value>Whether or not the FailPoint is supported.</value>
+        public bool IsThisFailPointSupported()
         {
             // some failpoints aren't supported everywhere
             switch (_name)
             {
                 case FailPointName.MaxTimeAlwaysTimeout:
-                    return _server.Description.Type != ServerType.ShardRouter;
+                    return _server.Value.Description.Type != ServerType.ShardRouter;
                 default:
                     return true;
             }
         }
+
+        private FailPointContext CreateFailPointContext(BsonValue mode)
+        {
+            return new FailPointContext(
+                binding => SetMode(mode, binding),
+                binding => SetMode("off", binding),
+                () => new SingleServerReadWriteBinding(_server.Value, _session)); 
+        }
+
+       
 
         private IServer GetWriteableServer(ICluster cluster)
         {

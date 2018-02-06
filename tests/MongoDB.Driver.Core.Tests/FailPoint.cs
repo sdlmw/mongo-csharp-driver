@@ -54,41 +54,68 @@ namespace MongoDB.Driver.Core.Tests
         }
     }
 
-    public class FailPoint
+    public class FailPoint : IDisposable
     {
-        // private readonly fields
-        private readonly string _name;
+        #region Private readonly fields
+        private readonly Lazy<SingleServerReadWriteBinding> _binding;
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly BsonValue _mode;
+        private readonly string _name;
         private readonly ICoreSessionHandle _session;
         private readonly Lazy<IServer> _server;
-        
-        // constructors
+        #endregion
+
+        #region Private mutable fields
+        private bool _disposed;
+        private bool _wasEnabled;
+        #endregion
+
+        public SingleServerReadWriteBinding Binding => _binding.Value;
+
         public FailPoint(string name, BsonValue mode, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
         {
             Ensure.IsNotNull(name, nameof(name));
             Ensure.IsNotNull(cluster, nameof(cluster));
             Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
-   
-            _name = name;
-            _mode = mode;
+
+            _binding = new Lazy<SingleServerReadWriteBinding>(() => new SingleServerReadWriteBinding(_server.Value, _session));
             _messageEncoderSettings = messageEncoderSettings;
-            _server = new Lazy<IServer>(()=> GetWriteableServer(cluster));
+            _mode = mode;
+            _name = name;
+            _server = new Lazy<IServer>(() => GetWriteableServer(cluster));
             _session = session;
         }
 
-        /// <summary>
-        /// Creates a context with a custom mode
-        /// </summary>
-        public IFailPointContext CreateContext()
+        #region Static Methods
+        public static FailPoint CreateAlwaysTimeOutFailPoint(
+            ICluster cluster, 
+            ICoreSessionHandle session, 
+            MessageEncoderSettings messageEncoderSettings)
         {
-            return new FailPointContext(
-                binding => SendFailPointCommand(_mode, binding),
-                binding => SendFailPointCommand("off", binding),
-                () => new SingleServerReadWriteBinding(_server.Value, _session));
+            return new FailPoint(FailPointName.MaxTimeAlwaysTimeout, FailPointMode.AlwaysOn, cluster, session, messageEncoderSettings);
+        }
+        #endregion
+
+
+        #region Instance Methods
+        /// <summary>
+        /// Turns on the FailPoint, sending the command to the server
+        /// </summary>
+        public void Enable()
+        {
+            SendFailPointCommand(_mode, Binding);
+            _wasEnabled = true;
         }
 
-        // /<summary>
+        public void Dispose()
+        {
+            if (_disposed) return;
+            if (_wasEnabled) SendFailPointCommand("off", Binding);
+            _disposed = true;
+            Binding.Dispose();
+        }
+
+        /// <summary>
         /// Whether or not the FailPoint will work on the cluster.
         /// </summary>
         /// <value>Whether or not the FailPoint is supported.</value>
@@ -103,7 +130,7 @@ namespace MongoDB.Driver.Core.Tests
                     return true;
             }
         }
-       
+
         private IServer GetWriteableServer(ICluster cluster)
         {
             var selector = WritableServerSelector.Instance;
@@ -114,8 +141,8 @@ namespace MongoDB.Driver.Core.Tests
         {
             var command = new BsonDocument
             {
-                { "configureFailPoint", _name },
-                { "mode", mode }
+                {"configureFailPoint", _name},
+                {"mode", mode}
             };
 
             var operation = new WriteCommandOperation<BsonDocument>(
@@ -126,54 +153,7 @@ namespace MongoDB.Driver.Core.Tests
 
             operation.Execute(binding, CancellationToken.None);
         }
-
-
-        private class FailPointContext : IFailPointContext
-        {
-            private readonly Lazy<SingleServerReadWriteBinding> _binding;
-            private readonly Action<SingleServerReadWriteBinding> _failPointOn;
-            private readonly Action<SingleServerReadWriteBinding> _failPointOff;
-
-            private bool _disposed;
-            private bool _wasEnabled = false;
-
-            public SingleServerReadWriteBinding Binding => _binding.Value;
-
-            public FailPointContext(
-                Action<SingleServerReadWriteBinding> failPointOn, 
-                Action<SingleServerReadWriteBinding> failPointOff,
-                Func<SingleServerReadWriteBinding> createBinding)
-            {
-                _failPointOn = failPointOn;
-                _failPointOff = failPointOff;
-                _binding = new Lazy<SingleServerReadWriteBinding>(createBinding);
-                failPointOn(Binding);
-            }
-
-            /// <summary>
-            /// Turns on the FailPoint, sending the command to the server
-            /// </summary>
-            public void Enable()
-            {
-                  _failPointOn(_binding.Value);
-                  _wasEnabled = true;
-            }
-
-            public void Dispose()
-            {
-                if (_disposed) return;
-                if (_wasEnabled) _failPointOff(Binding); 
-                _disposed = true;
-                Binding.Dispose();
-            }
-        }
-
-        public interface IFailPointContext : IDisposable
-        {
-            SingleServerReadWriteBinding Binding { get; }
-            void Enable();
-        }
+        #endregion
     }
 
-    
 }

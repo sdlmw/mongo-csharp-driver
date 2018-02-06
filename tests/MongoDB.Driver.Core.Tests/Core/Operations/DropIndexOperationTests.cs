@@ -252,13 +252,13 @@ namespace MongoDB.Driver.Core.Operations
         {
             RequireServer.Check().Supports(Feature.FailPoints);
             var indexName = "x_1";
-            var failPoint = new FailPoint(FailPointName.MaxTimeAlwaysTimeout, CoreTestConfiguration.Cluster, _session.Fork(), _messageEncoderSettings);
-            var subject = new DropIndexOperation(_collectionNamespace, indexName, _messageEncoderSettings) { MaxTime = TimeSpan.FromTicks(1) };
+            var subject = new DropIndexOperation(_collectionNamespace, indexName, _messageEncoderSettings) { MaxTime = TimeSpan.FromSeconds(9001) };
             Exception exception;
 
-            using (var failPointContext = failPoint.CreateAlwaysOnContext())
+            using (var failPoint = FailPoint.CreateAlwaysTimeOutFailPoint(CoreTestConfiguration.Cluster, _session.Fork(), _messageEncoderSettings))
             {
-                exception = Record.Exception(() => ExecuteOperation(subject, failPointContext.Binding, async));
+                failPoint.Enable();
+                exception = Record.Exception(() => ExecuteOperation(subject, failPoint.Binding, async));
             }
 
             exception.Should().BeOfType<MongoExecutionTimeoutException>();

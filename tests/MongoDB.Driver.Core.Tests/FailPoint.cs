@@ -48,7 +48,7 @@ namespace MongoDB.Driver.Core.Tests
         /// Create a mode in which the FailPoint occurs a set number of times. 
         /// </summary>
         /// <param name="n">The number of times the FailPoint happen.</param>
-        public static BsonValue ConfigureTimes(int n)
+        public static BsonValue CreateTimesToFailMode(int n)
         {
             return new BsonDocument("times", n);
         }
@@ -70,8 +70,20 @@ namespace MongoDB.Driver.Core.Tests
         private bool _wasEnabled;
         #endregion
 
+        /// <summary>
+        /// The binding used by the FailPoint and associated commands.
+        /// </summary>
+        /// <value>Lazily constructed binding for the FailPoint.</value>
         public SingleServerReadWriteBinding Binding => _binding.Value;
 
+        /// <summary>
+        /// Creates a new FailPoint.
+        /// </summary>
+        /// <param name="name">The name (type) of the FailPoint.</param>
+        /// <param name="mode">The mode.</param>
+        /// <param name="cluster">The cluster.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="messageEncoderSettings">The message encoder settings.</param>
         public FailPoint(string name, BsonValue mode, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
         {
             Ensure.IsNotNull(name, nameof(name));
@@ -87,12 +99,29 @@ namespace MongoDB.Driver.Core.Tests
         }
 
         #region Static Methods
-        public static FailPoint CreateAlwaysTimeOutFailPoint(
-            ICluster cluster, 
-            ICoreSessionHandle session, 
-            MessageEncoderSettings messageEncoderSettings)
+        /// <summary>
+        /// Creates a FailPoint that always times out.
+        /// </summary>
+        /// <param name="cluster">The cluster.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="messageEncoderSettings">The message encoder settings.</param>
+        /// <returns>A FailPoint that always times out.</returns>
+        public static FailPoint CreateAlwaysTimesOutFailPoint(ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
         {
             return new FailPoint(FailPointName.MaxTimeAlwaysTimeout, FailPointMode.AlwaysOn, cluster, session, messageEncoderSettings);
+        }
+
+        /// <summary>
+        /// Creates a FailPoint that times out <paramref name="n"/> times.
+        /// </summary>
+        /// <param name="n">The number of times to time out.</param>
+        /// <param name="cluster">The cluster.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="messageEncoderSettings">The message encoder settings.</param>
+        /// <returns>A FailPoint that always times out.</returns>
+        public static FailPoint CreateTimesOutNTimesFailPoint(int n, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
+        {
+            return new FailPoint(FailPointName.MaxTimeAlwaysTimeout, FailPointMode.CreateTimesToFailMode(n), cluster, session, messageEncoderSettings);
         }
         #endregion
 

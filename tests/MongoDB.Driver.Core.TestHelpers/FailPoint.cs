@@ -14,12 +14,9 @@
 */
 
 using System;
-using System.Linq;
 using System.Threading;
-using System.Xml.Schema;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Clusters.ServerSelectors;
@@ -28,7 +25,7 @@ using MongoDB.Driver.Core.Operations;
 using MongoDB.Driver.Core.Servers;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 
-namespace MongoDB.Driver.Core.Tests
+namespace MongoDB.Driver.Core.TestHelpers
 {
     public static class FailPointName
     {
@@ -57,17 +54,21 @@ namespace MongoDB.Driver.Core.Tests
     public class FailPoint : IDisposable
     {
         #region Private readonly fields
+
         private readonly Lazy<SingleServerReadWriteBinding> _binding;
         private readonly MessageEncoderSettings _messageEncoderSettings;
         private readonly BsonValue _mode;
         private readonly string _name;
         private readonly ICoreSessionHandle _session;
         private readonly Lazy<IServer> _server;
+
         #endregion
 
         #region Private mutable fields
+
         private bool _disposed;
         private bool _wasEnabled;
+
         #endregion
 
         /// <summary>
@@ -99,6 +100,7 @@ namespace MongoDB.Driver.Core.Tests
         }
 
         #region Static Methods
+
         /// <summary>
         /// Creates a FailPoint that always times out.
         /// </summary>
@@ -123,10 +125,40 @@ namespace MongoDB.Driver.Core.Tests
         {
             return new FailPoint(FailPointName.MaxTimeAlwaysTimeout, FailPointMode.CreateTimesToFailMode(n), cluster, session, messageEncoderSettings);
         }
+
+        /// <summary>
+        /// Creates and enables FailPoint that always times out.
+        /// </summary>
+        /// <param name="cluster">The cluster.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="messageEncoderSettings">The message encoder settings.</param>
+        /// <returns>A FailPoint that always times out.</returns>
+        public static FailPoint EnableAlwaysTimesOutFailPoint(ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
+        {
+            var failPoint = CreateAlwaysTimesOutFailPoint(cluster, session, messageEncoderSettings);
+            failPoint.Enable();
+            return failPoint;
+        }
+
+        /// <summary>
+        /// Creates and enalbe a FailPoint that times out <paramref name="n"/> times.
+        /// </summary>
+        /// <param name="n">The number of times to time out.</param>
+        /// <param name="cluster">The cluster.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="messageEncoderSettings">The message encoder settings.</param>
+        /// <returns>A FailPoint that always times out.</returns>
+        public static FailPoint EnableTimesOutNTimesFailPoint(int n, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
+        {
+            var failPoint = CreateTimesOutNTimesFailPoint(n, cluster, session, messageEncoderSettings);
+            failPoint.Enable();
+            return failPoint;
+        }
+
         #endregion
 
-
         #region Instance Methods
+
         /// <summary>
         /// Turns on the FailPoint, sending the command to the server.
         /// FailPoint will be automatically disabled upon the disposal of the FailPoint.
@@ -183,6 +215,7 @@ namespace MongoDB.Driver.Core.Tests
 
             operation.Execute(binding, CancellationToken.None);
         }
+
         #endregion
     }
 

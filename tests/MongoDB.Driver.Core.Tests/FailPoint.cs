@@ -128,7 +128,8 @@ namespace MongoDB.Driver.Core.Tests
 
         #region Instance Methods
         /// <summary>
-        /// Turns on the FailPoint, sending the command to the server
+        /// Turns on the FailPoint, sending the command to the server.
+        /// FailPoint will be automatically disabled upon the disposal of the FailPoint.
         /// </summary>
         public void Enable()
         {

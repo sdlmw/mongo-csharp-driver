@@ -22,8 +22,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Misc;
+using MongoDB.Driver.Core.TestHelpers;
 using MongoDB.Driver.Core.TestHelpers.XunitExtensions;
-using MongoDB.Driver.Core.Tests;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 using Xunit;
 
@@ -255,9 +255,8 @@ namespace MongoDB.Driver.Core.Operations
             var subject = new DropIndexOperation(_collectionNamespace, indexName, _messageEncoderSettings) { MaxTime = TimeSpan.FromSeconds(9001) };
             Exception exception;
 
-            using (var failPoint = FailPoint.CreateAlwaysTimeOutFailPoint(CoreTestConfiguration.Cluster, _session.Fork(), _messageEncoderSettings))
+            using (var failPoint = FailPoint.EnableAlwaysTimesOutFailPoint(CoreTestConfiguration.Cluster, _session.Fork(), _messageEncoderSettings))
             {
-                failPoint.Enable();
                 exception = Record.Exception(() => ExecuteOperation(subject, failPoint.Binding, async));
             }
 

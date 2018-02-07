@@ -34,200 +34,126 @@ namespace MongoDB.Driver.Core.TestHelpers
         public const string OnPrimaryTransactionalWrite = "onPrimaryTransactionalWrite";
     }
 
-    public static class FailPointMode
+    public sealed class FailPoint : IDisposable
     {
-        /// <summary>
-        /// A mode in which the FailPoint is always on. 
-        /// </summary>
-        public static BsonValue AlwaysOn => "alwaysOn";
-        
-        /// <summary>
-        /// Create a mode in which the FailPoint occurs a set number of times. 
-        /// </summary>
-        /// <param name="n">The number of times the FailPoint happen.</param>
-        public static BsonValue CreateTimesToFailMode(int n)
+        #region static
+        // public static methods
+        public static FailPoint Configure(ICluster cluster, ICoreSessionHandle session, string name, BsonDocument args)
         {
-            return new BsonDocument("times", n);
-        }
-    }
-
-    public class FailPoint : IDisposable
-    {
-        #region Private readonly fields
-        private readonly Lazy<SingleServerReadWriteBinding> _binding;
-        private readonly BsonDocument _args;
-        private readonly MessageEncoderSettings _messageEncoderSettings;
-        private readonly string _name;
-        private readonly ICoreSessionHandle _session;
-        private readonly Lazy<IServer> _server;
-
-        #endregion
-
-        #region Private mutable fields
-
-        private bool _disposed;
-        private bool _wasEnabled;
-
-        #endregion
-
-        /// <summary>
-        /// The binding used by the FailPoint and associated commands.
-        /// </summary>
-        /// <value>Lazily constructed binding for the FailPoint.</value>
-        public SingleServerReadWriteBinding Binding => _binding.Value;
-
-
-        /// <summary>
-        /// Creates a new FailPoint via name and arguments.
-        /// </summary>
-        /// <param name="name">The name.</param>
-        /// <param name="args">The arguments for the failpoint. </param>
-        /// <param name="cluster">The cluster.</param>
-        /// <param name="session">The session.</param>
-        /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        public FailPoint(string name, BsonDocument args, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
-        {
-            Ensure.IsNotNull(args, nameof(args));
-            Ensure.IsNotNull(cluster, nameof(cluster));
-            Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
-            Ensure.IsNotNull(name, nameof(name));
-
-            _binding = new Lazy<SingleServerReadWriteBinding>(() => new SingleServerReadWriteBinding(_server.Value, _session));
-            _messageEncoderSettings = messageEncoderSettings;
-            _args = args;
-            _name = name;
-            _server = new Lazy<IServer>(() => GetWriteableServer(cluster));
-            _session = session;
-        }
-
-        /// <summary>
-        /// Creates a new FailPoint via name and a mode.
-        /// </summary>
-        /// <param name="name">The name (type) of the FailPoint.</param>
-        /// <param name="mode">The mode.</param>
-        /// <param name="cluster">The cluster.</param>
-        /// <param name="session">The session.</param>
-        /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        public FailPoint(string name, BsonValue mode, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
-            : this(name, new BsonDocument { { "mode", mode } }, cluster, session, messageEncoderSettings) { }
-
-        #region Static Methods
-
-        /// <summary>
-        /// Creates a FailPoint that always times out.
-        /// </summary>
-        /// <param name="cluster">The cluster.</param>
-        /// <param name="session">The session.</param>
-        /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        /// <returns>A FailPoint that always times out.</returns>
-        public static FailPoint CreateAlwaysTimesOutFailPoint(ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
-        {
-            return new FailPoint(FailPointName.MaxTimeAlwaysTimeout, FailPointMode.AlwaysOn, cluster, session, messageEncoderSettings);
-        }
-
-        /// <summary>
-        /// Creates a FailPoint that times out <paramref name="n"/> times.
-        /// </summary>
-        /// <param name="n">The number of times to time out.</param>
-        /// <param name="cluster">The cluster.</param>
-        /// <param name="session">The session.</param>
-        /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        /// <returns>A FailPoint that always times out.</returns>
-        public static FailPoint CreateTimesOutNTimesFailPoint(int n, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
-        {
-            return new FailPoint(FailPointName.MaxTimeAlwaysTimeout, FailPointMode.CreateTimesToFailMode(n), cluster, session, messageEncoderSettings);
-        }
-
-        /// <summary>
-        /// Creates and enables FailPoint that always times out.
-        /// </summary>
-        /// <param name="cluster">The cluster.</param>
-        /// <param name="session">The session.</param>
-        /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        /// <returns>A FailPoint that always times out.</returns>
-        public static FailPoint EnableAlwaysTimesOutFailPoint(ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
-        {
-            var failPoint = CreateAlwaysTimesOutFailPoint(cluster, session, messageEncoderSettings);
-            failPoint.Enable();
-            return failPoint;
-        }
-
-        /// <summary>
-        /// Creates and enable a FailPoint that times out <paramref name="n"/> times.
-        /// </summary>
-        /// <param name="n">The number of times to time out.</param>
-        /// <param name="cluster">The cluster.</param>
-        /// <param name="session">The session.</param>
-        /// <param name="messageEncoderSettings">The message encoder settings.</param>
-        /// <returns>A FailPoint that always times out.</returns>
-        public static FailPoint EnableTimesOutNTimesFailPoint(int n, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
-        {
-            var failPoint = CreateTimesOutNTimesFailPoint(n, cluster, session, messageEncoderSettings);
-            failPoint.Enable();
-            return failPoint;
-        }
-
-        #endregion
-
-        #region Instance Methods
-
-        /// <summary>
-        /// Turns on the FailPoint, sending the command to the server.
-        /// FailPoint will be automatically disabled upon the disposal of the FailPoint.
-        /// </summary>
-        public void Enable()
-        {
-            SendFailPointCommand(_args, Binding);
-            _wasEnabled = true;
-        }
-
-        public void Dispose()
-        {
-            if (_disposed) return;
-            if (_wasEnabled) SendFailPointCommand("off", Binding);
-            _disposed = true;
-            Binding.Dispose();
-        }
-
-        /// <summary>
-        /// Whether or not the FailPoint will work on the cluster.
-        /// </summary>
-        /// <value>Whether or not the FailPoint is supported.</value>
-        public bool IsThisFailPointSupported()
-        {
-            // some failpoints aren't supported everywhere
-            switch (_name)
+            var server = GetWriteableServer(cluster);
+            var failpoint = new FailPoint(server, session, name, args);
+            try
             {
-                case FailPointName.MaxTimeAlwaysTimeout:
-                    return _server.Value.Description.Type != ServerType.ShardRouter;
-                default:
-                    return true;
+                failpoint.Configure();
+                return failpoint;
+            }
+            catch
+            {
+                try { failpoint.Dispose(); } catch { }
+                throw;
             }
         }
 
-        private IServer GetWriteableServer(ICluster cluster)
+        public static FailPoint ConfigureAlwaysOn(ICluster cluster, ICoreSessionHandle session, string name)
+        {
+            var args = new BsonDocument("mode", "alwaysOn");
+            return Configure(cluster, session, name, args);
+        }
+
+        public static FailPoint ConfigureTimes(ICluster cluster, ICoreSessionHandle session, string name, int n)
+        {
+            var args = new BsonDocument("mode", new BsonDocument("times", n));
+            return Configure(cluster, session, name, args);
+        }
+
+        // private static methods
+        private static IServer GetWriteableServer(ICluster cluster)
         {
             var selector = WritableServerSelector.Instance;
             return cluster.SelectServer(selector, CancellationToken.None);
         }
-
-        private void SendFailPointCommand(BsonDocument args, SingleServerReadWriteBinding binding)
-        {            
-            var operation = new WriteCommandOperation<BsonDocument>(
-                databaseNamespace: new DatabaseNamespace("admin"),
-                command: new BsonDocument { { "configureFailPoint", _name} }.Merge(args),
-                resultSerializer: BsonDocumentSerializer.Instance,
-                messageEncoderSettings: _messageEncoderSettings);
-
-            operation.Execute(binding, CancellationToken.None);
-        }
-
-        private void SendFailPointCommand(BsonValue mode, SingleServerReadWriteBinding binding)
-        {
-            SendFailPointCommand(args: new BsonDocument {{"mode", mode}}, binding: binding);
-        }
-
         #endregion
-    }
 
+        // private fields
+        private readonly BsonDocument _args;
+        private readonly IReadWriteBinding _binding;
+        private bool _disposed;
+        private readonly string _name;
+        private readonly IServer _server;
+
+        // constructors
+        public FailPoint(IServer server, ICoreSessionHandle session, string name, BsonDocument args)
+        {
+            _server = Ensure.IsNotNull(server, nameof(server));
+            Ensure.IsNotNull(session, nameof(session));
+            _name = Ensure.IsNotNull(name, nameof(name));
+            _args = Ensure.IsNotNull(args, nameof(args));
+
+            _binding = new SingleServerReadWriteBinding(server, session.Fork());
+        }
+
+        // public properties
+        public IReadWriteBinding Binding => _binding;
+
+        // public methods
+        public void Configure()
+        {
+            Configure(_args);
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                try { ConfigureOff(); } catch { }
+                _binding.Dispose();
+                _disposed = true;
+            }
+        }
+
+        public bool IsSupported()
+        {
+            if (Feature.FailPoints.IsSupported(_server.Description.Version))
+            {
+                // some failpoints aren't supported everywhere
+                switch (_name)
+                {
+                    case FailPointName.MaxTimeAlwaysTimeout:
+                        return _server.Description.Type != ServerType.ShardRouter;
+
+                    default:
+                        return true;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        // private methods
+        private void Configure(BsonDocument args)
+        {
+            var command = new BsonDocument("configureFailPoint", _name);
+            command.Merge(args);
+            ExecuteCommand(command);
+        }
+
+        private void ConfigureOff()
+        {
+            var args = new BsonDocument("mode", "off");
+            Configure(args);
+        }
+
+        private void ExecuteCommand(BsonDocument command)
+        {
+            var adminDatabase = new DatabaseNamespace("admin");
+            var operation = new WriteCommandOperation<BsonDocument>(
+                adminDatabase,
+                command,
+                BsonDocumentSerializer.Instance,
+                new MessageEncoderSettings());
+            operation.Execute(_binding, CancellationToken.None);
+        }
+    }
 }

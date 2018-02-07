@@ -54,10 +54,9 @@ namespace MongoDB.Driver.Core.TestHelpers
     public class FailPoint : IDisposable
     {
         #region Private readonly fields
-
         private readonly Lazy<SingleServerReadWriteBinding> _binding;
+        private readonly BsonDocument _args;
         private readonly MessageEncoderSettings _messageEncoderSettings;
-        private readonly BsonValue _mode;
         private readonly string _name;
         private readonly ICoreSessionHandle _session;
         private readonly Lazy<IServer> _server;
@@ -77,8 +76,32 @@ namespace MongoDB.Driver.Core.TestHelpers
         /// <value>Lazily constructed binding for the FailPoint.</value>
         public SingleServerReadWriteBinding Binding => _binding.Value;
 
+
         /// <summary>
-        /// Creates a new FailPoint.
+        /// Creates a new FailPoint via name and arguments.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="args">The arguments for the failpoint. </param>
+        /// <param name="cluster">The cluster.</param>
+        /// <param name="session">The session.</param>
+        /// <param name="messageEncoderSettings">The message encoder settings.</param>
+        public FailPoint(string name, BsonDocument args, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
+        {
+            Ensure.IsNotNull(args, nameof(args));
+            Ensure.IsNotNull(cluster, nameof(cluster));
+            Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
+            Ensure.IsNotNull(name, nameof(name));
+
+            _binding = new Lazy<SingleServerReadWriteBinding>(() => new SingleServerReadWriteBinding(_server.Value, _session));
+            _messageEncoderSettings = messageEncoderSettings;
+            _args = args;
+            _name = name;
+            _server = new Lazy<IServer>(() => GetWriteableServer(cluster));
+            _session = session;
+        }
+
+        /// <summary>
+        /// Creates a new FailPoint via name and a mode.
         /// </summary>
         /// <param name="name">The name (type) of the FailPoint.</param>
         /// <param name="mode">The mode.</param>
@@ -86,18 +109,7 @@ namespace MongoDB.Driver.Core.TestHelpers
         /// <param name="session">The session.</param>
         /// <param name="messageEncoderSettings">The message encoder settings.</param>
         public FailPoint(string name, BsonValue mode, ICluster cluster, ICoreSessionHandle session, MessageEncoderSettings messageEncoderSettings)
-        {
-            Ensure.IsNotNull(name, nameof(name));
-            Ensure.IsNotNull(cluster, nameof(cluster));
-            Ensure.IsNotNull(messageEncoderSettings, nameof(messageEncoderSettings));
-
-            _binding = new Lazy<SingleServerReadWriteBinding>(() => new SingleServerReadWriteBinding(_server.Value, _session));
-            _messageEncoderSettings = messageEncoderSettings;
-            _mode = mode;
-            _name = name;
-            _server = new Lazy<IServer>(() => GetWriteableServer(cluster));
-            _session = session;
-        }
+            : this(name, new BsonDocument { { "mode", mode } }, cluster, session, messageEncoderSettings) { }
 
         #region Static Methods
 
@@ -141,7 +153,7 @@ namespace MongoDB.Driver.Core.TestHelpers
         }
 
         /// <summary>
-        /// Creates and enalbe a FailPoint that times out <paramref name="n"/> times.
+        /// Creates and enable a FailPoint that times out <paramref name="n"/> times.
         /// </summary>
         /// <param name="n">The number of times to time out.</param>
         /// <param name="cluster">The cluster.</param>
@@ -165,7 +177,7 @@ namespace MongoDB.Driver.Core.TestHelpers
         /// </summary>
         public void Enable()
         {
-            SendFailPointCommand(_mode, Binding);
+            SendFailPointCommand(_args, Binding);
             _wasEnabled = true;
         }
 
@@ -199,21 +211,20 @@ namespace MongoDB.Driver.Core.TestHelpers
             return cluster.SelectServer(selector, CancellationToken.None);
         }
 
-        private void SendFailPointCommand(BsonValue mode, SingleServerReadWriteBinding binding)
-        {
-            var command = new BsonDocument
-            {
-                {"configureFailPoint", _name},
-                {"mode", mode}
-            };
-
+        private void SendFailPointCommand(BsonDocument args, SingleServerReadWriteBinding binding)
+        {            
             var operation = new WriteCommandOperation<BsonDocument>(
                 databaseNamespace: new DatabaseNamespace("admin"),
-                command: command,
+                command: new BsonDocument { { "configureFailPoint", _name} }.Merge(args),
                 resultSerializer: BsonDocumentSerializer.Instance,
                 messageEncoderSettings: _messageEncoderSettings);
 
             operation.Execute(binding, CancellationToken.None);
+        }
+
+        private void SendFailPointCommand(BsonValue mode, SingleServerReadWriteBinding binding)
+        {
+            SendFailPointCommand(args: new BsonDocument {{"mode", mode}}, binding: binding);
         }
 
         #endregion

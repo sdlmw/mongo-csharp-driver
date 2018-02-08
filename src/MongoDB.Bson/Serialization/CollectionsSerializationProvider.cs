@@ -42,7 +42,8 @@ namespace MongoDB.Bson.Serialization
                 { typeof(Queue<>), typeof(QueueSerializer<>) },
                 { typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionSerializer<>) },
                 { typeof(Stack<>), typeof(StackSerializer<>) },
-                { typeof(Dictionary<,>), typeof(DictionarySerializer<,>)},
+                { typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionarySerializer<,>) },
+                // { typeof(Dictionary<,>), typeof(DictionarySerializer<,>)},
                 // { typeof(SortedDictionary<,>), typeof(DictionaryInterfaceImplementerSerializer<,,>)},
                 // { typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>)}
             };

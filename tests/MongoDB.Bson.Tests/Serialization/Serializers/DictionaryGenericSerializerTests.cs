@@ -41,11 +41,16 @@ namespace MongoDB.Bson.Tests.Serialization.DictionaryGenericSerializers
             public Dictionary<object, object> D { get; set; }
             public IDictionary<object, object> ID { get; set; }
 
-            // public IReadOnlyDictionary<object, object> IROD { get; set; }
-            // public ReadOnlyDictionary<object,object> ROD { get; set; }
-
+            
             public SortedDictionary<object, object> SD { get; set; }
             public SortedList<object, object> SL { get; set; }
+        }
+
+        public class T1 : T
+        {
+            // public IReadOnlyDictionary<object, object> IROD { get; set; }
+            public ReadOnlyDictionary<object, object> ROD { get; set; }
+
         }
 
         public class RO<TKey, TValue> : ReadOnlyDictionary<TKey, TValue>
@@ -88,21 +93,21 @@ namespace MongoDB.Bson.Tests.Serialization.DictionaryGenericSerializers
         [Fact]
         public void TestNull()
         {
-            var obj = new T { D = null, ID = null, /* IROD = null, ROD = null,*/ SD = null, SL = null };
+            var obj = new T1 { D = null, ID = null, /* IROD = null,*/  ROD = null,SD = null, SL = null };
             var json = obj.ToJson();
             var rep = "null";
 
-            var expected = "{ 'D' : #R, 'ID' : #R, 'SD' : #R, 'SL' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'D' : #R, 'ID' : #R, 'SD' : #R, 'SL' : #R, 'ROD' : #R }".Replace("#R", rep).Replace("'", "\"");
             // 'IROD' : #R, 'ROD' : #R, 
 
             Assert.Equal(expected, json);
 
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<T>(bson);
+            var rehydrated = BsonSerializer.Deserialize<T1>(bson);
             Assert.Null(rehydrated.D);
             Assert.Null(rehydrated.ID);
             //Assert.Null(rehydrated.IROD);
-            //Assert.Null(rehydrated.ROD);
+            Assert.Null(rehydrated.ROD);
             Assert.Null(rehydrated.SD);
             Assert.Null(rehydrated.SL);
             
@@ -117,10 +122,10 @@ namespace MongoDB.Bson.Tests.Serialization.DictionaryGenericSerializers
             var sd = CreateSortedDictionary(d);
             var sl = CreateSortedList(d);
 
-            var obj = new T { D = d, ID = d, /* IROD = rod, ROD = rod, */ SD = sd, SL = sl };
+            var obj = new T1 { D = d, ID = d, /* IROD = rod,*/  ROD = rod, SD = sd, SL = sl };
             var json = obj.ToJson();
             var rep = "{ }";
-            var expected = "{ 'D' : #R, 'ID' : #R, 'SD' : #R, 'SL' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'D' : #R, 'ID' : #R, 'ROD' : #R, 'SD' : #R, 'SL' : #R }".Replace("#R", rep).Replace("'", "\"");
             // 'IROD' : #R, 'ROD' : #R, 
 
             Assert.Equal(expected, json);

@@ -21,7 +21,7 @@ using MongoDB.Bson.Serialization.Options;
 
 namespace MongoDB.Bson.Serialization.Serializers
 {
-    /*
+
     /// <summary>
     /// Represents a serializer for dictionaries.
     /// </summary>
@@ -128,7 +128,7 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <value>
         /// The dictionary representation.
         /// </value>
-        public ReadOnlyDictionarySerializerBase DictionaryRepresentation
+        public DictionaryRepresentation DictionaryRepresentation
         {
             get { return _dictionaryRepresentation; }
         }
@@ -253,12 +253,12 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// Creates the instance.
         /// </summary>
         /// <returns>The instance.</returns>
-        protected abstract TDictionary CreateInstance();
+        protected abstract TDictionary CreateInstance(IDictionary<TKey,TValue> interimDictionary);
 
         // private methods
         private TDictionary DeserializeArrayRepresentation(BsonDeserializationContext context)
         {
-            var dictionary = CreateInstance();
+            var dictionary = new Dictionary<TKey,TValue>();
 
             var bsonReader = context.Reader;
             bsonReader.ReadStartArray();
@@ -298,12 +298,12 @@ namespace MongoDB.Bson.Serialization.Serializers
             }
             bsonReader.ReadEndArray();
 
-            return dictionary;
+            return CreateInstance(dictionary);
         }
 
         private TDictionary DeserializeDocumentRepresentation(BsonDeserializationContext context)
         {
-            var dictionary = CreateInstance();
+            var dictionary = new Dictionary<TKey, TValue>();
 
             var bsonReader = context.Reader;
             bsonReader.ReadStartDocument();
@@ -315,7 +315,7 @@ namespace MongoDB.Bson.Serialization.Serializers
             }
             bsonReader.ReadEndDocument();
 
-            return dictionary;
+            return CreateInstance(dictionary);
         }
 
         private TKey DeserializeKeyString(string keyString)
@@ -405,5 +405,5 @@ namespace MongoDB.Bson.Serialization.Serializers
         {
             get { return ValueSerializer; }
         }
-    } */
+    } 
 }

@@ -227,7 +227,7 @@
     <Compile Include="Serialization\Serializers\BsonBooleanSerializer.cs" />
     <Compile Include="Serialization\IBsonSerializerExtensions.cs" />
     <Compile Include="Serialization\Serializers\Decimal128Serializer.cs" />
-    <Compile Include="Serialization\Serializers\ReadOnlyDictionarySerializerBase.cs" />
+    <Compile Include="Serialization\Serializers\ReadOnlyDictionaryInterfaceSerializer.cs" />
     <Compile Include="Serialization\Serializers\ElementAppendingSerializer.cs" />
     <Compile Include="Serialization\Serializers\PartiallyRawBsonDocumentSerializer.cs" />
     <Compile Include="Serialization\Serializers\ProjectingDeserializer.cs" />

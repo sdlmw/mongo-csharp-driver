@@ -67,7 +67,6 @@ namespace MongoDB.Bson.Serialization.Serializers
                 _map = map;
                 _keys = new Lazy<ICollection<TKey>>(() => new Collection<TKey>(_map.Keys.ToList()));
                 _values = new Lazy<ICollection<TValue>>(() => new Collection<TValue>(_map.Values.ToList()));
-
             }
 
             public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()

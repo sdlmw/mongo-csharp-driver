@@ -23,7 +23,6 @@ using MongoDB.Bson.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.TestHelpers.XunitExtensions;
-using MongoDB.Driver.Core.Tests;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
 using Xunit;
 
@@ -243,25 +242,6 @@ namespace MongoDB.Driver.Core.Operations
             var ex = action.ShouldThrow<ArgumentNullException>().Subject.Single();
 
             ex.ParamName.Should().Be("binding");
-        }
-
-        [Theory]
-        [ParameterAttributeData]
-        public void Execute_should_throw_when_maxTime_is_exceeded(
-            [Values(false, true)] bool async)
-        {
-            RequireServer.Check().Supports(Feature.FailPoints);
-            var indexName = "x_1";
-            var failPoint = new FailPoint(FailPointName.MaxTimeAlwaysTimeout, CoreTestConfiguration.Cluster, _session.Fork(), _messageEncoderSettings);
-            var subject = new DropIndexOperation(_collectionNamespace, indexName, _messageEncoderSettings) { MaxTime = TimeSpan.FromTicks(1) };
-            Exception exception;
-
-            using (var failPointContext = failPoint.CreateAlwaysOnContext())
-            {
-                exception = Record.Exception(() => ExecuteOperation(subject, failPointContext.Binding, async));
-            }
-
-            exception.Should().BeOfType<MongoExecutionTimeoutException>();
         }
 
         [SkippableTheory]

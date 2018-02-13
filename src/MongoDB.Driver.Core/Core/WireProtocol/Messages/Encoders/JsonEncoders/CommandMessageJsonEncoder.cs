@@ -146,15 +146,15 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
         private void WriteSection(IBsonWriter writer, CommandMessageSection section)
         {
             writer.WriteStartDocument();
-            writer.WriteInt32("payloadType", section.PayloadType);
+            writer.WriteInt32("payloadType", (int)section.PayloadType);
 
             switch (section.PayloadType)
             {
-                case 0:
+                case PayloadType.Zero:
                     WriteType0Section(writer, (Type0CommandMessageSection)section);
                     break;
 
-                case 1:
+                case PayloadType.One:
                     WriteType1Section(writer, (Type1CommandMessageSection)section);
                     break;
 

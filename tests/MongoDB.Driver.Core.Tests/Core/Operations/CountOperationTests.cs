@@ -431,7 +431,7 @@ namespace MongoDB.Driver.Core.Operations
         [SkippableTheory]
         [ParameterAttributeData]
         public void Execute_should_return_expected_result(
-            [Values(false/*, true*/)]
+            [Values(false, true)]
             bool async)
         {
             RequireServer.Check();

@@ -358,10 +358,10 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
         {
             switch (section.PayloadType)
             {
-                case 0:
+                case PayloadType.Zero:
                     return CreateType0SectionDocument((Type0CommandMessageSection<BsonDocument>)section);
 
-                case 1:
+                case PayloadType.One:
                     return CreateType1SectionDocument((Type1CommandMessageSection<BsonDocument>)section);
 
                 default:

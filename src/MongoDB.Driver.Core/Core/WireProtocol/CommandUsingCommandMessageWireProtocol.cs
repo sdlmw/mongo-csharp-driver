@@ -44,7 +44,6 @@ namespace MongoDB.Driver.Core.WireProtocol
         private readonly ReadPreference _readPreference;
         private readonly IBsonSerializer<TCommandResult> _resultSerializer;
         private readonly ICoreSession _session;
-        private readonly bool _slaveOk; // TODO: what does this mean when using CommandMessage?
 
         // constructors
         public CommandUsingCommandMessageWireProtocol(
@@ -55,7 +54,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             IElementNameValidator commandValidator,
             BsonDocument additionalOptions,
             Func<CommandResponseHandling> responseHandling,
-            bool slaveOk,
             IBsonSerializer<TCommandResult> resultSerializer,
             MessageEncoderSettings messageEncoderSettings)
         {
@@ -66,7 +64,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             _commandValidator = Ensure.IsNotNull(commandValidator, nameof(commandValidator));
             _additionalOptions = additionalOptions; // can be null
             _responseHandling = responseHandling;
-            _slaveOk = slaveOk;
             _resultSerializer = Ensure.IsNotNull(resultSerializer, nameof(resultSerializer));
             _messageEncoderSettings = messageEncoderSettings;
         }
@@ -115,19 +112,14 @@ namespace MongoDB.Driver.Core.WireProtocol
 
         private Type0CommandMessageSection<BsonDocument> CreateType0Section(ConnectionDescription connectionDescription)
         {
-            var serverType = connectionDescription?.IsMasterResult.ServerType;
-
             var extraElements = new List<BsonElement>();
             var dbElement = new BsonElement("$db", _databaseNamespace.DatabaseName);
             extraElements.Add(dbElement);
-            if (serverType != null)
+            if (_readPreference != null && _readPreference != ReadPreference.Primary)
             {
-                var readPreferenceDocument = QueryHelper.CreateReadPreferenceDocument(serverType.Value, _readPreference);
-                if (readPreferenceDocument != null)
-                {
-                    var readPreferenceElement = new BsonElement("$readPreference", readPreferenceDocument);
-                    extraElements.Add(readPreferenceElement);
-                }
+                var readPreferenceDocument = QueryHelper.CreateReadPreferenceDocument(_readPreference);
+                var readPreferenceElement = new BsonElement("$readPreference", readPreferenceDocument);
+                extraElements.Add(readPreferenceElement);
             }
             if (_session.Id != null)
             {

@@ -38,7 +38,6 @@ namespace MongoDB.Driver.Core.WireProtocol
         private readonly ReadPreference _readPreference;
         private readonly IBsonSerializer<TCommandResult> _resultSerializer;
         private readonly ICoreSession _session;
-        private readonly bool _slaveOk;
 
         // constructors
         public CommandWireProtocol(
@@ -48,35 +47,15 @@ namespace MongoDB.Driver.Core.WireProtocol
             IBsonSerializer<TCommandResult> resultSerializer,
             MessageEncoderSettings messageEncoderSettings)
             : this(
+                NoCoreSession.Instance,
+                slaveOk ? ReadPreference.PrimaryPreferred : ReadPreference.Primary,
                 databaseNamespace,
                 command,
                 NoOpElementNameValidator.Instance,
+                null, // additionalOptions
                 () => CommandResponseHandling.Return,
-                slaveOk,
                 resultSerializer,
                 messageEncoderSettings)
-        {
-        }
-
-        public CommandWireProtocol(
-            DatabaseNamespace databaseNamespace,
-            BsonDocument command,
-            IElementNameValidator commandValidator,
-            Func<CommandResponseHandling> responseHandling,
-            bool slaveOk,
-            IBsonSerializer<TCommandResult> resultSerializer,
-            MessageEncoderSettings messageEncoderSettings)
-            : this(
-                  NoCoreSession.Instance,
-                  null, // readPreference
-                  databaseNamespace,
-                  command,
-                  commandValidator,
-                  null, // aditionalOptions
-                  responseHandling,
-                  slaveOk,
-                  resultSerializer,
-                  messageEncoderSettings)
         {
         }
 
@@ -88,7 +67,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             IElementNameValidator commandValidator,
             BsonDocument additionalOptions,
             Func<CommandResponseHandling> responseHandling,
-            bool slaveOk,
             IBsonSerializer<TCommandResult> resultSerializer,
             MessageEncoderSettings messageEncoderSettings)
         {
@@ -99,7 +77,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             _commandValidator = Ensure.IsNotNull(commandValidator, nameof(commandValidator));
             _additionalOptions = additionalOptions; // can be null
             _responseHandling = responseHandling;
-            _slaveOk = slaveOk;
             _resultSerializer = Ensure.IsNotNull(resultSerializer, nameof(resultSerializer));
             _messageEncoderSettings = messageEncoderSettings;
         }
@@ -128,7 +105,6 @@ namespace MongoDB.Driver.Core.WireProtocol
                 _commandValidator,
                 _additionalOptions,
                 _responseHandling,
-                _slaveOk,
                 _resultSerializer,
                 _messageEncoderSettings);
         }
@@ -143,7 +119,6 @@ namespace MongoDB.Driver.Core.WireProtocol
                 _commandValidator,
                 _additionalOptions,
                 _responseHandling,
-                _slaveOk,
                 _resultSerializer,
                 _messageEncoderSettings);
         }

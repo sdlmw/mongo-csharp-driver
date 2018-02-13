@@ -44,7 +44,6 @@ namespace MongoDB.Driver.Core.WireProtocol
         private readonly ReadPreference _readPreference;
         private readonly IBsonSerializer<TCommandResult> _resultSerializer;
         private readonly ICoreSession _session;
-        private readonly bool _slaveOk;
 
         // constructors
         public CommandUsingQueryMessageWireProtocol(
@@ -55,7 +54,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             IElementNameValidator commandValidator,
             BsonDocument additionalOptions,
             Func<CommandResponseHandling> responseHandling,
-            bool slaveOk,
             IBsonSerializer<TCommandResult> resultSerializer,
             MessageEncoderSettings messageEncoderSettings)
         {
@@ -66,7 +64,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             _commandValidator = Ensure.IsNotNull(commandValidator, nameof(commandValidator));
             _additionalOptions = additionalOptions; // can be null
             _responseHandling = responseHandling;
-            _slaveOk = slaveOk;
             _resultSerializer = Ensure.IsNotNull(resultSerializer, nameof(resultSerializer));
             _messageEncoderSettings = messageEncoderSettings;
         }
@@ -75,6 +72,7 @@ namespace MongoDB.Driver.Core.WireProtocol
         private QueryMessage CreateMessage(ConnectionDescription connectionDescription, out bool messageContainsSessionId)
         {
             var wrappedCommand = WrapCommandForQueryMessage(connectionDescription, out messageContainsSessionId);
+            var slaveOk = _readPreference != null && _readPreference.ReadPreferenceMode != ReadPreferenceMode.Primary;
 
             return new QueryMessage(
                 RequestMessage.GetNextRequestId(),
@@ -84,7 +82,7 @@ namespace MongoDB.Driver.Core.WireProtocol
                 _commandValidator,
                 0,
                 -1,
-                _slaveOk,
+                slaveOk,
                 false,
                 false,
                 false,

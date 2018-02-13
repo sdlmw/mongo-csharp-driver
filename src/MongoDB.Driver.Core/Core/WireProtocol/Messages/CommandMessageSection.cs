@@ -19,7 +19,22 @@ using MongoDB.Driver.Core.Misc;
 namespace MongoDB.Driver.Core.WireProtocol.Messages
 {
     /// <summary>
-    /// Represents a CommandMessage payload.
+    /// Represents the payload type.
+    /// </summary>
+    public enum PayloadType
+    {
+        /// <summary>
+        /// Payload type 0.
+        /// </summary>
+        Zero = 0,
+        /// <summary>
+        /// Payload type 1.
+        /// </summary>
+        One = 1
+    }
+
+    /// <summary>
+    /// Represents a CommandMessage section.
     /// </summary>
     public abstract class CommandMessageSection
     {
@@ -29,11 +44,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
         /// <value>
         /// The type of the payload.
         /// </value>
-        public abstract int PayloadType { get; }
+        public abstract PayloadType PayloadType { get; }
     }
 
     /// <summary>
-    /// Represents a Type 0 CommandMessage payload.
+    /// Represents a Type 0 CommandMessage section.
     /// </summary>
     /// <seealso cref="MongoDB.Driver.Core.WireProtocol.Messages.CommandMessageSection" />
     public abstract class Type0CommandMessageSection : CommandMessageSection
@@ -73,11 +88,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
         public IBsonSerializer DocumentSerializer => _documentSerializer;
 
         /// <inheritdoc />
-        public override int PayloadType => 0;
+        public override PayloadType PayloadType => PayloadType.Zero;
     }
 
     /// <summary>
-    /// Represents a Type 0 CommandMessage payload.
+    /// Represents a Type 0 CommandMessage section.
     /// </summary>
     /// <typeparam name="TDocument">The type of the document.</typeparam>
     /// <seealso cref="MongoDB.Driver.Core.WireProtocol.Messages.Type0CommandMessageSection" />
@@ -120,7 +135,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
     }
 
     /// <summary>
-    /// Represents a Type 1 CommandMessage payload.
+    /// Represents a Type 1 CommandMessage section.
     /// </summary>
     public class Type1CommandMessageSection : CommandMessageSection
     {
@@ -169,11 +184,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
         public string Identifier => _identifier;
 
         /// <inheritdoc />
-        public override int PayloadType => 1;
+        public override PayloadType PayloadType => PayloadType.One;
     }
 
     /// <summary>
-    /// Represents a Type 1 CommandMessage payload.
+    /// Represents a Type 1 CommandMessage section.
     /// </summary>
     public class Type1CommandMessageSection<TDocument> : Type1CommandMessageSection where TDocument : class
     {

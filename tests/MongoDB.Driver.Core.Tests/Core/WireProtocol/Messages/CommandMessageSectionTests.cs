@@ -35,7 +35,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             result.Document.Should().BeSameAs(document);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
-            result.PayloadType.Should().Be(0);
+            result.PayloadType.Should().Be(PayloadType.Zero);
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             var result = subject.PayloadType;
 
-            result.Should().Be(0);
+            result.Should().Be(PayloadType.Zero);
         }
 
         // private methods
@@ -93,7 +93,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             result.Document.Should().BeSameAs(document);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
-            result.PayloadType.Should().Be(0);
+            result.PayloadType.Should().Be(PayloadType.Zero);
         }
 
         [Fact]
@@ -143,7 +143,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
             result.Documents.Should().BeSameAs(documents);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
             result.Identifier.Should().BeSameAs(identifier);
-            result.PayloadType.Should().Be(1);
+            result.PayloadType.Should().Be(PayloadType.One);
         }
 
         [Fact]
@@ -186,7 +186,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             var result = subject.PayloadType;
 
-            result.Should().Be(1);
+            result.Should().Be(PayloadType.One);
         }
 
         // private methods
@@ -216,7 +216,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
             result.Documents.Should().BeSameAs(documents);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
             result.Identifier.Should().BeSameAs(identifier);
-            result.PayloadType.Should().Be(1);
+            result.PayloadType.Should().Be(PayloadType.One);
         }
 
         [Fact]

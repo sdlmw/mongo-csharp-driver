@@ -111,12 +111,12 @@ namespace MongoDB.Bson.Serialization
             Type implementedGenericReadOnlyDictionaryInterface = null; 
             Type implementedEnumerableInterface = null;
 
-            var typeInfo = type.GetTypeInfo();
+            TypeInfo typeInfo = type.GetTypeInfo();
             var implementedInterfaces = typeInfo.GetInterfaces().ToList(); 
-            if (typeInfo.IsInterface) implementedInterfaces.Add(typeInfo);
+            if (typeInfo.IsInterface) implementedInterfaces.Add(type);
 
             var genericInterfaceDefinitions = implementedInterfaces.Where(ii => ii.GetTypeInfo().IsGenericType);
-            var nonGenericInterfaceDefinitions = implementedInterfaces.Where(ii => !ii.IsGenericType).ToArray();
+            var nonGenericInterfaceDefinitions = implementedInterfaces.Where(ii => !ii.GetTypeInfo().IsGenericType).ToArray();
 
             implementedGenericReadOnlyDictionaryInterface = genericInterfaceDefinitions.FirstOrDefault(i => i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
             implementedGenericDictionaryInterface = genericInterfaceDefinitions.FirstOrDefault(i => i.GetGenericTypeDefinition() == typeof(IDictionary<,>));

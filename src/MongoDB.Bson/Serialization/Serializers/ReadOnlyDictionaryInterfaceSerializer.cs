@@ -1,4 +1,4 @@
-﻿/* Copyright 2010-present MongoDB Inc.
+﻿/* Copyright 2018-present MongoDB Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -32,28 +32,19 @@ namespace MongoDB.Bson.Serialization.Serializers
     /// <typeparam name="TValue"></typeparam>
     public class ReadOnlyDictionaryInterfaceSerializer<TKey, TValue> : ClassSerializerBase<IReadOnlyDictionary<TKey,TValue>> {
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
+
+        /// <inheritdoc/>
         public override IReadOnlyDictionary<TKey, TValue> Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            var dict = BsonSerializer.Deserialize<Dictionary<TKey, TValue>>(context.Reader);
-            return dict != null ? new ReadOnlyDictionary<TKey, TValue>(dict) : null;
+            var map = BsonSerializer.Deserialize<Dictionary<TKey, TValue>>(context.Reader);
+            return map != null ? new ReadOnlyDictionary<TKey, TValue>(map) : null;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="args"></param>
-        /// <param name="value"></param>
+        /// <inheritdoc/>
         public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, IReadOnlyDictionary<TKey, TValue> value)
         {
-            var wrappedDict = value != null ? new ReadOnlyDictionaryInterfaceWrapper(value) : null;
-            BsonSerializer.Serialize<IDictionary<TKey, TValue>>(bsonWriter: context.Writer, value: wrappedDict, configurator: null, args: args);
+            var wrappedMap = value != null ? new ReadOnlyDictionaryInterfaceWrapper(value) : null;
+            BsonSerializer.Serialize<IDictionary<TKey, TValue>>(bsonWriter: context.Writer, value: wrappedMap, configurator: null, args: args);
         }
 
         private class ReadOnlyDictionaryInterfaceWrapper : IDictionary<TKey, TValue>

@@ -38,11 +38,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
             {
                 return false;
             }
-            if (x.PayloadType == PayloadType.Zero)
+            if (x.PayloadType == PayloadType.Type0)
             {
                 return Type0SectionEquals((Type0CommandMessageSection)x, (Type0CommandMessageSection)y);
             }
-            if (x.PayloadType == PayloadType.One)
+            if (x.PayloadType == PayloadType.Type1)
             {
                 return Type1SectionEquals((Type1CommandMessageSection)x, (Type1CommandMessageSection)y);
             }

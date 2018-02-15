@@ -52,7 +52,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
             _sections = Ensure.IsNotNull(sections, nameof(sections)).ToList();
             _moreToCome = moreToCome;
 
-            if (_sections.Count(s => s.PayloadType == PayloadType.Zero) != 1)
+            if (_sections.Count(s => s.PayloadType == PayloadType.Type0) != 1)
             {
                 throw new ArgumentException("There must be exactly one type 0 payload.", nameof(sections));
             }

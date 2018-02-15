@@ -118,7 +118,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
 
         private void EnsureExactlyOneType0SectionIsPresent(List<CommandMessageSection> sections)
         {
-            var count = sections.Count(s => s.PayloadType == PayloadType.Zero);
+            var count = sections.Count(s => s.PayloadType == PayloadType.Type0);
             switch (count)
             {
                 case 0:
@@ -250,11 +250,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.BinaryEncoders
 
             switch (section.PayloadType)
             {
-                case PayloadType.Zero:
+                case PayloadType.Type0:
                     WriteType0Section(writer, (Type0CommandMessageSection)section);
                     break;
 
-                case PayloadType.One:
+                case PayloadType.Type1:
                     WriteType1Section(writer, (Type1CommandMessageSection)section, messageStartPosition);
                     break;
 

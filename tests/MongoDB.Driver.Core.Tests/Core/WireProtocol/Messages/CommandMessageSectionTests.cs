@@ -35,7 +35,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             result.Document.Should().BeSameAs(document);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
-            result.PayloadType.Should().Be(PayloadType.Zero);
+            result.PayloadType.Should().Be(PayloadType.Type0);
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             var result = subject.PayloadType;
 
-            result.Should().Be(PayloadType.Zero);
+            result.Should().Be(PayloadType.Type0);
         }
 
         // private methods
@@ -93,7 +93,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             result.Document.Should().BeSameAs(document);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
-            result.PayloadType.Should().Be(PayloadType.Zero);
+            result.PayloadType.Should().Be(PayloadType.Type0);
         }
 
         [Fact]
@@ -143,7 +143,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
             result.Documents.Should().BeSameAs(documents);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
             result.Identifier.Should().BeSameAs(identifier);
-            result.PayloadType.Should().Be(PayloadType.One);
+            result.PayloadType.Should().Be(PayloadType.Type1);
         }
 
         [Fact]
@@ -186,7 +186,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
 
             var result = subject.PayloadType;
 
-            result.Should().Be(PayloadType.One);
+            result.Should().Be(PayloadType.Type1);
         }
 
         // private methods
@@ -216,7 +216,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
             result.Documents.Should().BeSameAs(documents);
             result.DocumentSerializer.Should().BeSameAs(documentSerializer);
             result.Identifier.Should().BeSameAs(identifier);
-            result.PayloadType.Should().Be(PayloadType.One);
+            result.PayloadType.Should().Be(PayloadType.Type1);
         }
 
         [Fact]

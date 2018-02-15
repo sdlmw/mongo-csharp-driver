@@ -26,11 +26,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
         /// <summary>
         /// Payload type 0.
         /// </summary>
-        Zero = 0,
+        Type0 = 0,
         /// <summary>
         /// Payload type 1.
         /// </summary>
-        One = 1
+        Type1 = 1
     }
 
     /// <summary>
@@ -88,7 +88,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
         public IBsonSerializer DocumentSerializer => _documentSerializer;
 
         /// <inheritdoc />
-        public override PayloadType PayloadType => PayloadType.Zero;
+        public override PayloadType PayloadType => PayloadType.Type0;
     }
 
     /// <summary>
@@ -184,7 +184,7 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
         public string Identifier => _identifier;
 
         /// <inheritdoc />
-        public override PayloadType PayloadType => PayloadType.One;
+        public override PayloadType PayloadType => PayloadType.Type1;
     }
 
     /// <summary>

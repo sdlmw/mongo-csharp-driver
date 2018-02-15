@@ -43,11 +43,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages
         {
             switch (section.PayloadType)
             {
-                case PayloadType.Zero:
+                case PayloadType.Type0:
                     DisposeType0Section((Type0CommandMessageSection<RawBsonDocument>)section);
                     break;
 
-                case PayloadType.One:
+                case PayloadType.Type1:
                     DisposeType1Section((Type1CommandMessageSection<RawBsonDocument>)section);
                     break;
             }

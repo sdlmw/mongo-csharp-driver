@@ -150,11 +150,11 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
 
             switch (section.PayloadType)
             {
-                case PayloadType.Zero:
+                case PayloadType.Type0:
                     WriteType0Section(writer, (Type0CommandMessageSection)section);
                     break;
 
-                case PayloadType.One:
+                case PayloadType.Type1:
                     WriteType1Section(writer, (Type1CommandMessageSection)section);
                     break;
 

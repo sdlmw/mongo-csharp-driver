@@ -335,20 +335,13 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
 
         private BsonDocument CreateMessageDocument(CommandMessage message)
         {
-            var sections = new BsonArray();
-            foreach (var section in message.Sections)
-            {
-                var sectionDocument = CreateSectionDocument(section);
-                sections.Add(sectionDocument);
-            }
-
             var messageDocument = new BsonDocument
             {
                 { "opcode", "opmsg" },
                 { "requestId", message.RequestId },
                 { "responseTo", message.ResponseTo },
                 { "moreToCome", true, message.MoreToCome },
-                { "sections", sections }
+                { "sections", new BsonArray(message.Sections.Select(s => CreateSectionDocument(s))) }
             };
 
             return messageDocument;
@@ -358,10 +351,10 @@ namespace MongoDB.Driver.Core.WireProtocol.Messages.Encoders.JsonEncoders
         {
             switch (section.PayloadType)
             {
-                case PayloadType.Zero:
+                case PayloadType.Type0:
                     return CreateType0SectionDocument((Type0CommandMessageSection<BsonDocument>)section);
 
-                case PayloadType.One:
+                case PayloadType.Type1:
                     return CreateType1SectionDocument((Type1CommandMessageSection<BsonDocument>)section);
 
                 default:

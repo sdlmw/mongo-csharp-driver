@@ -230,6 +230,7 @@
     <Compile Include="Serialization\Serializers\ElementAppendingSerializer.cs" />
     <Compile Include="Serialization\Serializers\PartiallyRawBsonDocumentSerializer.cs" />
     <Compile Include="Serialization\Serializers\ProjectingDeserializer.cs" />
+    <Compile Include="Serialization\Serializers\ReadOnlyDictionaryInterfaceImplementerSerializer.cs" />
     <Compile Include="Serialization\Serializers\SerializerHelper.cs" />
     <Compile Include="Serialization\Serializers\DiscriminatedWrapperSerializer.cs" />
     <Compile Include="Serialization\Serializers\SerializerBase.cs" />

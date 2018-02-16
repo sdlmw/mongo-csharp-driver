@@ -93,6 +93,12 @@ namespace MongoDB.Bson.Serialization
                 }
             }
 
+            var readOnlyDictionarySerializer = GetReadOnlyDictionarySerializer(type, serializerRegistry);
+            if (readOnlyDictionarySerializer != null)
+            {
+                return readOnlyDictionarySerializer;
+            }
+
             return GetCollectionSerializer(type, serializerRegistry);
         }
 
@@ -232,6 +238,56 @@ namespace MongoDB.Bson.Serialization
                 {
                     var serializerDefinition = typeof(EnumerableInterfaceImplementerSerializer<>);
                     return CreateGenericSerializer(serializerDefinition, new[] { type }, serializerRegistry);
+                }
+            }
+
+            return null;
+        }
+
+        private IBsonSerializer GetReadOnlyDictionarySerializer(Type type, IBsonSerializerRegistry serializerRegistry)
+        {
+            var typeInfo = type.GetTypeInfo();
+            if (typeInfo.IsGenericTypeDefinition)
+            {
+                return null;
+            }
+
+            // handle IReadOnlyDictionary<TKey, TValue>
+            if (typeInfo.IsInterface && typeInfo.IsGenericType)
+            {
+                var typeDefinition = typeInfo.GetGenericTypeDefinition();
+                if (typeDefinition == typeof(IReadOnlyDictionary<,>))
+                {
+                    var serializerDefinition = typeof(ImpliedImplementationInterfaceSerializer<,>);
+                    var typeParameters = typeInfo.GetGenericArguments();
+                    var keyType = typeParameters[0];
+                    var valueType = typeParameters[1];
+                    var readOnlyDictionaryDefinition = typeof(ReadOnlyDictionary<,>);
+                    var readOnlyDictionaryType = readOnlyDictionaryDefinition.MakeGenericType(keyType, valueType);
+                    return CreateGenericSerializer(serializerDefinition, new[] { type, readOnlyDictionaryType }, serializerRegistry);
+                }
+            }
+
+            // handle ReadOnlyDictionary<TKey, TValue> and subclasses
+            if (typeInfo.IsClass)
+            {
+                var baseType = type;
+                while (baseType != typeof(object))
+                {
+                    var baseTypeInfo = baseType.GetTypeInfo();
+                    if (baseTypeInfo.IsGenericType && !baseTypeInfo.IsGenericTypeDefinition)
+                    {
+                        var baseTypeDefinition = baseTypeInfo.GetGenericTypeDefinition();
+                        if (baseTypeDefinition == typeof(ReadOnlyDictionary<,>))
+                        {
+                            var serializerDefinition = typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>);
+                            var typeParameters = baseTypeInfo.GetGenericArguments();
+                            var keyType = typeParameters[0];
+                            var valueType = typeParameters[1];
+                            return CreateGenericSerializer(serializerDefinition, new[] { type, keyType, valueType }, serializerRegistry);
+                        }
+                    }
+                    baseType = baseTypeInfo.BaseType;
                 }
             }
 

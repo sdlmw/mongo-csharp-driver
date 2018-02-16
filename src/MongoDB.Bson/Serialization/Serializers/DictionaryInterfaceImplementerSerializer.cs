@@ -266,13 +266,16 @@ namespace MongoDB.Bson.Serialization.Serializers
         }
 
         // protected methods
-        /// <summary>
-        /// Creates the instance.
-        /// </summary>
-        /// <returns>The instance.</returns>
-        protected override TDictionary CreateInstance()
+        /// <inheritdoc />
+        protected override ICollection<KeyValuePair<TKey, TValue>> CreateAccumulator()
         {
             return Activator.CreateInstance<TDictionary>();
+        }
+
+        /// <inheritdoc />
+        protected override TDictionary Finalize(ICollection<KeyValuePair<TKey, TValue>> accumulator)
+        {
+            return (TDictionary)accumulator;
         }
 
         // explicit interface implementations

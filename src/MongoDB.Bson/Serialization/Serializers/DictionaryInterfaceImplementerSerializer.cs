@@ -16,6 +16,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using MongoDB.Bson.Serialization.Options;
 
 namespace MongoDB.Bson.Serialization.Serializers
@@ -265,16 +266,6 @@ namespace MongoDB.Bson.Serialization.Serializers
             }
         }
 
-        // protected methods
-        /// <summary>
-        /// Creates the instance.
-        /// </summary>
-        /// <returns>The instance.</returns>
-        protected override TDictionary CreateInstance()
-        {
-            return Activator.CreateInstance<TDictionary>();
-        }
-
         // explicit interface implementations
         IBsonSerializer IChildSerializerConfigurable.ChildSerializer
         {
@@ -289,6 +280,18 @@ namespace MongoDB.Bson.Serialization.Serializers
         IBsonSerializer IDictionaryRepresentationConfigurable.WithDictionaryRepresentation(DictionaryRepresentation dictionaryRepresentation)
         {
             return WithDictionaryRepresentation(dictionaryRepresentation);
+        }
+        
+        /// <inheritdoc/>
+        protected override ICollection<KeyValuePair<TKey, TValue>> CreateAccumulator()
+        {
+            return Activator.CreateInstance<TDictionary>();
+        }
+
+        /// <inheritdoc/>
+        protected override TDictionary FinalizeAccumulator(ICollection<KeyValuePair<TKey, TValue>> accumulator)
+        {
+            return (TDictionary)accumulator;
         }
     }
 }

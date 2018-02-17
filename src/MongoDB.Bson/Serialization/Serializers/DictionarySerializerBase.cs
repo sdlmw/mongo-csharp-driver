@@ -341,7 +341,7 @@ namespace MongoDB.Bson.Serialization.Serializers
         IBsonArraySerializer,
         IBsonDocumentSerializer,
         IBsonDictionarySerializer
-        where TDictionary : class, IDictionary<TKey, TValue>
+        where TDictionary : class, IEnumerable<KeyValuePair<TKey, TValue>>
     {
         // private constants
         private static class Flags
@@ -558,15 +558,22 @@ namespace MongoDB.Bson.Serialization.Serializers
 
         // protected methods
         /// <summary>
-        /// Creates the instance.
+        /// Creates an accumulator.
         /// </summary>
+        /// <returns>The accumulator.</returns>
+        protected abstract ICollection<KeyValuePair<TKey,TValue>> CreateAccumulator();
+
+        /// <summary>
+        /// Finalizes an accumulator.
+        /// </summary>
+        /// <param name="accumulator">The accumulator to finalize</param>
         /// <returns>The instance.</returns>
-        protected abstract TDictionary CreateInstance();
+        protected abstract TDictionary FinalizeAccumulator(ICollection<KeyValuePair<TKey,TValue>> accumulator);
 
         // private methods
         private TDictionary DeserializeArrayRepresentation(BsonDeserializationContext context)
         {
-            var dictionary = CreateInstance();
+            var accumulator = CreateAccumulator();
 
             var bsonReader = context.Reader;
             bsonReader.ReadStartArray();
@@ -602,16 +609,16 @@ namespace MongoDB.Bson.Serialization.Serializers
                         throw CreateCannotDeserializeFromBsonTypeException(bsonType);
                 }
 
-                dictionary.Add(key, value);
+                accumulator.Add(new KeyValuePair<TKey, TValue>(key, value));
             }
             bsonReader.ReadEndArray();
 
-            return dictionary;
+            return FinalizeAccumulator(accumulator);
         }
 
         private TDictionary DeserializeDocumentRepresentation(BsonDeserializationContext context)
         {
-            var dictionary = CreateInstance();
+            var accumulator = CreateAccumulator();
 
             var bsonReader = context.Reader;
             bsonReader.ReadStartDocument();
@@ -619,11 +626,11 @@ namespace MongoDB.Bson.Serialization.Serializers
             {
                 var key = DeserializeKeyString(bsonReader.ReadName());
                 var value = _lazyValueSerializer.Value.Deserialize(context);
-                dictionary.Add(key, value);
+                accumulator.Add(new KeyValuePair<TKey, TValue>(key, value));
             }
             bsonReader.ReadEndDocument();
 
-            return dictionary;
+            return FinalizeAccumulator(accumulator);
         }
 
         private TKey DeserializeKeyString(string keyString)

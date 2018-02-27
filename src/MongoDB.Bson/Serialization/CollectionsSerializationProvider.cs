@@ -104,44 +104,47 @@ namespace MongoDB.Bson.Serialization
             Type implementedGenericEnumerableInterface = null;
             Type implementedGenericSetInterface = null;
             Type implementedDictionaryInterface = null;
-            Type implementedGenericReadOnlyDictionaryInterface = null; 
             Type implementedEnumerableInterface = null;
 
-            TypeInfo typeInfo = type.GetTypeInfo();
-            var implementedInterfaces = typeInfo.GetInterfaces().ToList(); 
-            if (typeInfo.IsInterface) implementedInterfaces.Add(type);
+            var implementedInterfaces = new List<Type>(type.GetTypeInfo().GetInterfaces());
+            var typeInfo = type.GetTypeInfo();
+            if (typeInfo.IsInterface)
+            {
+                implementedInterfaces.Add(type);
+            }
 
-            var genericInterfaceDefinitions = implementedInterfaces.Where(ii => ii.GetTypeInfo().IsGenericType);
-            var nonGenericInterfaceDefinitions = implementedInterfaces.Where(ii => !ii.GetTypeInfo().IsGenericType).ToArray();
-
-            implementedGenericReadOnlyDictionaryInterface = genericInterfaceDefinitions.FirstOrDefault(i => i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
-            implementedGenericDictionaryInterface = genericInterfaceDefinitions.FirstOrDefault(i => i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
-            implementedGenericEnumerableInterface = genericInterfaceDefinitions.FirstOrDefault(i => i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
-            implementedGenericSetInterface = genericInterfaceDefinitions.FirstOrDefault(i => i.GetGenericTypeDefinition() == typeof(ISet<>));
-            implementedDictionaryInterface = nonGenericInterfaceDefinitions.FirstOrDefault(i => i == typeof(IDictionary));
-            implementedEnumerableInterface = nonGenericInterfaceDefinitions.FirstOrDefault(i => i == typeof(IEnumerable));
-
-
-            // /* the order of the tests is important
-            // * e.g. A Dictionary<,> implements IReadonlyDictionary but not vice versa */
-            // /* if (implementedGenericReadOnlyDictionaryInterface != null)
-            //{
-            //    var keyType = implementedGenericDictionaryInterface.GetTypeInfo().GetGenericArguments()[0];
-            //    var valueType = implementedGenericDictionaryInterface.GetTypeInfo().GetGenericArguments()[1];
-            //    if (typeInfo.IsInterface)
-            //    {
-            //        var dictionaryDefinition = typeof(ReadOnlyDictionary<,>);
-            //        var dictionaryType = dictionaryDefinition.MakeGenericType(keyType, valueType);
-            //        var serializerDefinition = typeof(ImpliedImplementationInterfaceSerializer<,>);
-            //        return CreateGenericSerializer(serializerDefinition, new[] { type, dictionaryType }, serializerRegistry);
-            //    }
-            //    else
-            //    {
-            //        var serializerDefinition = typeof(ReadonlyDictionaryInterfaceImplementerSerializer<,,>);
-            //        return CreateGenericSerializer(serializerDefinition, new[] { type, keyType, valueType }, serializerRegistry);
-            //    }
-
-            //}
+            foreach (var implementedInterface in implementedInterfaces)
+            {
+                var implementedInterfaceTypeInfo = implementedInterface.GetTypeInfo();
+                if (implementedInterfaceTypeInfo.IsGenericType)
+                {
+                    var genericInterfaceDefinition = implementedInterface.GetGenericTypeDefinition();
+                    if (genericInterfaceDefinition == typeof(IDictionary<,>))
+                    {
+                        implementedGenericDictionaryInterface = implementedInterface;
+                    }
+                    if (genericInterfaceDefinition == typeof(IEnumerable<>))
+                    {
+                        implementedGenericEnumerableInterface = implementedInterface;
+                    }
+                    if (genericInterfaceDefinition == typeof(ISet<>))
+                    {
+                        implementedGenericSetInterface = implementedInterface;
+                    }
+                }
+                else
+                {
+                    if (implementedInterface == typeof(IDictionary))
+                    {
+                        implementedDictionaryInterface = implementedInterface;
+                    }
+                    if (implementedInterface == typeof(IEnumerable))
+                    {
+                        implementedEnumerableInterface = implementedInterface;
+                    }
+                }
+            }
+            
             if (implementedGenericDictionaryInterface != null)
             {
                 var keyType = implementedGenericDictionaryInterface.GetTypeInfo().GetGenericArguments()[0];

@@ -17,6 +17,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection;
 using MongoDB.Bson.Serialization.Options;
 
 namespace MongoDB.Bson.Serialization.Serializers
@@ -156,7 +157,16 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <inheritdoc/>
         protected override TDictionary FinalizeAccumulator(ICollection<KeyValuePair<TKey, TValue>> accumulator)
         {
-            return (TDictionary)accumulator;
+            var dictionaryType = typeof(TDictionary);
+            var dictionaryTypeInfo = dictionaryType.GetTypeInfo();
+            var constructorInfo = dictionaryTypeInfo.GetConstructor(new[] { typeof(IDictionary<TKey,TValue>) });
+            if (constructorInfo != null)
+            {
+                return (TDictionary)constructorInfo.Invoke(new object[] { accumulator });
+            }
+
+            throw new MissingMethodException(
+                $"No suitable constructor found for IReadOnlyDictionary type: '{dictionaryType.FullName}'.");
         }
     }
 }

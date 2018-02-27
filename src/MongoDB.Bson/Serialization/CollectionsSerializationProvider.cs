@@ -20,6 +20,7 @@ using System.Collections.ObjectModel;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using MongoDB.Bson.Serialization.Serializers;
 
 namespace MongoDB.Bson.Serialization
@@ -42,8 +43,8 @@ namespace MongoDB.Bson.Serialization
                 { typeof(Queue<>), typeof(QueueSerializer<>) },
                 { typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionSerializer<>) },
                 { typeof(Stack<>), typeof(StackSerializer<>) },
-                { typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryInterfaceSerializer<,>) },
-                { typeof(IReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryInterfaceSerializer<,>) },
+                // { typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryInterfaceSerializer<,>) },
+                // { typeof(IReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryInterfaceSerializer<,>) },
                 // { typeof(Dictionary<,>), typeof(DictionarySerializer<,>)},
                 // { typeof(SortedDictionary<,>), typeof(DictionaryInterfaceImplementerSerializer<,,>)},
                 // { typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>)}
@@ -99,7 +100,7 @@ namespace MongoDB.Bson.Serialization
                 }
             }
 
-            return GetCollectionSerializer(type, serializerRegistry);
+            return GetReadOnlyDictionarySerializer(type, serializerRegistry) ?? GetCollectionSerializer(type, serializerRegistry);
         }
 
         private IBsonSerializer GetCollectionSerializer(Type type, IBsonSerializerRegistry serializerRegistry)
@@ -239,5 +240,40 @@ namespace MongoDB.Bson.Serialization
 
             return null;
         }
+
+        private List<Type> GetImplementedInterfaces(Type type)
+        {
+            return type.GetTypeInfo().IsInterface 
+                ? type.GetTypeInfo().GetInterfaces().Concat(new Type[]{type}).ToList()
+                : type.GetTypeInfo().GetInterfaces().ToList();
+        }
+
+        private IBsonSerializer GetReadOnlyDictionarySerializer(Type type, IBsonSerializerRegistry serializerRegistry)
+        {
+            var implementedInterfaces = GetImplementedInterfaces(type); 
+            var genericInterfaceDefinitions = implementedInterfaces.Where(ii => ii.GetTypeInfo().IsGenericType);
+            var implementedGenericReadOnlyDictionaryInterface = genericInterfaceDefinitions.FirstOrDefault(
+                i => i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
+
+            if (implementedGenericReadOnlyDictionaryInterface == null)
+            {
+                return null;
+            }
+            
+            var keyType = implementedGenericReadOnlyDictionaryInterface.GetTypeInfo().GetGenericArguments()[0];
+            var valueType = implementedGenericReadOnlyDictionaryInterface.GetTypeInfo().GetGenericArguments()[1];
+                 
+            return (type.GetTypeInfo().IsInterface) 
+                ? CreateGenericSerializer(
+                    serializerTypeDefinition: typeof(ImpliedImplementationInterfaceSerializer<,>), 
+                    typeArguments: new[] { type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType)}, 
+                    serializerRegistry: serializerRegistry)
+                : CreateGenericSerializer(
+                    serializerTypeDefinition: typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>), 
+                    typeArguments: new[] { type, keyType, valueType }, 
+                    serializerRegistry: serializerRegistry);
+
+        }
+        
     }
 }

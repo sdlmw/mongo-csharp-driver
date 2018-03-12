@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.TestHelpers.XunitExtensions;
+using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Operations;
 using Moq;
 using Xunit;
@@ -313,9 +314,9 @@ namespace MongoDB.Driver.Tests
             var client = new Mock<IMongoClient>().Object;
             var options = new ClientSessionOptions();
             var coreServerSession = new CoreServerSession();
-            var serverSession = new ServerSession(coreServerSession);
-            var clientSession = new ClientSession(client, options, serverSession, isImplicit: false);
-            return new ClientSessionHandle(clientSession);
+            var coreSession = new CoreSession(coreServerSession, options.ToCore());
+            var coreSessionHandle = new CoreSessionHandle(coreSession);
+            return new ClientSessionHandle(client, options, coreSessionHandle);
         }
     }
 }

@@ -64,6 +64,12 @@ namespace MongoDB.Driver.Core.Bindings
         public BsonTimestamp OperationTime => null;
 
         /// <inheritdoc />
+        public CoreSessionOptions Options => null;
+
+        /// <inheritdoc />
+        public ICoreServerSession ServerSession => NoCoreServerSession.Instance;
+
+        /// <inheritdoc />
         public void AdvanceClusterTime(BsonDocument newClusterTime)
         {
         }

@@ -64,6 +64,22 @@ namespace MongoDB.Driver.Core.Bindings
         /// </value>
         BsonTimestamp OperationTime { get; }
 
+        /// <summary>
+        /// Gets the session options.
+        /// </summary>
+        /// <value>
+        /// The session options.
+        /// </value>
+        CoreSessionOptions Options { get; }
+
+        /// <summary>
+        /// Gets the server session.
+        /// </summary>
+        /// <value>
+        /// The server session.
+        /// </value>
+        ICoreServerSession ServerSession { get; }
+
         // methods
         /// <summary>
         /// Advances the cluster time.

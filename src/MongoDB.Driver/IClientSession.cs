@@ -15,6 +15,7 @@
 
 using System;
 using MongoDB.Bson;
+using MongoDB.Driver.Core.Bindings;
 
 namespace MongoDB.Driver
 {
@@ -39,6 +40,14 @@ namespace MongoDB.Driver
         /// The cluster time.
         /// </value>
         BsonDocument ClusterTime { get; }
+
+        /// <summary>
+        /// Gets the core session.
+        /// </summary>
+        /// <value>
+        /// The core session.
+        /// </value>
+        ICoreSessionHandle CoreSession { get; }
 
         /// <summary>
         /// Gets a value indicating whether this session is an implicit session.

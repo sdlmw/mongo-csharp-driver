@@ -86,25 +86,25 @@ namespace MongoDB.Driver.Tests
         }
 
         [Fact]
-        public void Dispose_should_call_coreServerSession_Dispose()
+        public void Dispose_should_not_call_coreServerSession_Dispose()
         {
             Mock<ICoreServerSession> mockCoreServerSession;
             var subject = CreateSubject(out mockCoreServerSession);
 
             subject.Dispose();
 
-            mockCoreServerSession.Verify(m => m.Dispose(), Times.Once);
+            mockCoreServerSession.Verify(m => m.Dispose(), Times.Never);
         }
 
         [Fact]
-        public void WasUsed_should_call_coreServerSession_WasUsed()
+        public void WasUsed_should_throw()
         {
             Mock<ICoreServerSession> mockCoreServerSession;
             var subject = CreateSubject(out mockCoreServerSession);
 
-            subject.WasUsed();
+            var exception = Record.Exception(() => subject.WasUsed());
 
-            mockCoreServerSession.Verify(m => m.WasUsed(), Times.Once);
+            exception.Should().BeOfType<NotSupportedException>();
         }
 
         // private methods

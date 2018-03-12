@@ -93,6 +93,26 @@ namespace MongoDB.Driver.Core.Bindings
             }
         }
 
+        /// <inheritdoc />
+        public virtual CoreSessionOptions Options
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _wrapped.Options;
+            }
+        }
+
+        /// <inheritdoc />
+        public virtual ICoreServerSession ServerSession
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _wrapped.ServerSession;
+            }
+        }
+
         /// <summary>
         /// Gets the wrapped session.
         /// </summary>

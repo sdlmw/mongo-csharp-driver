@@ -51,13 +51,13 @@ namespace MongoDB.Driver
         /// <inheritdoc />
         public void Dispose()
         {
-            _coreServerSession.Dispose();
+            // do nothing, the ServerSession does NOT own the wrapped core server session
         }
 
         /// <inheritdoc />
         public void WasUsed()
         {
-            _coreServerSession.WasUsed();
+            throw new NotSupportedException();
         }
     }
 }

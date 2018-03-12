@@ -965,7 +965,7 @@ namespace MongoDB.Driver
 
         private TResult ExecuteReadOperation<TResult>(IClientSessionHandle session, IReadOperation<TResult> operation, ReadPreference readPreference, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (var binding = new ReadPreferenceBinding(_cluster, readPreference, session.ToCoreSession()))
+            using (var binding = new ReadPreferenceBinding(_cluster, readPreference, session.CoreSession.Fork()))
             using (var bindingHandle = new ReadBindingHandle(binding))
             {
                 return _operationExecutor.ExecuteReadOperation(bindingHandle, operation, cancellationToken);
@@ -979,7 +979,7 @@ namespace MongoDB.Driver
 
         private async Task<TResult> ExecuteReadOperationAsync<TResult>(IClientSessionHandle session, IReadOperation<TResult> operation, ReadPreference readPreference, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (var binding = new ReadPreferenceBinding(_cluster, readPreference, session.ToCoreSession()))
+            using (var binding = new ReadPreferenceBinding(_cluster, readPreference, session.CoreSession.Fork()))
             using (var bindingHandle = new ReadBindingHandle(binding))
             {
                 return await _operationExecutor.ExecuteReadOperationAsync(bindingHandle, operation, cancellationToken).ConfigureAwait(false);
@@ -988,7 +988,7 @@ namespace MongoDB.Driver
 
         private TResult ExecuteWriteOperation<TResult>(IClientSessionHandle session, IWriteOperation<TResult> operation, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (var binding = new WritableServerBinding(_cluster, session.ToCoreSession()))
+            using (var binding = new WritableServerBinding(_cluster, session.CoreSession.Fork()))
             using (var bindingHandle = new ReadWriteBindingHandle(binding))
             {
                 return _operationExecutor.ExecuteWriteOperation(bindingHandle, operation, cancellationToken);
@@ -997,7 +997,7 @@ namespace MongoDB.Driver
 
         private async Task<TResult> ExecuteWriteOperationAsync<TResult>(IClientSessionHandle session, IWriteOperation<TResult> operation, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (var binding = new WritableServerBinding(_cluster, session.ToCoreSession()))
+            using (var binding = new WritableServerBinding(_cluster, session.CoreSession.Fork()))
             using (var bindingHandle = new ReadWriteBindingHandle(binding))
             {
                 return await _operationExecutor.ExecuteWriteOperationAsync(bindingHandle, operation, cancellationToken).ConfigureAwait(false);
@@ -1107,7 +1107,7 @@ namespace MongoDB.Driver
                 CreateManyIndexesOptions options,
                 CancellationToken cancellationToken = default(CancellationToken))
             {
-                return _collection.UsingImplicitSession(session => CreateMany(session, models, options, cancellationToken), cancellationToken);   
+                return _collection.UsingImplicitSession(session => CreateMany(session, models, options, cancellationToken), cancellationToken);
             }
 
             public override IEnumerable<string> CreateMany(IClientSessionHandle session, IEnumerable<CreateIndexModel<TDocument>> models, CancellationToken cancellationToken = default(CancellationToken))
@@ -1225,8 +1225,8 @@ namespace MongoDB.Driver
             }
 
             public override void DropOne(
-                IClientSessionHandle session, 
-                string name, 
+                IClientSessionHandle session,
+                string name,
                 DropIndexOptions options,
                 CancellationToken cancellationToken)
             {
@@ -1257,8 +1257,8 @@ namespace MongoDB.Driver
             }
 
             public override Task DropOneAsync(
-                IClientSessionHandle session, 
-                string name, 
+                IClientSessionHandle session,
+                string name,
                 DropIndexOptions options,
                 CancellationToken cancellationToken)
             {

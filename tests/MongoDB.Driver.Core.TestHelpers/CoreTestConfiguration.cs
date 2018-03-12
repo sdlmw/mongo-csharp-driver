@@ -290,9 +290,7 @@ namespace MongoDB.Driver
         {
             if (AreSessionsSupported(cluster))
             {
-                var serverSession = cluster.AcquireServerSession();
-                var session = new CoreSession(serverSession);
-                return new CoreSessionHandle(session);
+                return cluster.StartSession();
             }
             else
             {

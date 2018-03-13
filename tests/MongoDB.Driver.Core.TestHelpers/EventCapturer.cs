@@ -150,8 +150,7 @@ namespace MongoDB.Driver.Core
                     @event.DatabaseNamespace,
                     @event.OperationId,
                     @event.RequestId,
-                    @event.ConnectionId,
-                    @event.MessageType);
+                    @event.ConnectionId);
                 _parent.Capture(@event);
             }
 

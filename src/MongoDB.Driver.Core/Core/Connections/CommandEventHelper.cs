@@ -285,8 +285,7 @@ namespace MongoDB.Driver.Core.Connections
                         databaseNamespace,
                         operationId,
                         requestId,
-                        connectionId,
-                        MongoDBMessageType.Command);
+                        connectionId);
 
                     _startedEvent(@event);
                 }
@@ -401,8 +400,7 @@ namespace MongoDB.Driver.Core.Connections
                         decodedMessage.CollectionNamespace.DatabaseNamespace,
                         operationId,
                         requestId,
-                        connectionId,
-                        MongoDBMessageType.Delete);
+                        connectionId);
 
                     _startedEvent(@event);
                 }
@@ -447,8 +445,7 @@ namespace MongoDB.Driver.Core.Connections
                     originalMessage.CollectionNamespace.DatabaseNamespace,
                     operationId,
                     originalMessage.RequestId,
-                    connectionId,
-                    MongoDBMessageType.GetMore);
+                    connectionId);
 
                 _startedEvent(@event);
             }
@@ -513,8 +510,7 @@ namespace MongoDB.Driver.Core.Connections
                         decodedMessage.CollectionNamespace.DatabaseNamespace,
                         operationId,
                         requestId,
-                        connectionId,
-                        MongoDBMessageType.Insert);
+                        connectionId);
 
                     _startedEvent(@event);
                 }
@@ -560,8 +556,7 @@ namespace MongoDB.Driver.Core.Connections
                     collectionNamespace.DatabaseNamespace,
                     operationId,
                     originalMessage.RequestId,
-                    connectionId,
-                    MongoDBMessageType.KillCursors);
+                    connectionId);
 
                 _startedEvent(@event);
             }
@@ -623,8 +618,7 @@ namespace MongoDB.Driver.Core.Connections
                         decodedMessage.CollectionNamespace.DatabaseNamespace,
                         operationId,
                         requestId,
-                        connectionId,
-                        MongoDBMessageType.Query);
+                        connectionId);
 
                     _startedEvent(@event);
                 }
@@ -957,8 +951,7 @@ namespace MongoDB.Driver.Core.Connections
                         decodedMessage.CollectionNamespace.DatabaseNamespace,
                         operationId,
                         requestId,
-                        connectionId,
-                        MongoDBMessageType.Update);
+                        connectionId);
 
                     _startedEvent(@event);
                 }

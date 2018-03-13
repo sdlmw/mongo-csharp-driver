@@ -22,12 +22,9 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Bson.TestHelpers.XunitExtensions;
 using MongoDB.Driver.Core.Bindings;
-using MongoDB.Driver.Core.Clusters;
-using MongoDB.Driver.Core.Configuration;
 using MongoDB.Driver.Core.Events;
 using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.TestHelpers.XunitExtensions;
-using MongoDB.Driver.Core.WireProtocol.Messages;
 using Xunit;
 
 namespace MongoDB.Driver.Core.Operations
@@ -1319,9 +1316,6 @@ namespace MongoDB.Driver.Core.Operations
                     var commandStartedEvents = eventCapturer.Events.OfType<CommandStartedEvent>().ToList();
                     var actualBatchCounts = commandStartedEvents.Select(e => e.Command["deletes"].AsBsonArray.Count).ToList();
                     actualBatchCounts.Should().Equal(expectedBatchCounts);
-                    var actualNumberOfCommandMessages = commandStartedEvents.Where(e => e.MessageType == MongoDBMessageType.Command).Count();
-                    var expectedNumberOfCommandMessages = expectedBatchCounts.Length;
-                    actualNumberOfCommandMessages.Should().Be(expectedNumberOfCommandMessages);
                 }
             }
         }
@@ -1355,9 +1349,6 @@ namespace MongoDB.Driver.Core.Operations
                     var commandStartedEvents = eventCapturer.Events.OfType<CommandStartedEvent>().ToList();
                     var actualBatchCounts = commandStartedEvents.Select(e => e.Command["deletes"].AsBsonArray.Count).ToList();
                     actualBatchCounts.Should().Equal(expectedBatchCounts);
-                    var actualNumberOfQueryMessages = commandStartedEvents.Where(e => e.MessageType == MongoDBMessageType.Query).Count();
-                    var expectedNumberOfQueryMessages = expectedBatchCounts.Length;
-                    actualNumberOfQueryMessages.Should().Be(expectedNumberOfQueryMessages);
                 }
             }
         }
@@ -1392,9 +1383,6 @@ namespace MongoDB.Driver.Core.Operations
                     var commandStartedEvents = eventCapturer.Events.OfType<CommandStartedEvent>().ToList();
                     var actualBatchCounts = commandStartedEvents.Select(e => e.Command["documents"].AsBsonArray.Count).ToList();
                     actualBatchCounts.Should().Equal(expectedBatchCounts);
-                    var actualNumberOfCommandMessages = commandStartedEvents.Where(e => e.MessageType == MongoDBMessageType.Command).Count();
-                    var expectedNumberOfCommandMessages = expectedBatchCounts.Length;
-                    actualNumberOfCommandMessages.Should().Be(expectedNumberOfCommandMessages);
                 }
             }
         }
@@ -1429,9 +1417,6 @@ namespace MongoDB.Driver.Core.Operations
                     var commandStartedEvents = eventCapturer.Events.OfType<CommandStartedEvent>().ToList();
                     var actualBatchCounts = commandStartedEvents.Select(e => e.Command["documents"].AsBsonArray.Count).ToList();
                     actualBatchCounts.Should().Equal(expectedBatchCounts);
-                    var actualNumberOfQueryMessages = commandStartedEvents.Where(e => e.MessageType == MongoDBMessageType.Query).Count();
-                    var expectedNumberOfQueryMessages = expectedBatchCounts.Length;
-                    actualNumberOfQueryMessages.Should().Be(expectedNumberOfQueryMessages);
                 }
             }
         }
@@ -1464,9 +1449,6 @@ namespace MongoDB.Driver.Core.Operations
                     var commandStartedEvents = eventCapturer.Events.OfType<CommandStartedEvent>().ToList();
                     var actualBatchCounts = commandStartedEvents.Select(e => e.Command["updates"].AsBsonArray.Count).ToList();
                     actualBatchCounts.Should().Equal(expectedBatchCounts);
-                    var actualNumberOfCommandMessages = commandStartedEvents.Where(e => e.MessageType == MongoDBMessageType.Command).Count();
-                    var expectedNumberOfCommandMessages = expectedBatchCounts.Length;
-                    actualNumberOfCommandMessages.Should().Be(expectedNumberOfCommandMessages);
                 }
             }
         }
@@ -1500,9 +1482,6 @@ namespace MongoDB.Driver.Core.Operations
                     var commandStartedEvents = eventCapturer.Events.OfType<CommandStartedEvent>().ToList();
                     var actualBatchCounts = commandStartedEvents.Select(e => e.Command["updates"].AsBsonArray.Count).ToList();
                     actualBatchCounts.Should().Equal(expectedBatchCounts);
-                    var actualNumberOfQueryMessages = commandStartedEvents.Where(e => e.MessageType == MongoDBMessageType.Query).Count();
-                    var expectedNumberOfQueryMessages = expectedBatchCounts.Length;
-                    actualNumberOfQueryMessages.Should().Be(expectedNumberOfQueryMessages);
                 }
             }
         }

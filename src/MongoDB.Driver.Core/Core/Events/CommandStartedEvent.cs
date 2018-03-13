@@ -16,7 +16,6 @@
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
-using MongoDB.Driver.Core.WireProtocol.Messages;
 
 namespace MongoDB.Driver.Core.Events
 {
@@ -29,7 +28,6 @@ namespace MongoDB.Driver.Core.Events
         private readonly string _commandName;
         private readonly ConnectionId _connectionId;
         private readonly DatabaseNamespace _databaseNamespace;
-        private readonly MongoDBMessageType _messageType;
         private readonly long? _operationId;
         private readonly int _requestId;
 
@@ -42,8 +40,7 @@ namespace MongoDB.Driver.Core.Events
         /// <param name="operationId">The operation identifier.</param>
         /// <param name="requestId">The request identifier.</param>
         /// <param name="connectionId">The connection identifier.</param>
-        /// <param name="messageType">Type of the message.</param>
-        public CommandStartedEvent(string commandName, BsonDocument command, DatabaseNamespace databaseNamespace, long? operationId, int requestId, ConnectionId connectionId, MongoDBMessageType messageType)
+        public CommandStartedEvent(string commandName, BsonDocument command, DatabaseNamespace databaseNamespace, long? operationId, int requestId, ConnectionId connectionId)
         {
             _commandName = Ensure.IsNotNullOrEmpty(commandName, "commandName");
             _command = Ensure.IsNotNull(command, "command");
@@ -51,7 +48,6 @@ namespace MongoDB.Driver.Core.Events
             _connectionId = Ensure.IsNotNull(connectionId, "connectionId");
             _operationId = operationId;
             _requestId = requestId;
-            _messageType = messageType;
         }
 
         /// <summary>
@@ -84,14 +80,6 @@ namespace MongoDB.Driver.Core.Events
         public DatabaseNamespace DatabaseNamespace
         {
             get { return _databaseNamespace; }
-        }
-
-        /// <summary>
-        /// Gets the type of the message used to send the command to the server.
-        /// </summary>
-        public MongoDBMessageType MessageType
-        {
-            get { return _messageType; }
         }
 
         /// <summary>

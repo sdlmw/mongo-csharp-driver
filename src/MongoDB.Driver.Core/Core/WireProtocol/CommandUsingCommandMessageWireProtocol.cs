@@ -24,6 +24,7 @@ using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Bindings;
+using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.Operations;
@@ -126,9 +127,10 @@ namespace MongoDB.Driver.Core.WireProtocol
                 var lsidElement = new BsonElement("lsid", _session.Id);
                 extraElements.Add(lsidElement);
             }
-            if (_session.ClusterTime != null)
+            var clusterTime = ClusterClock.GreaterClusterTime(_session.ClusterTime, _session.Cluster?.ClusterTime);
+            if (clusterTime != null)
             {
-                var clusterTimeElement = new BsonElement("$clusterTime", _session.ClusterTime);
+                var clusterTimeElement = new BsonElement("$clusterTime", clusterTime);
                 extraElements.Add(clusterTimeElement);
             }
 
@@ -163,6 +165,7 @@ namespace MongoDB.Driver.Core.WireProtocol
                 {
                     var materializedClusterTime = ((RawBsonDocument)clusterTime).Materialize(binaryReaderSettings);
                     _session.AdvanceClusterTime(materializedClusterTime);
+                    _session.Cluster?.AdvanceClusterTime(materializedClusterTime);
                 }
 
                 BsonValue operationTime;

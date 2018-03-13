@@ -14,6 +14,7 @@
 */
 
 using MongoDB.Bson;
+using MongoDB.Driver.Core.Clusters;
 
 namespace MongoDB.Driver.Core.Bindings
 {
@@ -48,6 +49,9 @@ namespace MongoDB.Driver.Core.Bindings
         #endregion
 
         // public properties
+        /// <inheritdoc />
+        public ICluster Cluster => null;
+
         /// <inheritdoc />
         public BsonDocument ClusterTime => null;
 

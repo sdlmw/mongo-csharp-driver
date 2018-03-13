@@ -27,6 +27,7 @@ namespace MongoDB.Driver.Core.Bindings
     public sealed class CoreSession : ICoreSession
     {
         // private fields
+        private readonly ICluster _cluster;
         private readonly IClusterClock _clusterClock = new ClusterClock();
         private bool _disposed;
         private readonly IOperationClock _operationClock = new OperationClock();
@@ -37,17 +38,23 @@ namespace MongoDB.Driver.Core.Bindings
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreSession" /> class.
         /// </summary>
+        /// <param name="cluster">The cluster.</param>
         /// <param name="serverSession">The server session.</param>
         /// <param name="options">The options.</param>
         public CoreSession(
+            ICluster cluster,
             ICoreServerSession serverSession,
             CoreSessionOptions options)
         {
+            _cluster = Ensure.IsNotNull(cluster, nameof(cluster));
             _serverSession = Ensure.IsNotNull(serverSession, nameof(serverSession));
             _options = Ensure.IsNotNull(options, nameof(options));
         }
 
         // public properties
+        /// <inheritdoc />
+        public ICluster Cluster => _cluster;
+
         /// <inheritdoc />
         public BsonDocument ClusterTime => _clusterClock.ClusterTime;
 

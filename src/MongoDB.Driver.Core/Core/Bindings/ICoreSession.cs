@@ -15,6 +15,7 @@
 
 using System;
 using MongoDB.Bson;
+using MongoDB.Driver.Core.Clusters;
 
 namespace MongoDB.Driver.Core.Bindings
 {
@@ -24,6 +25,14 @@ namespace MongoDB.Driver.Core.Bindings
     public interface ICoreSession : IDisposable
     {
         // properties
+        /// <summary>
+        /// Gets the cluster.
+        /// </summary>
+        /// <value>
+        /// The cluster.
+        /// </value>
+        ICluster Cluster { get; }
+
         /// <summary>
         /// Gets the cluster time.
         /// </summary>

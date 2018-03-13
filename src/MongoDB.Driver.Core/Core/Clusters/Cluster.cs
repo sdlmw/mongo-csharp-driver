@@ -21,6 +21,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoDB.Driver.Core.Async;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Clusters.ServerSelectors;
@@ -111,6 +112,11 @@ namespace MongoDB.Driver.Core.Clusters
             get { return _clusterId; }
         }
 
+        public BsonDocument ClusterTime
+        {
+            get { return _clusterClock.ClusterTime; }
+        }
+
         public ClusterDescription Description
         {
             get
@@ -128,6 +134,11 @@ namespace MongoDB.Driver.Core.Clusters
         }
 
         // methods
+        public void AdvanceClusterTime(BsonDocument newClusterTime)
+        {
+            _clusterClock.AdvanceClusterTime(newClusterTime);
+        }
+
         public ICoreServerSession AcquireServerSession()
         {
             return _serverSessionPool.AcquireSession();
@@ -286,7 +297,7 @@ namespace MongoDB.Driver.Core.Clusters
         {
             options = options ?? new CoreSessionOptions();
             var serverSession = AcquireServerSession();
-            var session = new CoreSession(serverSession, options);
+            var session = new CoreSession(this, serverSession, options);
             return new CoreSessionHandle(session);
         }
 

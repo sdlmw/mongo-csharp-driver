@@ -179,7 +179,7 @@ namespace MongoDB.Driver.Tests
         {
             var options = new ClientSessionOptions();
             var coreServerSession = new CoreServerSession();
-            var coreSession = new CoreSession(coreServerSession, options.ToCore(isImplicit: true));
+            var coreSession = new CoreSession(_client.Cluster, coreServerSession, options.ToCore(isImplicit: true));
             var coreSessionHandle = new CoreSessionHandle(coreSession);
             return new ClientSessionHandle(_client, options, coreSessionHandle);
         }

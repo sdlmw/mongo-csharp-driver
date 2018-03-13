@@ -20,6 +20,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoDB.Driver.Core.Bindings;
 using MongoDB.Driver.Core.Clusters.ServerSelectors;
 using MongoDB.Driver.Core.Configuration;
@@ -49,6 +50,14 @@ namespace MongoDB.Driver.Core.Clusters
         ClusterId ClusterId { get; }
 
         /// <summary>
+        /// Gets the cluster time.
+        /// </summary>
+        /// <value>
+        /// The cluster time.
+        /// </value>
+        BsonDocument ClusterTime { get; }
+
+        /// <summary>
         /// Gets the cluster description.
         /// </summary>
         /// <value>
@@ -65,6 +74,12 @@ namespace MongoDB.Driver.Core.Clusters
         ClusterSettings Settings { get; }
 
         // methods
+        /// <summary>
+        /// Advances the cluster time.
+        /// </summary>
+        /// <param name="newClusterTime">The new cluster time.</param>
+        void AdvanceClusterTime(BsonDocument newClusterTime);
+
         /// <summary>
         /// Acquires a core server session.
         /// </summary>

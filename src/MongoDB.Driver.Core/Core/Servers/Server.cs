@@ -376,7 +376,7 @@ namespace MongoDB.Driver.Core.Servers
                 CancellationToken cancellationToken)
             {
                 var protocol = new CommandWireProtocol<TResult>(
-                    CreateClusterClockAdvancingCoreSession(session),
+                    session,
                     readPreference,
                     databaseNamespace,
                     command,
@@ -455,7 +455,7 @@ namespace MongoDB.Driver.Core.Servers
                 CancellationToken cancellationToken)
             {
                 var protocol = new CommandWireProtocol<TResult>(
-                    CreateClusterClockAdvancingCoreSession(session),
+                    session,
                     readPreference,
                     databaseNamespace,
                     command,
@@ -749,11 +749,6 @@ namespace MongoDB.Driver.Core.Servers
                     isUpsert);
 
                 return ExecuteProtocolAsync(protocol, cancellationToken);
-            }
-
-            private ICoreSession CreateClusterClockAdvancingCoreSession(ICoreSession session)
-            {
-                return new ClusterClockAdvancingCoreSession(session, _server.ClusterClock);
             }
 
             private void ExecuteProtocol(IWireProtocol protocol, CancellationToken cancellationToken)

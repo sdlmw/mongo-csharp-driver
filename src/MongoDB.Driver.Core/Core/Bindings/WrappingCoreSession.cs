@@ -15,6 +15,7 @@
 
 using System;
 using MongoDB.Bson;
+using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Misc;
 
 namespace MongoDB.Driver.Core.Bindings
@@ -43,6 +44,16 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         // public properties
+        /// <inheritdoc />
+        public virtual ICluster Cluster
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return _wrapped.Cluster;
+            }
+        }
+
         /// <inheritdoc />
         public virtual BsonDocument ClusterTime
         {

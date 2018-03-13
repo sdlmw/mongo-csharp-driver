@@ -31,7 +31,7 @@ namespace MongoDB.Driver
         internal CoreSessionOptions ToCore(bool isImplicit = false)
         {
             return new CoreSessionOptions(
-                isCausallyConsistent: CausalConsistency ?? false,
+                isCausallyConsistent: CausalConsistency ?? true,
                 isImplicit: isImplicit);
         }
     }

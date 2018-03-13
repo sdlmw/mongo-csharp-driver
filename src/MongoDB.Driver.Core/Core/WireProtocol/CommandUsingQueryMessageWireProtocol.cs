@@ -23,6 +23,7 @@ using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Bindings;
+using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.Operations;
@@ -171,6 +172,7 @@ namespace MongoDB.Driver.Core.WireProtocol
                 {
                     var materializedClusterTime = ((RawBsonDocument)clusterTime).Materialize(binaryReaderSettings);
                     _session.AdvanceClusterTime(materializedClusterTime);
+                    _session.Cluster?.AdvanceClusterTime(materializedClusterTime);
                 }
                 BsonValue operationTime;
                 if (rawDocument.TryGetValue("operationTime", out operationTime))
@@ -249,10 +251,11 @@ namespace MongoDB.Driver.Core.WireProtocol
                     }
                 }
             }
-            if (_session.ClusterTime != null)
+            var clusterTime = ClusterClock.GreaterClusterTime(_session.ClusterTime, _session.Cluster?.ClusterTime);
+            if (clusterTime != null)
             {
-                var clusterTime = new BsonElement("$clusterTime", _session.ClusterTime);
-                extraElements.Add(clusterTime);
+                var clusterTimeElement = new BsonElement("$clusterTime", clusterTime);
+                extraElements.Add(clusterTimeElement);
             }
             var appendExtraElementsSerializer = new ElementAppendingSerializer<BsonDocument>(BsonDocumentSerializer.Instance, extraElements);
             var commandWithExtraElements = new BsonDocumentWrapper(_command, appendExtraElementsSerializer);

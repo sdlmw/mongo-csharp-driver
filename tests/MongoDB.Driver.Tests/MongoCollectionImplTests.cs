@@ -45,6 +45,8 @@ namespace MongoDB.Driver
         public MongoCollectionImplTests()
         {
             var mockClient = new Mock<IMongoClient>();
+            var mockCluster = new Mock<ICluster>();
+            mockClient.SetupGet(m => m.Cluster).Returns(mockCluster.Object);
             _operationExecutor = new MockOperationExecutor();
             _operationExecutor.Client = mockClient.Object;
         }
@@ -2805,9 +2807,10 @@ namespace MongoDB.Driver
             if (usingSession)
             {
                 var client = new Mock<IMongoClient>().Object;
+                var cluster = Mock.Of<ICluster>();
                 var options = new ClientSessionOptions();
                 var coreServerSession = new CoreServerSession();
-                var coreSession = new CoreSession(coreServerSession, options.ToCore());
+                var coreSession = new CoreSession(cluster, coreServerSession, options.ToCore());
                 var coreSessionHandle = new CoreSessionHandle(coreSession);
                 return new ClientSessionHandle(client, options, coreSessionHandle);
             }

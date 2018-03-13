@@ -157,7 +157,6 @@
     <Compile Include="Core\Operations\QueryHelperTests.cs" />
     <Compile Include="Core\Operations\WriteCommandOperationTests.cs" />
     <Compile Include="Core\Operations\WriteConcernErrorHelperTests.cs" />
-    <Compile Include="Core\Servers\ClusterClockAdvancingCoreSessionTests.cs" />
     <Compile Include="Core\Servers\ServerDescriptionWithSimilarLastUpdateTimestampEqualityComparer.cs" />
     <Compile Include="Core\Servers\ServerMonitorTests.cs" />
     <Compile Include="Core\Servers\HeartbeatDelayTests.cs" />

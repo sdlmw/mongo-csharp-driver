@@ -64,7 +64,7 @@ namespace MongoDB.Driver.Tests
 
             var result = subject.ToCore(isImplicit: isImplicit);
 
-            result.IsCausallyConsistent.Should().Be(causalConsistency ?? false);
+            result.IsCausallyConsistent.Should().Be(causalConsistency ?? true);
             result.IsImplicit.Should().Be(isImplicit);
         }
     

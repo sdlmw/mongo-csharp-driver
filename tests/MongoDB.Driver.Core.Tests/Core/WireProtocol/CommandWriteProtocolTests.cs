@@ -26,6 +26,7 @@ using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver.Core.Bindings;
+using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Helpers;
 using MongoDB.Driver.Core.WireProtocol.Messages;
@@ -43,6 +44,7 @@ namespace MongoDB.Driver.Core.WireProtocol
             var messageEncoderSettings = new MessageEncoderSettings();
             var subject = new CommandWireProtocol<BsonDocument>(
                 NoCoreSession.Instance,
+                NoClusterClock.Instance,
                 ReadPreference.Primary,
                 new DatabaseNamespace("test"),
                 new BsonDocument("cmd", 1),
@@ -69,6 +71,7 @@ namespace MongoDB.Driver.Core.WireProtocol
             var messageEncoderSettings = new MessageEncoderSettings();
             var subject = new CommandWireProtocol<BsonDocument>(
                 NoCoreSession.Instance,
+                NoClusterClock.Instance,
                 ReadPreference.Primary,
                 new DatabaseNamespace("test"),
                 new BsonDocument("cmd", 1),
@@ -94,6 +97,7 @@ namespace MongoDB.Driver.Core.WireProtocol
             var messageEncoderSettings = new MessageEncoderSettings();
             var subject = new CommandWireProtocol<BsonDocument>(
                 NoCoreSession.Instance,
+                NoClusterClock.Instance,
                 ReadPreference.Primary,
                 new DatabaseNamespace("test"),
                 new BsonDocument("cmd", 1),
@@ -120,6 +124,7 @@ namespace MongoDB.Driver.Core.WireProtocol
             var messageEncoderSettings = new MessageEncoderSettings();
             var subject = new CommandWireProtocol<BsonDocument>(
                 NoCoreSession.Instance,
+                NoClusterClock.Instance,
                 ReadPreference.Primary,
                 new DatabaseNamespace("test"),
                 new BsonDocument("cmd", 1),

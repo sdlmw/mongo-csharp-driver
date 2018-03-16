@@ -45,16 +45,6 @@ namespace MongoDB.Driver.Core.Bindings
 
         // public properties
         /// <inheritdoc />
-        public virtual ICluster Cluster
-        {
-            get
-            {
-                ThrowIfDisposed();
-                return _wrapped.Cluster;
-            }
-        }
-
-        /// <inheritdoc />
         public virtual BsonDocument ClusterTime
         {
             get

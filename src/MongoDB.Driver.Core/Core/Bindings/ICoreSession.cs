@@ -26,14 +26,6 @@ namespace MongoDB.Driver.Core.Bindings
     {
         // properties
         /// <summary>
-        /// Gets the cluster.
-        /// </summary>
-        /// <value>
-        /// The cluster.
-        /// </value>
-        ICluster Cluster { get; }
-
-        /// <summary>
         /// Gets the cluster time.
         /// </summary>
         /// <value>

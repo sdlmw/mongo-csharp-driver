@@ -50,9 +50,6 @@ namespace MongoDB.Driver.Core.Bindings
 
         // public properties
         /// <inheritdoc />
-        public ICluster Cluster => null;
-
-        /// <inheritdoc />
         public BsonDocument ClusterTime => null;
 
         /// <inheritdoc />

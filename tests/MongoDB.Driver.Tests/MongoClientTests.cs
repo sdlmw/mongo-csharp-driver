@@ -313,10 +313,9 @@ namespace MongoDB.Driver.Tests
         private IClientSessionHandle CreateClientSession()
         {
             var client = new Mock<IMongoClient>().Object;
-            var cluster = Mock.Of<ICluster>();
             var options = new ClientSessionOptions();
             var coreServerSession = new CoreServerSession();
-            var coreSession = new CoreSession(cluster, coreServerSession, options.ToCore());
+            var coreSession = new CoreSession(coreServerSession, options.ToCore());
             var coreSessionHandle = new CoreSessionHandle(coreSession);
             return new ClientSessionHandle(client, options, coreSessionHandle);
         }

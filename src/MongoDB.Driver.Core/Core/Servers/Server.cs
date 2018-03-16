@@ -377,6 +377,7 @@ namespace MongoDB.Driver.Core.Servers
             {
                 var protocol = new CommandWireProtocol<TResult>(
                     session,
+                    _server.ClusterClock,
                     readPreference,
                     databaseNamespace,
                     command,
@@ -456,6 +457,7 @@ namespace MongoDB.Driver.Core.Servers
             {
                 var protocol = new CommandWireProtocol<TResult>(
                     session,
+                    _server.ClusterClock,
                     readPreference,
                     databaseNamespace,
                     command,

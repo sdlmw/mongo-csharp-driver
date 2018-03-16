@@ -37,6 +37,7 @@ namespace MongoDB.Driver.Core.WireProtocol
     {
         // fields
         private readonly BsonDocument _additionalOptions;
+        private readonly IClusterClock _clusterClock;
         private readonly BsonDocument _command;
         private readonly Func<CommandResponseHandling> _responseHandling;
         private readonly IElementNameValidator _commandValidator;
@@ -49,6 +50,7 @@ namespace MongoDB.Driver.Core.WireProtocol
         // constructors
         public CommandUsingQueryMessageWireProtocol(
             ICoreSession session,
+            IClusterClock clusterClock,
             ReadPreference readPreference,
             DatabaseNamespace databaseNamespace,
             BsonDocument command,
@@ -59,6 +61,7 @@ namespace MongoDB.Driver.Core.WireProtocol
             MessageEncoderSettings messageEncoderSettings)
         {
             _session = Ensure.IsNotNull(session, nameof(session));
+            _clusterClock = Ensure.IsNotNull(clusterClock, nameof(clusterClock));
             _readPreference = readPreference;
             _databaseNamespace = Ensure.IsNotNull(databaseNamespace, nameof(databaseNamespace));
             _command = Ensure.IsNotNull(command, nameof(command));
@@ -172,7 +175,7 @@ namespace MongoDB.Driver.Core.WireProtocol
                 {
                     var materializedClusterTime = ((RawBsonDocument)clusterTime).Materialize(binaryReaderSettings);
                     _session.AdvanceClusterTime(materializedClusterTime);
-                    _session.Cluster?.AdvanceClusterTime(materializedClusterTime);
+                    _clusterClock.AdvanceClusterTime(materializedClusterTime);
                 }
                 BsonValue operationTime;
                 if (rawDocument.TryGetValue("operationTime", out operationTime))
@@ -251,7 +254,7 @@ namespace MongoDB.Driver.Core.WireProtocol
                     }
                 }
             }
-            var clusterTime = ClusterClock.GreaterClusterTime(_session.ClusterTime, _session.Cluster?.ClusterTime);
+            var clusterTime = ClusterClock.GreaterClusterTime(_session.ClusterTime, _clusterClock.ClusterTime);
             if (clusterTime != null)
             {
                 var clusterTimeElement = new BsonElement("$clusterTime", clusterTime);

@@ -54,9 +54,6 @@ namespace MongoDB.Driver
         public BsonDocument ClusterTime => _coreSession.ClusterTime;
 
         /// <inheritdoc />
-        public ICoreSessionHandle CoreSession => _coreSession;
-
-        /// <inheritdoc />
         public bool IsImplicit => _coreSession.IsImplicit;
 
         /// <inheritdoc />
@@ -67,6 +64,9 @@ namespace MongoDB.Driver
 
         /// <inheritdoc />
         public IServerSession ServerSession => _serverSession;
+
+        /// <inheritdoc />
+        public ICoreSessionHandle WrappedCoreSession => _coreSession;
 
         // public methods
         /// <inheritdoc />

@@ -42,14 +42,6 @@ namespace MongoDB.Driver
         BsonDocument ClusterTime { get; }
 
         /// <summary>
-        /// Gets the core session.
-        /// </summary>
-        /// <value>
-        /// The core session.
-        /// </value>
-        ICoreSessionHandle CoreSession { get; }
-
-        /// <summary>
         /// Gets a value indicating whether this session is an implicit session.
         /// </summary>
         /// <value>
@@ -80,6 +72,14 @@ namespace MongoDB.Driver
         /// The server session.
         /// </value>
         IServerSession ServerSession { get; }
+
+        /// <summary>
+        /// Gets the wrapped core session (intended for internal use only).
+        /// </summary>
+        /// <value>
+        /// The wrapped core session.
+        /// </value>
+        ICoreSessionHandle WrappedCoreSession { get; }
 
         // methods
         /// <summary>

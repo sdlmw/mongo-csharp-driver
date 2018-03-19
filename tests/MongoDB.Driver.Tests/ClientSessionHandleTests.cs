@@ -37,8 +37,8 @@ namespace MongoDB.Driver.Tests
             var result = new ClientSessionHandle(client, options, coreSession);
 
             result.Client.Should().BeSameAs(client);
-            result.CoreSession.Should().BeSameAs(coreSession);
             result.Options.Should().BeSameAs(options);
+            result.WrappedCoreSession.Should().BeSameAs(coreSession);
             result._disposed().Should().BeFalse();
 
             var serverSession = result.ServerSession.Should().BeOfType<ServerSession>().Subject;
@@ -61,23 +61,12 @@ namespace MongoDB.Driver.Tests
         {
             var subject = CreateSubject();
             var value = new BsonDocument();
-            var mockCoreSession = Mock.Get(subject.CoreSession);
+            var mockCoreSession = Mock.Get(subject.WrappedCoreSession);
             mockCoreSession.SetupGet(m => m.ClusterTime).Returns(value);
 
             var result = subject.ClusterTime;
 
             result.Should().BeSameAs(value);
-        }
-
-        [Fact]
-        public void CoreSession_returns_expected_result()
-        {
-            var coreSession = CreateCoreSession();
-            var subject = CreateSubject(coreSession: coreSession);
-
-            var result = subject.CoreSession;
-
-            result.Should().BeSameAs(coreSession);
         }
 
         [Theory]
@@ -86,7 +75,7 @@ namespace MongoDB.Driver.Tests
             [Values(false, true)] bool value)
         {
             var subject = CreateSubject();
-            var mockCoreSession = Mock.Get(subject.CoreSession);
+            var mockCoreSession = Mock.Get(subject.WrappedCoreSession);
             mockCoreSession.SetupGet(m => m.IsImplicit).Returns(value);
 
             var result = subject.IsImplicit;
@@ -99,7 +88,7 @@ namespace MongoDB.Driver.Tests
         {
             var subject = CreateSubject();
             var value = new BsonTimestamp(0);
-            var mockCoreSession = Mock.Get(subject.CoreSession);
+            var mockCoreSession = Mock.Get(subject.WrappedCoreSession);
             mockCoreSession.SetupGet(m => m.OperationTime).Returns(value);
 
             var result = subject.OperationTime;
@@ -128,6 +117,17 @@ namespace MongoDB.Driver.Tests
             result.Should().BeSameAs(subject._serverSession());
         }
 
+        [Fact]
+        public void WrappedCoreSession_returns_expected_result()
+        {
+            var coreSession = CreateCoreSession();
+            var subject = CreateSubject(coreSession: coreSession);
+
+            var result = subject.WrappedCoreSession;
+
+            result.Should().BeSameAs(coreSession);
+        }
+
         [Theory]
         [ParameterAttributeData]
         public void AdvanceClusterTime_should_call_coreSession(
@@ -138,7 +138,7 @@ namespace MongoDB.Driver.Tests
 
             subject.AdvanceClusterTime(newClusterTime);
 
-            Mock.Get(subject.CoreSession).Verify(m => m.AdvanceClusterTime(newClusterTime), Times.Once);
+            Mock.Get(subject.WrappedCoreSession).Verify(m => m.AdvanceClusterTime(newClusterTime), Times.Once);
         }
 
         [Theory]
@@ -151,7 +151,7 @@ namespace MongoDB.Driver.Tests
 
             subject.AdvanceOperationTime(newOperationTime);
 
-            Mock.Get(subject.CoreSession).Verify(m => m.AdvanceOperationTime(newOperationTime), Times.Once);
+            Mock.Get(subject.WrappedCoreSession).Verify(m => m.AdvanceOperationTime(newOperationTime), Times.Once);
         }
 
         [Theory]
@@ -167,7 +167,7 @@ namespace MongoDB.Driver.Tests
             }
 
             subject._disposed().Should().BeTrue();
-            Mock.Get(subject.CoreSession).Verify(m => m.Dispose(), Times.Once);
+            Mock.Get(subject.WrappedCoreSession).Verify(m => m.Dispose(), Times.Once);
         }
 
         [Fact]
@@ -184,9 +184,9 @@ namespace MongoDB.Driver.Tests
 
             result.Client.Should().BeSameAs(subject.Client);
             result.Options.Should().BeSameAs(subject.Options);
-            result.CoreSession.Should().NotBeSameAs(subject.CoreSession);
-            var coreSessionHandle1 = (CoreSessionHandle)subject.CoreSession;
-            var coreSessionHandle2 = (CoreSessionHandle)result.CoreSession;
+            result.WrappedCoreSession.Should().NotBeSameAs(subject.WrappedCoreSession);
+            var coreSessionHandle1 = (CoreSessionHandle)subject.WrappedCoreSession;
+            var coreSessionHandle2 = (CoreSessionHandle)result.WrappedCoreSession;
             coreSessionHandle2.Wrapped.Should().BeSameAs(coreSessionHandle1.Wrapped);
             coreSessionHandle.ReferenceCount().Should().Be(2);
         }

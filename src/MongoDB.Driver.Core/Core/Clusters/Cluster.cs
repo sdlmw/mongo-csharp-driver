@@ -112,11 +112,6 @@ namespace MongoDB.Driver.Core.Clusters
             get { return _clusterId; }
         }
 
-        public BsonDocument ClusterTime
-        {
-            get { return _clusterClock.ClusterTime; }
-        }
-
         public ClusterDescription Description
         {
             get
@@ -134,11 +129,6 @@ namespace MongoDB.Driver.Core.Clusters
         }
 
         // methods
-        public void AdvanceClusterTime(BsonDocument newClusterTime)
-        {
-            _clusterClock.AdvanceClusterTime(newClusterTime);
-        }
-
         public ICoreServerSession AcquireServerSession()
         {
             return _serverSessionPool.AcquireSession();

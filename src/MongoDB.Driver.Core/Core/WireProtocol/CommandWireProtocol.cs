@@ -20,7 +20,6 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver.Core.Bindings;
-using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.WireProtocol.Messages.Encoders;
@@ -31,7 +30,6 @@ namespace MongoDB.Driver.Core.WireProtocol
     {
         // private fields
         private readonly BsonDocument _additionalOptions;
-        private readonly IClusterClock _clusterClock;
         private readonly BsonDocument _command;
         private readonly Func<CommandResponseHandling> _responseHandling;
         private readonly IElementNameValidator _commandValidator;
@@ -50,7 +48,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             MessageEncoderSettings messageEncoderSettings)
             : this(
                 NoCoreSession.Instance,
-                NoClusterClock.Instance,
                 slaveOk ? ReadPreference.PrimaryPreferred : ReadPreference.Primary,
                 databaseNamespace,
                 command,
@@ -64,7 +61,6 @@ namespace MongoDB.Driver.Core.WireProtocol
 
         public CommandWireProtocol(
             ICoreSession session,
-            IClusterClock clusterClock,
             ReadPreference readPreference,
             DatabaseNamespace databaseNamespace,
             BsonDocument command,
@@ -75,7 +71,6 @@ namespace MongoDB.Driver.Core.WireProtocol
             MessageEncoderSettings messageEncoderSettings)
         {
             _session = Ensure.IsNotNull(session, nameof(session));
-            _clusterClock = Ensure.IsNotNull(clusterClock, nameof(clusterClock));
             _readPreference = readPreference;
             _databaseNamespace = Ensure.IsNotNull(databaseNamespace, nameof(databaseNamespace));
             _command = Ensure.IsNotNull(command, nameof(command));
@@ -104,7 +99,6 @@ namespace MongoDB.Driver.Core.WireProtocol
         {
             return new CommandUsingCommandMessageWireProtocol<TCommandResult>(
                 _session,
-                _clusterClock,
                 _readPreference,
                 _databaseNamespace,
                 _command,
@@ -119,7 +113,6 @@ namespace MongoDB.Driver.Core.WireProtocol
         {
             return new CommandUsingQueryMessageWireProtocol<TCommandResult>(
                 _session,
-                _clusterClock,
                 _readPreference,
                 _databaseNamespace,
                 _command,

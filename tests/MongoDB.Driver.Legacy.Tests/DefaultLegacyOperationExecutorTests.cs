@@ -98,9 +98,9 @@ namespace MongoDB.Driver.Legacy.Tests
 
             result.Client.Should().BeNull();
             result.Options.Should().BeNull();
-            result.CoreSession.Should().NotBeNull();
+            result.WrappedCoreSession.Should().NotBeNull();
 
-            var coreSessionHandle = result.CoreSession.Should().BeOfType<CoreSessionHandle>().Subject;
+            var coreSessionHandle = result.WrappedCoreSession.Should().BeOfType<CoreSessionHandle>().Subject;
             var referenceCountedCoreSession = coreSessionHandle.Wrapped.Should().BeOfType<ReferenceCountedCoreSession>().Subject;
             referenceCountedCoreSession.Wrapped.Should().BeOfType<NoCoreSession>();
         }

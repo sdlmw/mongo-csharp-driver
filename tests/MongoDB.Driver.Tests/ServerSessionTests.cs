@@ -72,17 +72,17 @@ namespace MongoDB.Driver.Tests
         }
 
         [Fact]
-        public void AdvanceTransactionNumber_should_call_coreServerSession_AdvanceTransactionNumber()
+        public void AdvanceTransactionNumber_should_do_nothing()
         {
             Mock<ICoreServerSession> mockCoreServerSession;
             var subject = CreateSubject(out mockCoreServerSession);
-            var transactionNumber = 123;
-            mockCoreServerSession.Setup(m => m.AdvanceTransactionNumber()).Returns(transactionNumber);
 
+#pragma warning disable 618
             var result = subject.AdvanceTransactionNumber();
+#pragma warning restore
 
-            result.Should().Be(transactionNumber);
-            mockCoreServerSession.Verify(m => m.AdvanceTransactionNumber(), Times.Once);
+            result.Should().Be(-1);
+            mockCoreServerSession.Verify(m => m.AdvanceTransactionNumber(), Times.Never);
         }
 
         [Fact]
@@ -97,14 +97,16 @@ namespace MongoDB.Driver.Tests
         }
 
         [Fact]
-        public void WasUsed_should_throw()
+        public void WasUsed_should_do_nothing()
         {
             Mock<ICoreServerSession> mockCoreServerSession;
             var subject = CreateSubject(out mockCoreServerSession);
 
-            var exception = Record.Exception(() => subject.WasUsed());
+#pragma warning disable 618
+            subject.WasUsed();
+#pragma warning restore
 
-            exception.Should().BeOfType<NotSupportedException>();
+            mockCoreServerSession.Verify(m => m.WasUsed(), Times.Never);
         }
 
         // private methods

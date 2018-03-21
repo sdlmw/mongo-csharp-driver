@@ -3531,9 +3531,7 @@ namespace MongoDB.Driver.Tests
         private bool AreSessionsSupported(IMongoClient client)
         {
             var description = client.Cluster.Description;
-            return
-                description.Type != ClusterType.Standalone &&
-                description.LogicalSessionTimeout.HasValue;
+            return description.LogicalSessionTimeout.HasValue;
         }
 
         private void CheckExpectedResult(ExpectedWriteConcernResult expectedResult, WriteConcernResult result)

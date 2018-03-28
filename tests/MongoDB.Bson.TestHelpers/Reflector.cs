@@ -33,5 +33,14 @@ namespace MongoDB.Bson.TestHelpers
                 .Single();
             return methodInfo.Invoke(obj, new object[] { });
         }
+
+        public static object Invoke<T1>(object obj, string name, T1 arg1)
+        {
+            var parameterTypes = new[] { typeof(T1) };
+            var methodInfo = obj.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(m => m.Name == name && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(parameterTypes))
+                .Single();
+            return methodInfo.Invoke(obj, new object[] { arg1 });
+        }
     }
 }

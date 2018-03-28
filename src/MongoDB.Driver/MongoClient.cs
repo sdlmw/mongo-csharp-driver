@@ -35,6 +35,22 @@ namespace MongoDB.Driver
     /// <inheritdoc/>
     public class MongoClient : MongoClientBase
     {
+        #region static
+        // private static methods
+        private static IEnumerable<ServerDescription> SelectServersThatDetermineWhetherSessionsAreSupported(ClusterConnectionMode connectionMode, IEnumerable<ServerDescription> servers)
+        {
+            var connectedServers = servers.Where(s => s.State == ServerState.Connected);
+            if (connectionMode == ClusterConnectionMode.Direct)
+            {
+                return connectedServers;
+            }
+            else
+            {
+                return connectedServers.Where(s => s.IsDataBearing);
+            }
+        }
+        #endregion
+
         // private fields
         private readonly ICluster _cluster;
         private readonly IOperationExecutor _operationExecutor;
@@ -328,26 +344,46 @@ namespace MongoDB.Driver
         // private methods
         private bool AreSessionsSupported(CancellationToken cancellationToken)
         {
-            return _cluster.Description.AreSessionsSupported ?? AreSessionsSupportedAfterServerSelection(cancellationToken);
+            return AreSessionsSupported(_cluster.Description) ?? AreSessionsSupportedAfterServerSelection(cancellationToken);
         }
 
         private async Task<bool> AreSessionsSupportedAsync(CancellationToken cancellationToken)
         {
-            return _cluster.Description.AreSessionsSupported ?? await AreSessionsSupportedAfterSeverSelctionAsync(cancellationToken).ConfigureAwait(false);
+            return AreSessionsSupported(_cluster.Description) ?? await AreSessionsSupportedAfterSeverSelctionAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        private bool? AreSessionsSupported(ClusterDescription clusterDescription)
+        {
+            if (clusterDescription.LogicalSessionTimeout.HasValue)
+            {
+                return true;
+            }
+            else
+            {
+                var selectedServers = SelectServersThatDetermineWhetherSessionsAreSupported(clusterDescription.ConnectionMode, clusterDescription.Servers).ToList();
+                if (selectedServers.Count == 0)
+                {
+                    return null;
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
 
         private bool AreSessionsSupportedAfterServerSelection(CancellationToken cancellationToken)
         {
             var selector = new AreSessionsSupportedServerSelector();
             var selectedServer = _cluster.SelectServer(selector, cancellationToken);
-            return selector.ClusterDescription.AreSessionsSupported ?? false;
+            return AreSessionsSupported(selector.ClusterDescription) ?? false;
         }
 
         private async Task<bool> AreSessionsSupportedAfterSeverSelctionAsync(CancellationToken cancellationToken)
         {
             var selector = new AreSessionsSupportedServerSelector();
             var selectedServer = await _cluster.SelectServerAsync(selector, cancellationToken).ConfigureAwait(false);
-            return selector.ClusterDescription.AreSessionsSupported ?? false;
+            return AreSessionsSupported(selector.ClusterDescription) ?? false;
         }
 
         private IAsyncCursor<string> CreateDatabaseNamesCursor(IAsyncCursor<BsonDocument> cursor)
@@ -499,7 +535,7 @@ namespace MongoDB.Driver
             public IEnumerable<ServerDescription> SelectServers(ClusterDescription cluster, IEnumerable<ServerDescription> servers)
             {
                 ClusterDescription = cluster;
-                return cluster.SelectServersThatDetermineWhetherSessionsAreSupported(servers);
+                return SelectServersThatDetermineWhetherSessionsAreSupported(cluster.ConnectionMode, servers);
             }
         }
     }

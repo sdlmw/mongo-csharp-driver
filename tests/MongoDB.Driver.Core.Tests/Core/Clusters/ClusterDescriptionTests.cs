@@ -14,11 +14,13 @@
 */
 
 using System;
+using System.Linq;
 using System.Net;
 using FluentAssertions;
 using MongoDB.Driver.Core.Helpers;
 using MongoDB.Driver.Core.Misc;
 using MongoDB.Driver.Core.Servers;
+using MongoDB.Driver.Core.TestHelpers;
 using Xunit;
 
 namespace MongoDB.Driver.Core.Clusters
@@ -63,6 +65,34 @@ namespace MongoDB.Driver.Core.Clusters
         }
 
         // instance member tests
+        [Theory]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'Standalone', servers : [ { state : 'Disconnected', type : 'Unknown' } ] }", null)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'Standalone', servers : [ { state : 'Connected', type : 'Standalone' } ] }", false)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'Standalone', servers : [ { state : 'Connected', type : 'Standalone', logicalSessionTimeoutMinutes : 30 } ] }", true)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Disconnected', type : 'Unknown' } ] }", null)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetPrimary' } ] }", false)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetSecondary' } ] }", false)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetArbiter' } ] }", null)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetPrimary', logicalSessionTimeoutMinutes : 30 } ] }", true)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetSecondary', logicalSessionTimeoutMinutes : 30 } ] }", true)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetArbiter', logicalSessionTimeoutMinutes : 30 } ] }", null)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'Sharded', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Disconnected', type : 'Unknown' } ] }", null)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'Sharded', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ShardRouter' } ] }", false)]
+        [InlineData("{ connectionMode : 'Automatic', clusterType : 'Sharded', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ShardRouter', logicalSessionTimeoutMinutes : 30 } ] }", true)]
+        [InlineData("{ connectionMode : 'Direct', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' } ] }", null)]
+        [InlineData("{ connectionMode : 'Direct', clusterType : 'ReplicaSet', servers : [ { state : 'Connected', type : 'ReplicaSetOther' } ] }", false)]
+        [InlineData("{ connectionMode : 'Direct', clusterType : 'ReplicaSet', servers : [ { state : 'Connected', type : 'ReplicaSetOther', logicalSessionTimeoutMinutes : 30 } ] }", true)]
+        [InlineData("{ connectionMode : 'Direct', clusterType : 'ReplicaSet', servers : [ { state : 'Connected', type : 'ReplicaSetPrimary' } ] }", false)]
+        [InlineData("{ connectionMode : 'Direct', clusterType : 'ReplicaSet', servers : [ { state : 'Connected', type : 'ReplicaSetPrimary', logicalSessionTimeoutMinutes : 30 } ] }", true)]
+        public void AreSessionsSupported_should_return_expected_result(string clusterDescriptionJson, bool? expectedResult)
+        {
+            var subject = ClusterDescriptionParser.Parse(clusterDescriptionJson);
+
+            var result = subject.AreSessionsSupported;
+
+            result.Should().Be(expectedResult);
+        }
+
         [Fact]
         public void Constructor_should_initialize_instance()
         {
@@ -219,6 +249,31 @@ namespace MongoDB.Driver.Core.Clusters
             var result = subject.LogicalSessionTimeout;
 
             result.Should().Be(expectedResult);
+        }
+
+        [Theory]
+        [InlineData("{ connectionMode : 'Direct', clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetArbiter' } ]}")]
+        public void SelectServersThatDetermineWhetherSessionsAreSupported_should_return_all_servers_when_connection_mode_is_direct(string clusterDescriptionJson)
+        {
+            var subject = ClusterDescriptionParser.Parse(clusterDescriptionJson);
+            var connectedServers = subject.Servers.Where(s => s.State == ServerState.Connected).ToList();
+
+            var result = subject.SelectServersThatDetermineWhetherSessionsAreSupported(connectedServers);
+
+            result.Should().Equal(connectedServers);
+        }
+
+        [Theory]
+        [InlineData("{ clusterType : 'ReplicaSet', servers : [ { state : 'Disconnected', type : 'Unknown' }, { state : 'Connected', type : 'ReplicaSetArbiter' }, { state : 'Connected', type : 'ReplicaSetPrimary' } ]}")]
+        public void SelectServersThatDetermineWhetherSessionsAreSupported_should_return_data_bearing_servers_when_connection_mode_is__not_direct(string clusterDescriptionJson)
+        {
+            var subject = ClusterDescriptionParser.Parse(clusterDescriptionJson);
+            var connectedServers = subject.Servers.Where(s => s.State == ServerState.Connected).ToList();
+            var dataBearingServers = connectedServers.Where(s => s.IsDataBearing);
+
+            var result = subject.SelectServersThatDetermineWhetherSessionsAreSupported(connectedServers);
+
+            result.Should().Equal(dataBearingServers);
         }
 
         [Fact]

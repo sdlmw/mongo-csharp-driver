@@ -16,6 +16,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization.Options;
 
@@ -561,7 +562,17 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// Creates an accumulator.
         /// </summary>
         /// <returns>The accumulator.</returns>
-        protected abstract ICollection<KeyValuePair<TKey,TValue>> CreateAccumulator();
+        protected virtual ICollection<KeyValuePair<TKey, TValue>> CreateAccumulator()
+        {
+            return (ICollection<KeyValuePair<TKey, TValue>>)CreateInstance();
+        }
+        
+        // protected methods
+        /// <summary>
+        /// Creates the instance.
+        /// </summary>
+        /// <returns>The instance.</returns>
+        protected abstract TDictionary CreateInstance();
 
         /// <summary>
         /// Finalizes an accumulator.
@@ -573,8 +584,8 @@ namespace MongoDB.Bson.Serialization.Serializers
         // private methods
         private TDictionary DeserializeArrayRepresentation(BsonDeserializationContext context)
         {
-            var accumulator = CreateAccumulator();
 
+            var accumulator = CreateAccumulator();
             var bsonReader = context.Reader;
             bsonReader.ReadStartArray();
             while (bsonReader.ReadBsonType() != BsonType.EndOfDocument)

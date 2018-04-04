@@ -289,6 +289,12 @@ namespace MongoDB.Bson.Serialization.Serializers
         }
 
         /// <inheritdoc/>
+        protected override TDictionary CreateInstance()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         protected override TDictionary FinalizeAccumulator(ICollection<KeyValuePair<TKey, TValue>> accumulator)
         {
             return (TDictionary)accumulator;

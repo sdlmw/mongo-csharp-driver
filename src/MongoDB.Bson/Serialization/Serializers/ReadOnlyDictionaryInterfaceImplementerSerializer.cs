@@ -69,14 +69,9 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <returns>The reconfigured serializer.</returns>
         public ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue> WithDictionaryRepresentation(DictionaryRepresentation dictionaryRepresentation)
         {
-            if (dictionaryRepresentation == DictionaryRepresentation)
-            {
-                return this;
-            }
-            else
-            {
-                return new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(dictionaryRepresentation, KeySerializer, ValueSerializer);
-            }
+            return dictionaryRepresentation == DictionaryRepresentation 
+                ? this 
+                : new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(dictionaryRepresentation, KeySerializer, ValueSerializer);
         }
 
         /// <summary>
@@ -88,14 +83,9 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <returns>The reconfigured serializer.</returns>
         public ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue> WithDictionaryRepresentation(DictionaryRepresentation dictionaryRepresentation, IBsonSerializer<TKey> keySerializer, IBsonSerializer<TValue> valueSerializer)
         {
-            if (dictionaryRepresentation == DictionaryRepresentation && keySerializer == KeySerializer && valueSerializer == ValueSerializer)
-            {
-                return this;
-            }
-            else
-            {
-                return new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(dictionaryRepresentation, keySerializer, valueSerializer);
-            }
+            return dictionaryRepresentation == DictionaryRepresentation && keySerializer == KeySerializer && valueSerializer == ValueSerializer
+                ? this
+                : new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(dictionaryRepresentation, keySerializer, valueSerializer);
         }
 
         /// <summary>
@@ -105,14 +95,9 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <returns>The reconfigured serializer.</returns>
         public ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue> WithKeySerializer(IBsonSerializer<TKey> keySerializer)
         {
-            if (keySerializer == KeySerializer)
-            {
-                return this;
-            }
-            else
-            {
-                return new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(DictionaryRepresentation, keySerializer, ValueSerializer);
-            }
+            return keySerializer == KeySerializer 
+                ? this 
+                : new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(DictionaryRepresentation, keySerializer, ValueSerializer);
         }
 
         /// <summary>
@@ -122,14 +107,9 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <returns>The reconfigured serializer.</returns>
         public ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue> WithValueSerializer(IBsonSerializer<TValue> valueSerializer)
         {
-            if (valueSerializer == ValueSerializer)
-            {
-                return this;
-            }
-            else
-            {
-                return new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(DictionaryRepresentation, KeySerializer, valueSerializer);
-            }
+            return valueSerializer == ValueSerializer 
+                ? this 
+                : new ReadOnlyDictionaryInterfaceImplementerSerializer<TDictionary, TKey, TValue>(DictionaryRepresentation, KeySerializer, valueSerializer);
         }
 
         // explicit interface implementations
@@ -155,18 +135,24 @@ namespace MongoDB.Bson.Serialization.Serializers
         }
 
         /// <inheritdoc/>
+        protected override TDictionary CreateInstance()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         protected override TDictionary FinalizeAccumulator(ICollection<KeyValuePair<TKey, TValue>> accumulator)
         {
-            var dictionaryType = typeof(TDictionary);
-            var dictionaryTypeInfo = dictionaryType.GetTypeInfo();
-            var constructorInfo = dictionaryTypeInfo.GetConstructor(new[] { typeof(IDictionary<TKey,TValue>) });
-            if (constructorInfo != null)
+            try
             {
-                return (TDictionary)constructorInfo.Invoke(new object[] { accumulator });
+                return (TDictionary) Activator.CreateInstance(typeof(TDictionary), new object[] {accumulator});
             }
-
-            throw new MissingMethodException(
-                $"No suitable constructor found for IReadOnlyDictionary type: '{dictionaryType.FullName}'.");
+            catch (MissingMethodException exception)
+            {
+                throw new MissingMethodException(
+                    $"No suitable constructor found for IReadOnlyDictionary type: '{typeof(TDictionary).FullName}'.",
+                    exception);
+            }
         }
     }
 }

@@ -95,7 +95,13 @@ namespace MongoDB.Bson.Serialization
                 }
             }
 
-            return GetReadOnlyDictionarySerializer(type, serializerRegistry) ?? GetCollectionSerializer(type, serializerRegistry);
+            var readOnlyDictionarySerializer = GetReadOnlyDictionarySerializer(type, serializerRegistry);
+            if (readOnlyDictionarySerializer != null)
+            {
+                return readOnlyDictionarySerializer;
+            }
+
+            return GetCollectionSerializer(type, serializerRegistry);
         }
 
         private IBsonSerializer GetCollectionSerializer(Type type, IBsonSerializerRegistry serializerRegistry)
@@ -145,6 +151,7 @@ namespace MongoDB.Bson.Serialization
                 }
             }
             
+            // the order of the tests is important
             if (implementedGenericDictionaryInterface != null)
             {
                 var keyType = implementedGenericDictionaryInterface.GetTypeInfo().GetGenericArguments()[0];
@@ -246,30 +253,34 @@ namespace MongoDB.Bson.Serialization
                 : type.GetTypeInfo().GetInterfaces().ToList();
         }
 
+        private static bool IsChildOf(Type t, Type parent) =>
+            t == parent || (t!=null) && (t != typeof(object) && IsChildOf(t.GetTypeInfo().BaseType, parent));
         private IBsonSerializer GetReadOnlyDictionarySerializer(Type type, IBsonSerializerRegistry serializerRegistry)
         {
-            var implementedInterfaces = GetImplementedInterfaces(type); 
-            var genericInterfaceDefinitions = implementedInterfaces.Where(ii => ii.GetTypeInfo().IsGenericType);
-            var implementedGenericReadOnlyDictionaryInterface = genericInterfaceDefinitions.FirstOrDefault(
-                i => i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
+            var typeInfo = type.GetTypeInfo();            
 
-            if (implementedGenericReadOnlyDictionaryInterface == null)
+            if (!typeInfo.IsGenericType || typeInfo.GetGenericArguments().Length != 2)
             {
                 return null;
             }
+
+            var kT = typeInfo?.GetGenericArguments()[0];
             
-            var keyType = implementedGenericReadOnlyDictionaryInterface.GetTypeInfo().GetGenericArguments()[0];
-            var valueType = implementedGenericReadOnlyDictionaryInterface.GetTypeInfo().GetGenericArguments()[1];
-                 
-            return (type.GetTypeInfo().IsInterface) 
-                ? CreateGenericSerializer(
-                    serializerTypeDefinition: typeof(ImpliedImplementationInterfaceSerializer<,>), 
-                    typeArguments: new[] { type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType)}, 
+            var keyType = typeInfo.GetGenericArguments()[0];
+            var valueType = typeInfo.GetGenericArguments()[1];
+            var isIReadOnlyDictionary = type.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>);
+            var derivesFromReadOnlyDictionary = 
+                IsChildOf(type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType));
+
+            return isIReadOnlyDictionary ? CreateGenericSerializer(
+                    serializerTypeDefinition: typeof(ImpliedImplementationInterfaceSerializer<,>),
+                    typeArguments: new[] { type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType) },
                     serializerRegistry: serializerRegistry)
-                : CreateGenericSerializer(
-                    serializerTypeDefinition: typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>), 
-                    typeArguments: new[] { type, keyType, valueType }, 
-                    serializerRegistry: serializerRegistry);
+                   : derivesFromReadOnlyDictionary ? CreateGenericSerializer(
+                    serializerTypeDefinition: typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>),
+                    typeArguments: new[] { type, keyType, valueType },
+                    serializerRegistry: serializerRegistry)
+                   : null;
 
         }
         

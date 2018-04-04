@@ -253,30 +253,29 @@ namespace MongoDB.Bson.Serialization
                 : type.GetTypeInfo().GetInterfaces().ToList();
         }
 
-        private static bool IsChildOf(Type t, Type parent) =>
-            t == parent || (t!=null) && (t != typeof(object) && IsChildOf(t.GetTypeInfo().BaseType, parent));
+        private static bool IsOrIsChildOf(Type t, Type parent) =>
+            t == parent || (t!=null) && (t != typeof(object) && IsOrIsChildOf(t.GetTypeInfo().BaseType, parent));
+
         private IBsonSerializer GetReadOnlyDictionarySerializer(Type type, IBsonSerializerRegistry serializerRegistry)
         {
             var typeInfo = type.GetTypeInfo();            
-
             if (!typeInfo.IsGenericType || typeInfo.GetGenericArguments().Length != 2)
             {
                 return null;
             }
 
-            var kT = typeInfo?.GetGenericArguments()[0];
-            
             var keyType = typeInfo.GetGenericArguments()[0];
             var valueType = typeInfo.GetGenericArguments()[1];
-            var isIReadOnlyDictionary = type.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>);
-            var derivesFromReadOnlyDictionary = 
-                IsChildOf(type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType));
+            var typeIsOrIsChildOfIReadOnlyDictionary =
+                IsOrIsChildOf(type, typeof(IReadOnlyDictionary<,>).MakeGenericType(keyType, valueType));
+            var typeIsOrIsChildOfReadOnlyDictionary = 
+                IsOrIsChildOf(type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType));
 
-            return isIReadOnlyDictionary ? CreateGenericSerializer(
+            return typeIsOrIsChildOfIReadOnlyDictionary ? CreateGenericSerializer(
                     serializerTypeDefinition: typeof(ImpliedImplementationInterfaceSerializer<,>),
                     typeArguments: new[] { type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType) },
                     serializerRegistry: serializerRegistry)
-                   : derivesFromReadOnlyDictionary ? CreateGenericSerializer(
+                   : typeIsOrIsChildOfReadOnlyDictionary ? CreateGenericSerializer(
                     serializerTypeDefinition: typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>),
                     typeArguments: new[] { type, keyType, valueType },
                     serializerRegistry: serializerRegistry)

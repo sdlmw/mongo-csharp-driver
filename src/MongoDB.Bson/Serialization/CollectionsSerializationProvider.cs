@@ -46,6 +46,11 @@ namespace MongoDB.Bson.Serialization
             };
         }
 
+        private static bool IsOrIsChildOf(Type type, Type parent)
+        {
+            return type == parent || (type != null) && (type != typeof(object) && IsOrIsChildOf(type.GetTypeInfo().BaseType, parent));
+        }
+
         /// <inheritdoc/>
         public override IBsonSerializer GetSerializer(Type type, IBsonSerializerRegistry serializerRegistry)
         {
@@ -252,10 +257,7 @@ namespace MongoDB.Bson.Serialization
                 ? type.GetTypeInfo().GetInterfaces().Concat(new Type[]{type}).ToList()
                 : type.GetTypeInfo().GetInterfaces().ToList();
         }
-
-        private static bool IsOrIsChildOf(Type t, Type parent) =>
-            t == parent || (t!=null) && (t != typeof(object) && IsOrIsChildOf(t.GetTypeInfo().BaseType, parent));
-
+            
         private IBsonSerializer GetReadOnlyDictionarySerializer(Type type, IBsonSerializerRegistry serializerRegistry)
         {
             var typeInfo = type.GetTypeInfo();            
@@ -266,20 +268,41 @@ namespace MongoDB.Bson.Serialization
 
             var keyType = typeInfo.GetGenericArguments()[0];
             var valueType = typeInfo.GetGenericArguments()[1];
-            var typeIsOrIsChildOfIReadOnlyDictionary =
-                IsOrIsChildOf(type, typeof(IReadOnlyDictionary<,>).MakeGenericType(keyType, valueType));
+            var typeIsIReadOnlyDictionary =
+                type == typeof(IReadOnlyDictionary<,>).MakeGenericType(keyType, valueType);
             var typeIsOrIsChildOfReadOnlyDictionary = 
                 IsOrIsChildOf(type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType));
 
-            return typeIsOrIsChildOfIReadOnlyDictionary ? CreateGenericSerializer(
+            var implementedInterfaces = GetImplementedInterfaces(type);
+            var genericInterfaceDefinitions = implementedInterfaces.Where(ii => ii.GetTypeInfo().IsGenericType);
+            var genericTypeDefintions = genericInterfaceDefinitions.Select(i => i.GetGenericTypeDefinition()).ToArray();
+            var implementsGenericReadOnlyDictionaryInterface =
+                genericTypeDefintions.Contains(typeof(IReadOnlyDictionary<,>));
+            var implementsGenericDictionaryInterface = genericTypeDefintions.Contains(typeof(IDictionary<,>));
+
+            if (typeIsIReadOnlyDictionary 
+                || (typeInfo.IsInterface
+                    && implementsGenericReadOnlyDictionaryInterface
+                    && !implementsGenericDictionaryInterface))
+            {
+                return CreateGenericSerializer(
                     serializerTypeDefinition: typeof(ImpliedImplementationInterfaceSerializer<,>),
-                    typeArguments: new[] { type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType) },
-                    serializerRegistry: serializerRegistry)
-                   : typeIsOrIsChildOfReadOnlyDictionary ? CreateGenericSerializer(
+                    typeArguments: new[] {type, typeof(ReadOnlyDictionary<,>).MakeGenericType(keyType, valueType)},
+                    serializerRegistry: serializerRegistry);
+            }
+                
+            if (typeIsOrIsChildOfReadOnlyDictionary
+                || (!typeInfo.IsInterface
+                    && implementsGenericReadOnlyDictionaryInterface
+                    && !implementsGenericDictionaryInterface))
+            {
+                return CreateGenericSerializer(
                     serializerTypeDefinition: typeof(ReadOnlyDictionaryInterfaceImplementerSerializer<,,>),
-                    typeArguments: new[] { type, keyType, valueType },
-                    serializerRegistry: serializerRegistry)
-                   : null;
+                    typeArguments: new[] {type, keyType, valueType},
+                    serializerRegistry: serializerRegistry);
+            }
+
+            return null;
 
         }
         

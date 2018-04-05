@@ -180,6 +180,7 @@
     <Compile Include="Serialization\Serializers\PartiallyRawBsonDocumentSerializerTests.cs" />
     <Compile Include="Serialization\Serializers\RawBsonArraySerializerTests.cs" />
     <Compile Include="Serialization\Serializers\RawBsonDocumentSerializerTests.cs" />
+    <Compile Include="Serialization\Serializers\ReadOnlyDictionarySerializerTests.cs" />
     <Compile Include="Serialization\Serializers\SerializeFlagsTests.cs" />
     <Compile Include="Serialization\Serializers\AnimalHierarchyWithAttributesTests.cs" />
     <Compile Include="Serialization\Serializers\AnimalHierarchyWithoutAttributesTests.cs" />

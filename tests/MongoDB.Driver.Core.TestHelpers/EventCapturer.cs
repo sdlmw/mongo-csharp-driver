@@ -168,6 +168,25 @@ namespace MongoDB.Driver.Core
 
             public void Handle(CommandFailedEvent @event)
             {
+                var exception = @event.Failure;
+
+                var mongoCommandException = exception as MongoCommandException;
+                if (mongoCommandException != null)
+                {
+                    exception = new MongoCommandException(
+                        mongoCommandException.ConnectionId,
+                        mongoCommandException.Message,
+                        (BsonDocument)mongoCommandException.Command?.DeepClone(),
+                        (BsonDocument)mongoCommandException.Result?.DeepClone());
+                }
+
+                @event = new CommandFailedEvent(
+                    @event.CommandName,
+                    exception,
+                    @event.OperationId,
+                    @event.RequestId,
+                    @event.ConnectionId,
+                    @event.Duration);
                 _parent.Capture(@event);
             }
         }

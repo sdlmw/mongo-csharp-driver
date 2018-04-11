@@ -83,8 +83,14 @@ namespace MongoDB.Driver.Core.WireProtocol
         public TCommandResult Execute(IConnection connection, CancellationToken cancellationToken)
         {
             var message = CreateCommandMessage(connection.Description);
-            connection.SendMessage(message, _messageEncoderSettings, cancellationToken);
-            MessageWasSent();
+            try
+            {
+                connection.SendMessage(message, _messageEncoderSettings, cancellationToken);
+            }
+            finally
+            {
+                MessageWasProbablySent();
+            }
 
             var wrappedMessage = message.WrappedMessage;
             if (wrappedMessage.ResponseExpected)
@@ -102,8 +108,14 @@ namespace MongoDB.Driver.Core.WireProtocol
         public async Task<TCommandResult> ExecuteAsync(IConnection connection, CancellationToken cancellationToken)
         {
             var message = CreateCommandMessage(connection.Description);
-            await connection.SendMessageAsync(message, _messageEncoderSettings, cancellationToken).ConfigureAwait(false);
-            MessageWasSent();
+            try
+            {
+                await connection.SendMessageAsync(message, _messageEncoderSettings, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                MessageWasProbablySent();
+            }
 
             var wrappedMessage = message.WrappedMessage;
             if (wrappedMessage.ResponseExpected)
@@ -150,19 +162,23 @@ namespace MongoDB.Driver.Core.WireProtocol
         private Type0CommandMessageSection<BsonDocument> CreateType0Section(ConnectionDescription connectionDescription)
         {
             var extraElements = new List<BsonElement>();
+
             var dbElement = new BsonElement("$db", _databaseNamespace.DatabaseName);
             extraElements.Add(dbElement);
+
             if (_readPreference != null && _readPreference != ReadPreference.Primary)
             {
                 var readPreferenceDocument = QueryHelper.CreateReadPreferenceDocument(_readPreference);
                 var readPreferenceElement = new BsonElement("$readPreference", readPreferenceDocument);
                 extraElements.Add(readPreferenceElement);
             }
+
             if (_session.Id != null)
             {
                 var lsidElement = new BsonElement("lsid", _session.Id);
                 extraElements.Add(lsidElement);
             }
+
             if (_session.ClusterTime != null)
             {
                 var clusterTimeElement = new BsonElement("$clusterTime", _session.ClusterTime);
@@ -170,15 +186,38 @@ namespace MongoDB.Driver.Core.WireProtocol
             }
             Action<BsonWriterSettings> writerSettingsConfigurator = s => s.GuidRepresentation = GuidRepresentation.Unspecified;
 
+            if (!_session.IsInTransaction && _session.Options != null && _session.Options.AutoStartTransaction)
+            {
+                _session.StartTransaction();
+            }
+
+            if (_session.IsInTransaction)
+            {
+                var transaction = _session.CurrentTransaction;
+                extraElements.Add(new BsonElement("txnNumber", transaction.TransactionNumber));
+                extraElements.Add(new BsonElement("stmtId", transaction.StatementId));
+                if (transaction.StatementId == 0)
+                {
+                    extraElements.Add(new BsonElement("startTransaction", true));
+                    extraElements.Add(new BsonElement("autoCommit", false));
+                }
+            }
+
             var elementAppendingSerializer = new ElementAppendingSerializer<BsonDocument>(BsonDocumentSerializer.Instance, extraElements, writerSettingsConfigurator);
             return new Type0CommandMessageSection<BsonDocument>(_command, elementAppendingSerializer);
         }
 
-        private void MessageWasSent()
+        private void MessageWasProbablySent()
         {
             if (_session.Id != null)
             {
                 _session.WasUsed();
+            }
+
+            if (_session.IsInTransaction)
+            {
+                var numberOfStatements = 1; // TODO: get this from the number of documents processed in the type 1 payload
+                _session.CurrentTransaction.AdvanceStatementId(numberOfStatements);
             }
         }
 

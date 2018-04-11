@@ -173,9 +173,10 @@ namespace MongoDB.Driver.Tests
         [Fact]
         public void Fork_should_return_expected_result()
         {
+            var cluster = Mock.Of<ICluster>();
             var coreServerSession = new CoreServerSession();
             var options = new ClientSessionOptions();
-            var coreSession = new CoreSession(coreServerSession, options.ToCore());
+            var coreSession = new CoreSession(cluster, coreServerSession, options.ToCore());
             var coreSessionHandle = new CoreSessionHandle(coreSession);
             var subject = CreateSubject(coreSession: coreSessionHandle);
             coreSessionHandle.ReferenceCount().Should().Be(1);

@@ -168,4 +168,15 @@ namespace MongoDB.Driver.Core.Bindings
         /// <returns>A new handle.</returns>
         ICoreSessionHandle Fork();
     }
+
+    internal static class ICoreSessionHandleExtensions
+    {
+        public static void AutoStartTransactionIfApplicable(this ICoreSession session)
+        {
+            if (!session.IsInTransaction && session.Options != null && session.Options.AutoStartTransaction)
+            {
+                session.StartTransaction();
+            }
+        }
+    }
 }

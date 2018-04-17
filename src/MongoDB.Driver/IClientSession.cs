@@ -52,6 +52,14 @@ namespace MongoDB.Driver
         bool IsImplicit { get; }
 
         /// <summary>
+        /// Gets a value indicating whether this instance is in a transaction.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is in a transaction; otherwise, <c>false</c>.
+        /// </value>
+        bool IsInTransaction { get; }
+
+        /// <summary>
         /// Gets the operation time.
         /// </summary>
         /// <value>

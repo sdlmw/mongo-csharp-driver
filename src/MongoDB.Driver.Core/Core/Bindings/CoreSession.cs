@@ -91,16 +91,48 @@ namespace MongoDB.Driver.Core.Bindings
         public void AbortTransaction(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureIsInTransaction(nameof(AbortTransaction));
-            var operation = CreateAbortTransactionOperation();
-            ExecuteOperationOnPrimary(operation, cancellationToken);
+            try
+            {
+                if (_currentTransaction.StatementId == 0)
+                {
+                    return;
+                }
+
+                var operation = CreateAbortTransactionOperation();
+                ExecuteEndTransactionOnPrimary(operation, cancellationToken);
+            }
+            catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+            {
+                // ignore exception
+            }
+            finally
+            {
+                _currentTransaction = null;
+            }
         }
 
         /// <inheritdoc />
-        public Task AbortTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task AbortTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureIsInTransaction(nameof(AbortTransactionAsync));
-            var operation = CreateAbortTransactionOperation();
-            return ExecuteOperationOnPrimaryAsync(operation, cancellationToken);
+            try
+            {
+                if (_currentTransaction.StatementId == 0)
+                {
+                    return;
+                }
+
+                var operation = CreateAbortTransactionOperation();
+                await ExecuteEndTransactionOnPrimaryAsync(operation, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+            {
+                // ignore exception
+            }
+            finally
+            {
+                _currentTransaction = null;
+            }
         }
 
         /// <inheritdoc />
@@ -125,16 +157,40 @@ namespace MongoDB.Driver.Core.Bindings
         public void CommitTransaction(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureIsInTransaction(nameof(CommitTransaction));
-            var operation = CreateCommitTransactionOperation();
-            ExecuteOperationOnPrimary(operation, cancellationToken);
+            try
+            {
+                if (_currentTransaction.StatementId == 0)
+                {
+                    return;
+                }
+
+                var operation = CreateCommitTransactionOperation();
+                ExecuteEndTransactionOnPrimary(operation, cancellationToken);
+            }
+            finally
+            {
+                _currentTransaction = null;
+            }
         }
 
         /// <inheritdoc />
-        public Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureIsInTransaction(nameof(CommitTransactionAsync));
-            var operation = CreateCommitTransactionOperation();
-            return ExecuteOperationOnPrimaryAsync(operation, cancellationToken);
+            try
+            {
+                if (_currentTransaction.StatementId == 0)
+                {
+                    return;
+                }
+
+                var operation = CreateCommitTransactionOperation();
+                await ExecuteEndTransactionOnPrimaryAsync(operation, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _currentTransaction = null;
+            }
         }
 
         /// <inheritdoc />
@@ -142,6 +198,18 @@ namespace MongoDB.Driver.Core.Bindings
         {
             if (!_disposed)
             {
+                if (_currentTransaction != null)
+                {
+                    try
+                    {
+                        AbortTransaction(CancellationToken.None);
+                    }
+                    catch
+                    {
+                        // ignore exceptions
+                    }
+                }
+
                 _serverSession.Dispose();
                 _disposed = true;
             }
@@ -152,12 +220,12 @@ namespace MongoDB.Driver.Core.Bindings
         {
             if (_currentTransaction != null)
             {
-                throw new InvalidOperationException("StartTransaction cannot be called when the session is already in a transaction.");
+                throw new InvalidOperationException("Transaction already in progress.");
             }
 
             var transactionNumber = AdvanceTransactionNumber();
-            var readConcern = transactionOptions?.ReadConcern ?? _options.DefaultTransactionOptions?.ReadConcern ?? ReadConcern.Snapshot;
-            var writeConcern = transactionOptions?.WriteConcern ?? _options.DefaultTransactionOptions?.WriteConcern ?? WriteConcern.WMajority;
+            var readConcern = transactionOptions?.ReadConcern ?? _options.DefaultTransactionOptions?.ReadConcern ?? ReadConcern.Default;
+            var writeConcern = transactionOptions?.WriteConcern ?? _options.DefaultTransactionOptions?.WriteConcern ?? new WriteConcern();
             var effectiveTransactionOptions = new TransactionOptions(readConcern, writeConcern);
             var transaction = new CoreTransaction(transactionNumber, effectiveTransactionOptions);
 
@@ -183,24 +251,25 @@ namespace MongoDB.Driver.Core.Bindings
 
         private void EnsureIsInTransaction(string methodName)
         {
+            this.AutoStartTransactionIfApplicable();
             if (_currentTransaction == null)
             {
-                throw new InvalidOperationException("${methodName} can only be called when the session is in a transaction.");
+                throw new InvalidOperationException("No transaction started.");
             }
         }
 
-        private TResult ExecuteOperationOnPrimary<TResult>(IReadOperation<TResult> operation, CancellationToken cancellationToken)
+        private TResult ExecuteEndTransactionOnPrimary<TResult>(IReadOperation<TResult> operation, CancellationToken cancellationToken)
         {
-            using (var sessionHandle = new CoreSessionHandle(this))
+            using (var sessionHandle = new NonDisposingCoreSessionHandle(this))
             using (var binding = new WritableServerBinding(_cluster, sessionHandle))
             {
                 return operation.Execute(binding, cancellationToken);
             }
         }
 
-        private async Task<TResult> ExecuteOperationOnPrimaryAsync<TResult>(IReadOperation<TResult> operation, CancellationToken cancellationToken)
+        private async Task<TResult> ExecuteEndTransactionOnPrimaryAsync<TResult>(IReadOperation<TResult> operation, CancellationToken cancellationToken)
         {
-            using (var sessionHandle = new CoreSessionHandle(this))
+            using (var sessionHandle = new NonDisposingCoreSessionHandle(this))
             using (var binding = new WritableServerBinding(_cluster, sessionHandle))
             {
                 return await operation.ExecuteAsync(binding, cancellationToken).ConfigureAwait(false);
@@ -210,9 +279,20 @@ namespace MongoDB.Driver.Core.Bindings
         private WriteConcern GetTransactionWriteConcern()
         {
             return
-                _currentTransaction.TransactionOptions.WriteConcern ??
+                _currentTransaction.TransactionOptions?.WriteConcern ??
                 _options.DefaultTransactionOptions?.WriteConcern ??
                 WriteConcern.WMajority;
+        }
+
+        private bool ShouldIgnoreAbortTransactionException(Exception ex)
+        {
+            var commandException = ex as MongoCommandException;
+            if (commandException != null)
+            {
+                return commandException.CodeName == "NoSuchTransaction";
+            }
+
+            return false;
         }
     }
 }

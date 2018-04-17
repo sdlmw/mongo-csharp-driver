@@ -40,26 +40,25 @@ namespace MongoDB.Driver.Core.Operations
                 readConcern = readConcern.With(level.Value);
             }
 
-            var command = new BsonDocument();
-            ReadConcernHelper.AppendReadConcern(command, readConcern, connectionDescription, session);
+            var result = ReadConcernHelper.GetReadConcernForCommand(session, connectionDescription, readConcern);
 
             if ((!supportsSessions || !causallyConsistent || operationTime == null) && level == null)
             {
-                command.ElementCount.Should().Be(0);
+                result.Should().BeNull();
             }
             else
             {
-                command.Contains("readConcern").Should().BeTrue();
+                result.Should().NotBeNull();
             }
 
             if (level != null)
             {
-                command["readConcern"]["level"].AsString.Should().Be("majority");
+                result["level"].AsString.Should().Be("majority");
             }
 
             if (supportsSessions && causallyConsistent && operationTime != null)
             {
-                command["readConcern"]["afterClusterTime"].AsBsonTimestamp.Value.Should().Be(operationTime.Value);
+                result["afterClusterTime"].AsBsonTimestamp.Value.Should().Be(operationTime.Value);
             }
         }
     }

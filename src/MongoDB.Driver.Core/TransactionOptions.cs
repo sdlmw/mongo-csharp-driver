@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 
 namespace MongoDB.Driver
 {
@@ -26,6 +27,39 @@ namespace MongoDB.Driver
     /// </summary>
     public class TransactionOptions
     {
+        #region static
+        // public static methods
+        /// <summary>
+        /// Returns a TransactionOptions constructed from the values specified in a BsonDocument.
+        /// </summary>
+        /// <param name="document">The document.</param>
+        /// <returns>A TransactionOptions.</returns>
+        public static TransactionOptions FromBsonDocument(BsonDocument document)
+        {
+            ReadConcern readConcern = null;
+            WriteConcern writeConcern = null;
+
+            foreach (var element in document)
+            {
+                switch (element.Name)
+                {
+                    case "readConcern":
+                        readConcern = ReadConcern.FromBsonDocument(element.Value.AsBsonDocument);
+                        break;
+
+                    case "writeConcern":
+                        writeConcern = WriteConcern.FromBsonDocument(element.Value.AsBsonDocument);
+                        break;
+
+                    default:
+                        throw new ArgumentException($"Invalid field: {element.Name}.");
+                }
+            }
+
+            return new TransactionOptions(readConcern, writeConcern);
+        }
+        #endregion
+
         // private fields
         private readonly ReadConcern _readConcern;
         private readonly WriteConcern _writeConcern;
@@ -60,5 +94,21 @@ namespace MongoDB.Driver
         /// The write concern.
         /// </value>
         public WriteConcern WriteConcern => _writeConcern;
+
+        // public methods
+        /// <summary>
+        /// Returns a new TransactionOptions with some values changed.
+        /// </summary>
+        /// <param name="readConcern">The new read concern.</param>
+        /// <param name="writeConcern">The new write concern.</param>
+        /// <returns>The new TransactionOptions.</returns>
+        public TransactionOptions With(
+            Optional<ReadConcern> readConcern = default(Optional<ReadConcern>),
+            Optional<WriteConcern> writeConcern = default(Optional<WriteConcern>))
+        {
+            return new TransactionOptions(
+                readConcern: readConcern.WithDefault(_readConcern),
+                writeConcern: writeConcern.WithDefault(_writeConcern));
+        }
     }
 }

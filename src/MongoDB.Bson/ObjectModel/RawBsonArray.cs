@@ -522,6 +522,22 @@ namespace MongoDB.Bson
         }
 
         /// <summary>
+        /// Materializes the RawBsonArray into a regular BsonArray.
+        /// </summary>
+        /// <param name="binaryReaderSettings">The binary reader settings.</param>
+        /// <returns>A BsonArray.</returns>
+        public BsonArray Materialize(BsonBinaryReaderSettings binaryReaderSettings)
+        {
+            ThrowIfDisposed();
+            using (var stream = new ByteBufferStream(_slice, ownsBuffer: false))
+            using (var reader = new BsonBinaryReader(stream, binaryReaderSettings))
+            {
+                var context = BsonDeserializationContext.CreateRoot(reader);
+                return BsonArraySerializer.Instance.Deserialize(context);
+            }
+        }
+
+        /// <summary>
         /// Removes the first occurrence of a value from the array.
         /// </summary>
         /// <param name="value">The value to remove.</param>

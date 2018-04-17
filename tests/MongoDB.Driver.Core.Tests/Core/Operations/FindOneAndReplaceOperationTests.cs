@@ -242,14 +242,17 @@ namespace MongoDB.Driver.Core.Operations
             [Values(null, 100L)]long? transactionNumber)
         {
             var subject = new FindOneAndReplaceOperation<BsonDocument>(_collectionNamespace, _filter, _replacement, BsonDocumentSerializer.Instance, _messageEncoderSettings);
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription();
 
-            var result = subject.CreateCommand(null, transactionNumber);
+            var result = subject.CreateCommand(session, connectionDescription, transactionNumber);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "txnNumber", () => transactionNumber, transactionNumber != null }
             };
             result.Should().Be(expectedResult);
@@ -268,14 +271,17 @@ namespace MongoDB.Driver.Core.Operations
                 BypassDocumentValidation = value
             };
             var serverVersion = Feature.BypassDocumentValidation.SupportedOrNotSupportedVersion(useServerVersionSupportingBypassDocumentValidation);
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription(serverVersion: serverVersion);
 
-            var result = subject.CreateCommand(serverVersion, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "bypassDocumentValidation", () => value.Value, value.HasValue && Feature.BypassDocumentValidation.IsSupported(serverVersion) }
             };
             result.Should().Be(expectedResult);
@@ -292,14 +298,17 @@ namespace MongoDB.Driver.Core.Operations
             {
                 Collation = collation
             };
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription(serverVersion: Feature.Collation.FirstSupportedVersion);
 
-            var result = subject.CreateCommand(Feature.Collation.FirstSupportedVersion, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "collation", () => collation.ToBsonDocument(), collation != null }
             };
             result.Should().Be(expectedResult);
@@ -315,14 +324,17 @@ namespace MongoDB.Driver.Core.Operations
             {
                 IsUpsert = value
             };
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription();
 
-            var result = subject.CreateCommand(null, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "upsert", () => true, value }
             };
             result.Should().Be(expectedResult);
@@ -341,14 +353,17 @@ namespace MongoDB.Driver.Core.Operations
             {
                 MaxTime = TimeSpan.FromTicks(maxTimeTicks)
             };
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription();
 
-            var result = subject.CreateCommand(null, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "maxTimeMS", expectedMaxTimeMS }
             };
             result.Should().Be(expectedResult);
@@ -366,14 +381,17 @@ namespace MongoDB.Driver.Core.Operations
             {
                 Projection = projection
             };
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription();
 
-            var result = subject.CreateCommand(null, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "fields", projection, projection != null }
             };
             result.Should().Be(expectedResult);
@@ -389,15 +407,17 @@ namespace MongoDB.Driver.Core.Operations
             {
                 ReturnDocument = value
             };
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription();
 
-            var result = subject.CreateCommand(null, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
-                { "new", () => true, value == ReturnDocument.After }
+                { "new", value == ReturnDocument.After }
             };
             result.Should().Be(expectedResult);
         }
@@ -413,14 +433,17 @@ namespace MongoDB.Driver.Core.Operations
             {
                 Sort = sort
             };
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription();
 
-            var result = subject.CreateCommand(null, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "sort", sort, sort != null }
             };
             result.Should().Be(expectedResult);
@@ -440,14 +463,17 @@ namespace MongoDB.Driver.Core.Operations
                 WriteConcern = writeConcern
             };
             var serverVersion = Feature.FindAndModifyWriteConcern.SupportedOrNotSupportedVersion(useServerVersionSupportingFindAndModifyWriteConcern);
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription(serverVersion: serverVersion);
 
-            var result = subject.CreateCommand(serverVersion, null);
+            var result = subject.CreateCommand(session, connectionDescription, null);
 
             var expectedResult = new BsonDocument
             {
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
+                { "new", false },
                 { "writeConcern", () => writeConcern.ToBsonDocument(), writeConcern != null && Feature.FindAndModifyWriteConcern.IsSupported(serverVersion) }
             };
             result.Should().Be(expectedResult);
@@ -460,8 +486,10 @@ namespace MongoDB.Driver.Core.Operations
             {
                 Collation = new Collation("en_US")
             };
+            var session = OperationTestHelper.CreateSession();
+            var connectionDescription = OperationTestHelper.CreateConnectionDescription(serverVersion: Feature.Collation.LastNotSupportedVersion);
 
-            var exception = Record.Exception(() => subject.CreateCommand(Feature.Collation.LastNotSupportedVersion, null));
+            var exception = Record.Exception(() => subject.CreateCommand(session, connectionDescription, null));
 
             exception.Should().BeOfType<NotSupportedException>();
         }

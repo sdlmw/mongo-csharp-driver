@@ -59,6 +59,9 @@ namespace MongoDB.Driver
         public bool IsImplicit => _coreSession.IsImplicit;
 
         /// <inheritdoc />
+        public bool IsInTransaction => _coreSession.IsInTransaction;
+
+        /// <inheritdoc />
         public BsonTimestamp OperationTime => _coreSession.OperationTime;
 
         /// <inheritdoc />

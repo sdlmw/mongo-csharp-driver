@@ -83,17 +83,17 @@ namespace MongoDB.Driver.Core.WireProtocol
         public TCommandResult Execute(IConnection connection, CancellationToken cancellationToken)
         {
             var message = CreateCommandMessage(connection.Description);
+
             try
             {
                 connection.SendMessage(message, _messageEncoderSettings, cancellationToken);
             }
             finally
             {
-                MessageWasProbablySent();
+                MessageWasProbablySent(message);
             }
 
-            var wrappedMessage = message.WrappedMessage;
-            if (wrappedMessage.ResponseExpected)
+            if (message.WrappedMessage.ResponseExpected)
             {
                 var encoderSelector = new CommandResponseMessageEncoderSelector();
                 var response = (CommandResponseMessage)connection.ReceiveMessage(message.RequestId, encoderSelector, _messageEncoderSettings, cancellationToken);
@@ -108,17 +108,17 @@ namespace MongoDB.Driver.Core.WireProtocol
         public async Task<TCommandResult> ExecuteAsync(IConnection connection, CancellationToken cancellationToken)
         {
             var message = CreateCommandMessage(connection.Description);
+
             try
             {
                 await connection.SendMessageAsync(message, _messageEncoderSettings, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
-                MessageWasProbablySent();
+                MessageWasProbablySent(message);
             }
 
-            var wrappedMessage = message.WrappedMessage;
-            if (wrappedMessage.ResponseExpected)
+            if (message.WrappedMessage.ResponseExpected)
             {
                 var encoderSelector = new CommandResponseMessageEncoderSelector();
                 var response = (CommandResponseMessage)await connection.ReceiveMessageAsync(message.RequestId, encoderSelector, _messageEncoderSettings, cancellationToken).ConfigureAwait(false);
@@ -186,11 +186,7 @@ namespace MongoDB.Driver.Core.WireProtocol
             }
             Action<BsonWriterSettings> writerSettingsConfigurator = s => s.GuidRepresentation = GuidRepresentation.Unspecified;
 
-            if (!_session.IsInTransaction && _session.Options != null && _session.Options.AutoStartTransaction)
-            {
-                _session.StartTransaction();
-            }
-
+            _session.AutoStartTransactionIfApplicable();
             if (_session.IsInTransaction)
             {
                 var transaction = _session.CurrentTransaction;
@@ -199,15 +195,20 @@ namespace MongoDB.Driver.Core.WireProtocol
                 if (transaction.StatementId == 0)
                 {
                     extraElements.Add(new BsonElement("startTransaction", true));
-                    extraElements.Add(new BsonElement("autoCommit", false));
+                    var readConcern = ReadConcernHelper.GetReadConcernForStartTransaction(_session, connectionDescription);
+                    if (readConcern != null)
+                    {
+                        extraElements.Add(new BsonElement("readConcern", readConcern));
+                    }
                 }
+                extraElements.Add(new BsonElement("autocommit", false));
             }
 
             var elementAppendingSerializer = new ElementAppendingSerializer<BsonDocument>(BsonDocumentSerializer.Instance, extraElements, writerSettingsConfigurator);
             return new Type0CommandMessageSection<BsonDocument>(_command, elementAppendingSerializer);
         }
 
-        private void MessageWasProbablySent()
+        private void MessageWasProbablySent(CommandRequestMessage message)
         {
             if (_session.Id != null)
             {
@@ -216,7 +217,9 @@ namespace MongoDB.Driver.Core.WireProtocol
 
             if (_session.IsInTransaction)
             {
-                var numberOfStatements = 1; // TODO: get this from the number of documents processed in the type 1 payload
+                var wrappedMessage = message.WrappedMessage;
+                var type1Section = wrappedMessage.Sections.OfType<Type1CommandMessageSection>().SingleOrDefault();
+                var numberOfStatements = type1Section == null ? 1 : type1Section.Documents.ProcessedCount;
                 _session.CurrentTransaction.AdvanceStatementId(numberOfStatements);
             }
         }

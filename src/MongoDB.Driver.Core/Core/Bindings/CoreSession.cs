@@ -107,12 +107,15 @@ namespace MongoDB.Driver.Core.Bindings
                 }
                 catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
                 {
-                    // ignore exception and return
-                    return;
+                    return; // ignore exception and return
                 }
                 catch (Exception exception) when (ShouldRetryEndTransactionException(exception))
                 {
                     // ignore exception and retry
+                }
+                catch
+                {
+                    return; // ignore exception and return
                 }
 
                 try
@@ -120,9 +123,9 @@ namespace MongoDB.Driver.Core.Bindings
                     var secondAttempt = CreateAbortTransactionOperation();
                     ExecuteEndTransactionOnPrimary(secondAttempt, cancellationToken);
                 }
-                catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+                catch
                 {
-                    // ignore exception
+                    return; // ignore exception and return
                 }
             }
             finally
@@ -151,12 +154,15 @@ namespace MongoDB.Driver.Core.Bindings
                 }
                 catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
                 {
-                    // ignore exception and return
-                    return;
+                    return; // ignore exception and return
                 }
                 catch (Exception exception) when (ShouldRetryEndTransactionException(exception))
                 {
                     // ignore exception and retry
+                }
+                catch
+                {
+                    return; // ignore exception and return
                 }
 
                 try
@@ -164,9 +170,9 @@ namespace MongoDB.Driver.Core.Bindings
                     var secondAttempt = CreateAbortTransactionOperation();
                     await ExecuteEndTransactionOnPrimaryAsync(secondAttempt, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+                catch
                 {
-                    // ignore exception
+                    return; // ignore exception and return
                 }
             }
             finally

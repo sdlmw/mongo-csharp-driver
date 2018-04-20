@@ -16,6 +16,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
@@ -529,11 +530,17 @@ namespace MongoDB.Bson
         public BsonArray Materialize(BsonBinaryReaderSettings binaryReaderSettings)
         {
             ThrowIfDisposed();
-            using (var stream = new ByteBufferStream(_slice, ownsBuffer: false))
+
+            // because BsonBinaryReader can only read documents at the top level we have to wrap the RawBsonArray in a document
+            var document = new BsonDocument("array", this);
+            var bytes = document.ToBson();
+
+            using (var stream = new MemoryStream(bytes))
             using (var reader = new BsonBinaryReader(stream, binaryReaderSettings))
             {
                 var context = BsonDeserializationContext.CreateRoot(reader);
-                return BsonArraySerializer.Instance.Deserialize(context);
+                var materializedDocument = BsonDocumentSerializer.Instance.Deserialize(context);
+                return materializedDocument["array"].AsBsonArray;
             }
         }
 

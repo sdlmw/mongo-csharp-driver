@@ -91,6 +91,7 @@ namespace MongoDB.Driver.Core.Bindings
         public void AbortTransaction(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureIsInTransaction(nameof(AbortTransaction));
+
             try
             {
                 if (_currentTransaction.StatementId == 0)
@@ -98,12 +99,31 @@ namespace MongoDB.Driver.Core.Bindings
                     return;
                 }
 
-                var operation = CreateAbortTransactionOperation();
-                ExecuteEndTransactionOnPrimary(operation, cancellationToken);
-            }
-            catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
-            {
-                // ignore exception
+                try
+                {
+                    var firstAttempt = CreateAbortTransactionOperation();
+                    ExecuteEndTransactionOnPrimary(firstAttempt, cancellationToken);
+                    return;
+                }
+                catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+                {
+                    // ignore exception and return
+                    return;
+                }
+                catch (Exception exception) when (ShouldRetryEndTransactionException(exception))
+                {
+                    // ignore exception and retry
+                }
+
+                try
+                {
+                    var secondAttempt = CreateAbortTransactionOperation();
+                    ExecuteEndTransactionOnPrimary(secondAttempt, cancellationToken);
+                }
+                catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+                {
+                    // ignore exception
+                }
             }
             finally
             {
@@ -114,7 +134,8 @@ namespace MongoDB.Driver.Core.Bindings
         /// <inheritdoc />
         public async Task AbortTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            EnsureIsInTransaction(nameof(AbortTransactionAsync));
+            EnsureIsInTransaction(nameof(AbortTransaction));
+
             try
             {
                 if (_currentTransaction.StatementId == 0)
@@ -122,12 +143,31 @@ namespace MongoDB.Driver.Core.Bindings
                     return;
                 }
 
-                var operation = CreateAbortTransactionOperation();
-                await ExecuteEndTransactionOnPrimaryAsync(operation, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
-            {
-                // ignore exception
+                try
+                {
+                    var firstAttempt = CreateAbortTransactionOperation();
+                    await ExecuteEndTransactionOnPrimaryAsync(firstAttempt, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+                catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+                {
+                    // ignore exception and return
+                    return;
+                }
+                catch (Exception exception) when (ShouldRetryEndTransactionException(exception))
+                {
+                    // ignore exception and retry
+                }
+
+                try
+                {
+                    var secondAttempt = CreateAbortTransactionOperation();
+                    await ExecuteEndTransactionOnPrimaryAsync(secondAttempt, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (ShouldIgnoreAbortTransactionException(exception))
+                {
+                    // ignore exception
+                }
             }
             finally
             {
@@ -157,6 +197,7 @@ namespace MongoDB.Driver.Core.Bindings
         public void CommitTransaction(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureIsInTransaction(nameof(CommitTransaction));
+
             try
             {
                 if (_currentTransaction.StatementId == 0)
@@ -164,8 +205,19 @@ namespace MongoDB.Driver.Core.Bindings
                     return;
                 }
 
-                var operation = CreateCommitTransactionOperation();
-                ExecuteEndTransactionOnPrimary(operation, cancellationToken);
+                try
+                {
+                    var firstAttempt = CreateCommitTransactionOperation();
+                    ExecuteEndTransactionOnPrimary(firstAttempt, cancellationToken);
+                    return;
+                }
+                catch (Exception exception) when (ShouldRetryEndTransactionException(exception))
+                {
+                    // ignore exception and retry
+                }
+
+                var secondAttempt = CreateCommitTransactionOperation();
+                ExecuteEndTransactionOnPrimary(secondAttempt, cancellationToken);
             }
             finally
             {
@@ -176,7 +228,8 @@ namespace MongoDB.Driver.Core.Bindings
         /// <inheritdoc />
         public async Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            EnsureIsInTransaction(nameof(CommitTransactionAsync));
+            EnsureIsInTransaction(nameof(CommitTransaction));
+
             try
             {
                 if (_currentTransaction.StatementId == 0)
@@ -184,8 +237,19 @@ namespace MongoDB.Driver.Core.Bindings
                     return;
                 }
 
-                var operation = CreateCommitTransactionOperation();
-                await ExecuteEndTransactionOnPrimaryAsync(operation, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    var firstAttempt = CreateCommitTransactionOperation();
+                    await ExecuteEndTransactionOnPrimaryAsync(firstAttempt, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+                catch (Exception exception) when (ShouldRetryEndTransactionException(exception))
+                {
+                    // ignore exception and retry
+                }
+
+                var secondAttempt = CreateCommitTransactionOperation();
+                await ExecuteEndTransactionOnPrimaryAsync(secondAttempt, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -284,15 +348,20 @@ namespace MongoDB.Driver.Core.Bindings
                 WriteConcern.WMajority;
         }
 
-        private bool ShouldIgnoreAbortTransactionException(Exception ex)
+        private bool ShouldIgnoreAbortTransactionException(Exception exception)
         {
-            var commandException = ex as MongoCommandException;
+            var commandException = exception as MongoCommandException;
             if (commandException != null)
             {
-                return commandException.CodeName == "NoSuchTransaction";
+                return true;
             }
 
             return false;
+        }
+
+        private bool ShouldRetryEndTransactionException(Exception exception)
+        {
+            return RetryabilityHelper.IsRetryableWriteException(exception);
         }
     }
 }

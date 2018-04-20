@@ -19,7 +19,7 @@ namespace MongoDB.Driver.Core.Bindings
     /// A handle to a core session that should not be disposed when the handle is disposed.
     /// </summary>
     /// <seealso cref="MongoDB.Driver.Core.Bindings.ICoreSessionHandle" />
-    public sealed class NonDisposingCoreSessionHandle : WrappingCoreSession, ICoreSessionHandle
+    internal sealed class NonDisposingCoreSessionHandle : WrappingCoreSession, ICoreSessionHandle
     {
         // private fields
         private readonly ICoreSession _wrapped;

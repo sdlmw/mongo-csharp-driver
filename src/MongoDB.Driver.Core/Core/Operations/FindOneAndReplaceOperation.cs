@@ -170,7 +170,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", CollectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _replacement },
-                { "new", _returnDocument == ReturnDocument.After },
+                { "new", true, _returnDocument == ReturnDocument.After },
                 { "sort", _sort, _sort != null },
                 { "fields", _projection, _projection != null },
                 { "upsert", true, _isUpsert },

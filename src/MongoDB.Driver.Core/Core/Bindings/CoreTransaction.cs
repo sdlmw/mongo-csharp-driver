@@ -21,9 +21,9 @@ namespace MongoDB.Driver.Core.Bindings
     public class CoreTransaction
     {
         // private fields
+        private int _statementId;
         private readonly long _transactionNumber;
         private readonly TransactionOptions _transactionOptions;
-        private int _statementId;
 
         // public constructors
         /// <summary>

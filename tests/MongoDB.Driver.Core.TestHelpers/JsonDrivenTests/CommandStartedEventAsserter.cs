@@ -100,7 +100,7 @@ namespace MongoDB.Driver.Core.TestHelpers.JsonDrivenTests
                     case "writeConcern":
                         if (actualCommand.Contains(name))
                         {
-                            throw new AssertionFailedException($"Expected {commandName} command to not contain field: {name}.");
+                            throw new AssertionFailedException($"Did not expect field '{name}' in command: {actualCommand.ToJson()}.");
                         }
                         return;
                 }
@@ -108,7 +108,18 @@ namespace MongoDB.Driver.Core.TestHelpers.JsonDrivenTests
 
             if (!actualCommand.Contains(name))
             {
-                throw new AssertionFailedException($"Expected {commandName} command to contain field: {name}.");
+                // some missing fields are only missing because the C# driver omits default values
+                switch (name)
+                {
+                    case "new":
+                        if (commandName == "findAndModify" && expectedValue == false)
+                        {
+                            return;
+                        }
+                        break;
+                }
+
+                throw new AssertionFailedException($"Expected field '{name}' in command: {actualCommand.ToJson()}.");
             }
 
             var actualValue = actualCommand[name];
@@ -119,7 +130,7 @@ namespace MongoDB.Driver.Core.TestHelpers.JsonDrivenTests
 
             if (!actualValue.Equals(expectedValue))
             {
-                throw new AssertionFailedException($"Expected {commandName} command {name} field to be {expectedValue.ToJson()} but found {actualValue.ToJson()}.");
+                throw new AssertionFailedException($"Expected field '{name}' in command '{commandName}' to be {expectedValue.ToJson()} but found {actualValue.ToJson()}.");
             }
         }
     }

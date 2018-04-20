@@ -246,7 +246,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "txnNumber", () => transactionNumber, transactionNumber != null }
             };
             result.Should().Be(expectedResult);
@@ -275,7 +274,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "bypassDocumentValidation", () => bypassDocumentValidation.Value, bypassDocumentValidation.HasValue && Feature.BypassDocumentValidation.IsSupported(serverVersion) }
             };
             result.Should().Be(expectedResult);
@@ -302,7 +300,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "collation", () => collation.ToBsonDocument(), collation != null }
             };
             result.Should().Be(expectedResult);
@@ -328,7 +325,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "upsert", () => true, value }
             };
             result.Should().Be(expectedResult);
@@ -357,7 +353,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "maxTimeMS", expectedMaxTimeMS }
             };
             result.Should().Be(expectedResult);
@@ -385,7 +380,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "fields", projection, projection != null }
             };
             result.Should().Be(expectedResult);
@@ -411,7 +405,7 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", value == ReturnDocument.After }
+                { "new", true, value == ReturnDocument.After }
             };
             result.Should().Be(expectedResult);
         }
@@ -437,7 +431,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "sort", sort, sort != null }
             };
             result.Should().Be(expectedResult);
@@ -467,7 +460,6 @@ namespace MongoDB.Driver.Core.Operations
                 { "findAndModify", _collectionNamespace.CollectionName },
                 { "query", _filter },
                 { "update", _update },
-                { "new", false },
                 { "writeConcern", () => writeConcern.ToBsonDocument(), writeConcern != null && Feature.FindAndModifyWriteConcern.IsSupported(serverVersion) }
             };
             result.Should().Be(expectedResult);
@@ -666,7 +658,7 @@ namespace MongoDB.Driver.Core.Operations
 
             exception.Should().BeOfType<NotSupportedException>();
         }
-        
+
         [SkippableTheory]
         [ParameterAttributeData]
         public void Execute_should_throw_when_maxTime_is_exceeded(

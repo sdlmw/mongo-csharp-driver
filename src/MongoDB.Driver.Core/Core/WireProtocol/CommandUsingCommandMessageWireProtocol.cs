@@ -195,7 +195,7 @@ namespace MongoDB.Driver.Core.WireProtocol
                 if (transaction.StatementId == 0)
                 {
                     extraElements.Add(new BsonElement("startTransaction", true));
-                    var readConcern = ReadConcernHelper.GetReadConcernForStartTransaction(_session, connectionDescription);
+                    var readConcern = ReadConcernHelper.GetReadConcernForFirstCommandInTransaction(_session, connectionDescription);
                     if (readConcern != null)
                     {
                         extraElements.Add(new BsonElement("readConcern", readConcern));

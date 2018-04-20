@@ -27,39 +27,6 @@ namespace MongoDB.Driver
     /// </summary>
     public class TransactionOptions
     {
-        #region static
-        // public static methods
-        /// <summary>
-        /// Returns a TransactionOptions constructed from the values specified in a BsonDocument.
-        /// </summary>
-        /// <param name="document">The document.</param>
-        /// <returns>A TransactionOptions.</returns>
-        public static TransactionOptions FromBsonDocument(BsonDocument document)
-        {
-            ReadConcern readConcern = null;
-            WriteConcern writeConcern = null;
-
-            foreach (var element in document)
-            {
-                switch (element.Name)
-                {
-                    case "readConcern":
-                        readConcern = ReadConcern.FromBsonDocument(element.Value.AsBsonDocument);
-                        break;
-
-                    case "writeConcern":
-                        writeConcern = WriteConcern.FromBsonDocument(element.Value.AsBsonDocument);
-                        break;
-
-                    default:
-                        throw new ArgumentException($"Invalid field: {element.Name}.");
-                }
-            }
-
-            return new TransactionOptions(readConcern, writeConcern);
-        }
-        #endregion
-
         // private fields
         private readonly ReadConcern _readConcern;
         private readonly WriteConcern _writeConcern;

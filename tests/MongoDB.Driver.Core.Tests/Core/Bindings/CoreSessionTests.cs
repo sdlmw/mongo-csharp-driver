@@ -35,9 +35,22 @@ namespace MongoDB.Driver.Core.Bindings
             var result = new CoreSession(cluster, serverSession, options);
 
             result.Cluster.Should().BeSameAs(cluster);
+            result.CurrentTransaction.Should().BeNull();
+            result.IsInTransaction.Should().BeFalse();
             result.Options.Should().BeSameAs(options);
             result.ServerSession.Should().BeSameAs(serverSession);
             result._disposed().Should().BeFalse();
+        }
+
+        [Fact]
+        public void Cluster_should_return_expected_result()
+        {
+            var cluster = Mock.Of<ICluster>();
+            var subject = CreateSubject(cluster: cluster);
+
+            var result = subject.Cluster;
+
+            result.Should().BeSameAs(cluster);
         }
 
         [Fact]

@@ -58,7 +58,6 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
         public void Run(JsonDrivenTestCase testCase)
         {
             RequireServer.Check().Supports(Feature.Transactions).ClusterType(ClusterType.ReplicaSet);
-            var shared = testCase.Shared;
             Run(testCase.Shared, testCase.Test);
         }
 
@@ -69,7 +68,7 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
             {
                 throw new SkipTestException(test["skipReason"].AsString);
             }
-            //if (test["description"].AsString != "operation writeConcern ignored for findOneAndUpdate")
+            //if (test["description"].AsString != "startTransaction options override defaults")
             //{
             //    throw new SkipTestException("testing");
             //}
@@ -207,7 +206,7 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
                                 break;
 
                             case "defaultTransactionOptions":
-                                options.DefaultTransactionOptions = TransactionOptions.FromBsonDocument(option.Value.AsBsonDocument);
+                                options.DefaultTransactionOptions = ParseTransactionOptions(option.Value.AsBsonDocument);
                                 break;
 
                             default:
@@ -280,6 +279,31 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
                     }
                 }
             }
+        }
+
+        public TransactionOptions ParseTransactionOptions(BsonDocument document)
+        {
+            ReadConcern readConcern = null;
+            WriteConcern writeConcern = null;
+
+            foreach (var element in document)
+            {
+                switch (element.Name)
+                {
+                    case "readConcern":
+                        readConcern = ReadConcern.FromBsonDocument(element.Value.AsBsonDocument);
+                        break;
+
+                    case "writeConcern":
+                        writeConcern = WriteConcern.FromBsonDocument(element.Value.AsBsonDocument);
+                        break;
+
+                    default:
+                        throw new ArgumentException($"Invalid field: {element.Name}.");
+                }
+            }
+
+            return new TransactionOptions(readConcern, writeConcern);
         }
 
         private void VerifyCollectionOutcome(BsonDocument outcome)

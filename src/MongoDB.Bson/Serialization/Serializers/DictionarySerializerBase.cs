@@ -564,7 +564,7 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// <returns>The accumulator.</returns>
         protected virtual ICollection<KeyValuePair<TKey, TValue>> CreateAccumulator()
         {
-            return (ICollection<KeyValuePair<TKey, TValue>>)CreateInstance();
+            return (ICollection<KeyValuePair<TKey, TValue>>)Activator.CreateInstance<TDictionary>();
         }
         
         // protected methods
@@ -572,14 +572,21 @@ namespace MongoDB.Bson.Serialization.Serializers
         /// Creates the instance.
         /// </summary>
         /// <returns>The instance.</returns>
-        protected abstract TDictionary CreateInstance();
+        [Obsolete("CreateInstance is deprecated. Please use CreateAccumulator instead.")]
+        protected virtual TDictionary CreateInstance()
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// Finalizes an accumulator.
         /// </summary>
         /// <param name="accumulator">The accumulator to finalize</param>
         /// <returns>The instance.</returns>
-        protected abstract TDictionary FinalizeAccumulator(ICollection<KeyValuePair<TKey,TValue>> accumulator);
+        protected virtual TDictionary FinalizeAccumulator(ICollection<KeyValuePair<TKey, TValue>> accumulator)
+        {
+            return (TDictionary)accumulator;
+        }
 
         // private methods
         private TDictionary DeserializeArrayRepresentation(BsonDeserializationContext context)

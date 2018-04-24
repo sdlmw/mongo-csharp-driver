@@ -1,4 +1,19 @@
-﻿using System;
+﻿/* Copyright 2018-present MongoDB Inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,40 +29,40 @@ namespace MongoDB.Bson.Tests.Serialization
     {
         // container classes for various dictionaries
 
-        public class IrodBox
+        public class IReadOnlyDictionaryBox
         {
-            public IReadOnlyDictionary<object, object> Irod;
+            public IReadOnlyDictionary<object, object> Map;
         }
 
-        public class RodBox
+        public class ReadOnlyDictionaryBox
         {
-            public ReadOnlyDictionary<object, object> Rod;
+            public ReadOnlyDictionary<object, object> Map;
         }
 
-        public class RodSubclassBox
+        public class ReadOnlyDictionarySubclassBox
         {
-            public RodSubclass<object, object> RodSub;
+            public ReadOnlyDictionarySubclass<object, object> Map;
         }
 
-        public class CustomIrodBox
+        public class CustomIReadOnlyDictionaryBox
         {
-            public CustomIrodImplementation<object, object> CustomIrod;
+            public CustomIReadOnlyDictionary<object, object> Map;
         }
 
         // "user" created readonly dictionaries
 
-        public class RodSubclass<TKey, TValue> : ReadOnlyDictionary<TKey, TValue>
+        public class ReadOnlyDictionarySubclass<TKey, TValue> : ReadOnlyDictionary<TKey, TValue>
         {
-            public RodSubclass(IDictionary<TKey, TValue> m) : base(m)
+            public ReadOnlyDictionarySubclass(IDictionary<TKey, TValue> m) : base(m)
             {
             }
         }
 
-        public class CustomIrodImplementation<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
+        public class CustomIReadOnlyDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
         {
             private ReadOnlyDictionary<TKey, TValue> _map;
 
-            public CustomIrodImplementation(IDictionary<TKey, TValue> map)
+            public CustomIReadOnlyDictionary(IDictionary<TKey, TValue> map)
             {
                 _map = new ReadOnlyDictionary<TKey, TValue>(map);
             }
@@ -74,15 +89,15 @@ namespace MongoDB.Bson.Tests.Serialization
         public void TestNominalTypeIReadOnlyDictionaryActualTypeReadOnlyDictionary()
         {
             var map = new Dictionary<object, object> { { "A", 42 } };
-            var obj = new IrodBox { Irod = new ReadOnlyDictionary<object, object>(map) };
+            var obj = new IReadOnlyDictionaryBox { Map = new ReadOnlyDictionary<object, object>(map) };
             var json = obj.ToJson();
             var rep = "{ 'A' : 42 }";
-            var expected = "{ 'Irod' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'Map' : #R }".Replace("#R", rep).Replace("'", "\"");
             Assert.Equal(expected, json);
 
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<IrodBox>(bson);
-            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Irod);
+            var rehydrated = BsonSerializer.Deserialize<IReadOnlyDictionaryBox>(bson);
+            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Map);
             Assert.True(bson.SequenceEqual(rehydrated.ToBson()));
         }
 
@@ -90,15 +105,15 @@ namespace MongoDB.Bson.Tests.Serialization
         public void TestNominalTypeIReadOnlyDictionaryActualTypeCustomIReadOnlyDictionary()
         {
             var map = new Dictionary<object, object> { { "A", 42 } };
-            var obj = new IrodBox { Irod = new CustomIrodImplementation<object, object>(map) };
+            var obj = new IReadOnlyDictionaryBox { Map = new CustomIReadOnlyDictionary<object, object>(map) };
             var json = obj.ToJson();
             var rep = "{ 'A' : 42 }";
-            var expected = "{ 'Irod' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'Map' : #R }".Replace("#R", rep).Replace("'", "\"");
             Assert.Equal(expected, json);
 
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<IrodBox>(bson);
-            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Irod);
+            var rehydrated = BsonSerializer.Deserialize<IReadOnlyDictionaryBox>(bson);
+            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Map);
             Assert.True(bson.SequenceEqual(rehydrated.ToBson()));
         }
 
@@ -107,15 +122,15 @@ namespace MongoDB.Bson.Tests.Serialization
         public void TestNominalTypeIReadOnlyDictionaryActualTypeReadOnlyDictionarySubclass()
         {
             var map = new Dictionary<object, object> { { "A", 42 } };
-            var obj = new IrodBox { Irod = new RodSubclass<object, object>(map) };
+            var obj = new IReadOnlyDictionaryBox { Map = new ReadOnlyDictionarySubclass<object, object>(map) };
             var json = obj.ToJson();
             var rep = "{ 'A' : 42 }";
-            var expected = "{ 'Irod' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'Map' : #R }".Replace("#R", rep).Replace("'", "\"");
             Assert.Equal(expected, json);
 
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<IrodBox>(bson);
-            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Irod);
+            var rehydrated = BsonSerializer.Deserialize<IReadOnlyDictionaryBox>(bson);
+            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Map);
             Assert.True(bson.SequenceEqual(rehydrated.ToBson()));
         }
 
@@ -125,15 +140,15 @@ namespace MongoDB.Bson.Tests.Serialization
         public void TestNominalTypeReadOnlyDictionaryActualTypeReadOnlyDictionary()
         {
             var map = new Dictionary<object, object> { { "A", 42 } };
-            var obj = new RodBox { Rod = new ReadOnlyDictionary<object, object>(map) };
+            var obj = new ReadOnlyDictionaryBox { Map = new ReadOnlyDictionary<object, object>(map) };
             var json = obj.ToJson();
             var rep = "{ 'A' : 42 }";
-            var expected = "{ 'Rod' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'Map' : #R }".Replace("#R", rep).Replace("'", "\"");
             Assert.Equal(expected, json);
 
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<RodBox>(bson);
-            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Rod);
+            var rehydrated = BsonSerializer.Deserialize<ReadOnlyDictionaryBox>(bson);
+            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Map);
             Assert.True(bson.SequenceEqual(rehydrated.ToBson()));
         }
 
@@ -141,15 +156,15 @@ namespace MongoDB.Bson.Tests.Serialization
         public void TestNominalTypeReadOnlyDictionaryActualTypeReadOnlyDictionarySubclass()
         {
             var map = new Dictionary<object, object> { { "A", 42 } };
-            var obj = new RodBox { Rod = new RodSubclass<object, object>(map) };
+            var obj = new ReadOnlyDictionaryBox { Map = new ReadOnlyDictionarySubclass<object, object>(map) };
             var json = obj.ToJson();
             var rep = "{ 'A' : 42 }";
-            var expected = "{ 'Rod' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'Map' : #R }".Replace("#R", rep).Replace("'", "\"");
             Assert.Equal(expected, json);
 
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<RodBox>(bson);
-            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Rod);
+            var rehydrated = BsonSerializer.Deserialize<ReadOnlyDictionaryBox>(bson);
+            Assert.IsType<ReadOnlyDictionary<object, object>>(rehydrated.Map);
             Assert.True(bson.SequenceEqual(rehydrated.ToBson()));
         }
 
@@ -159,14 +174,14 @@ namespace MongoDB.Bson.Tests.Serialization
         public void TestNominalTypeReadOnlyDictionarySubclassActualTypeReadOnlyDictionarySubclass()
         {
             var map = new Dictionary<object, object> { { "A", 42 } };
-            var obj = new RodSubclassBox { RodSub = new RodSubclass<object, object>(map) };
+            var obj = new ReadOnlyDictionarySubclassBox { Map = new ReadOnlyDictionarySubclass<object, object>(map) };
             var json = obj.ToJson();
             var rep = "{ 'A' : 42 }";
-            var expected = "{ 'RodSub' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'Map' : #R }".Replace("#R", rep).Replace("'", "\"");
             Assert.Equal(expected, json);
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<RodSubclassBox>(bson);
-            Assert.IsType<RodSubclass<object, object>>(rehydrated.RodSub);
+            var rehydrated = BsonSerializer.Deserialize<ReadOnlyDictionarySubclassBox>(bson);
+            Assert.IsType<ReadOnlyDictionarySubclass<object, object>>(rehydrated.Map);
             Assert.True(bson.SequenceEqual(rehydrated.ToBson()));
         }
 
@@ -176,15 +191,15 @@ namespace MongoDB.Bson.Tests.Serialization
         public void TestNominalTypeCustomIReadOnlyDictionaryActualTypeCustomIReadOnlyDictionary()
         {
             var map = new Dictionary<object, object> { { "A", 42 } };
-            var obj = new CustomIrodBox { CustomIrod = new CustomIrodImplementation<object, object>(map) };
+            var obj = new CustomIReadOnlyDictionaryBox { Map = new CustomIReadOnlyDictionary<object, object>(map) };
             var json = obj.ToJson();
             var rep = "{ 'A' : 42 }";
-            var expected = "{ 'CustomIrod' : #R }".Replace("#R", rep).Replace("'", "\"");
+            var expected = "{ 'Map' : #R }".Replace("#R", rep).Replace("'", "\"");
             Assert.Equal(expected, json);
 
             var bson = obj.ToBson();
-            var rehydrated = BsonSerializer.Deserialize<CustomIrodBox>(bson);
-            Assert.IsType<CustomIrodImplementation<object, object>>(rehydrated.CustomIrod);
+            var rehydrated = BsonSerializer.Deserialize<CustomIReadOnlyDictionaryBox>(bson);
+            Assert.IsType<CustomIReadOnlyDictionary<object, object>>(rehydrated.Map);
             Assert.True(bson.SequenceEqual(rehydrated.ToBson()));
         }
 

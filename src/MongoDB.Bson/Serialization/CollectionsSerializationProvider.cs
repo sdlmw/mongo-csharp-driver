@@ -284,10 +284,7 @@ namespace MongoDB.Bson.Serialization
             var implementsGenericDictionaryInterface = 
                 genericImplementedInterfaceDefinitions.Contains(typeof(IDictionary<,>));
 
-            if (typeIsIReadOnlyDictionary 
-                || (typeInfo.IsInterface
-                    && implementsGenericReadOnlyDictionaryInterface
-                    && !implementsGenericDictionaryInterface))
+            if (typeIsIReadOnlyDictionary)
             {
                 return CreateGenericSerializer(
                     serializerTypeDefinition: typeof(ImpliedImplementationInterfaceSerializer<,>),

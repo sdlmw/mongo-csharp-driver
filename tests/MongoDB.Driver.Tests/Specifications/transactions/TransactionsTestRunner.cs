@@ -33,7 +33,7 @@ using Xunit;
 
 namespace MongoDB.Driver.Tests.Specifications.transactions
 {
-    public sealed class TestRunner
+    public sealed class TransactionsTestRunner : JsonDrivenClientTestRunner
     {
         #region static
         private static readonly HashSet<string> __commandsToNotCapture = new HashSet<string>
@@ -54,7 +54,7 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
 
         // public methods
         [SkippableTheory]
-        [ClassData(typeof(TestCaseFactory))]
+        [ClassData(typeof(TransactionsTestCaseFactory))]
         public void Run(JsonDrivenTestCase testCase)
         {
             RequireServer.Check().Supports(Feature.Transactions).ClusterType(ClusterType.ReplicaSet);
@@ -75,16 +75,15 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
 
             JsonDrivenHelper.EnsureAllFieldsAreValid(shared, "_path", "data", "tests");
             JsonDrivenHelper.EnsureAllFieldsAreValid(test, "description", "clientOptions", "sessionOptions", "operations", "expectations", "outcome");
-            DropCollection();
-            CreateCollection();
-            InsertData(shared);
+
+            InitializeCollection(shared);
 
             var eventCapturer = new EventCapturer()
                 .Capture<CommandStartedEvent>(e => !__commandsToNotCapture.Contains(e.CommandName));
 
             Dictionary<string, BsonValue> sessionIdMap;
 
-            using (var client = CreateClient(test, eventCapturer))
+            using (var client = CreateDisposableClient(test, eventCapturer))
             using (var session0 = StartSession(client, test, "session0"))
             using (var session1 = StartSession(client, test, "session1"))
             {
@@ -106,36 +105,18 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
             AssertOutcome(test);
         }
 
-        private void DropCollection()
+        private void InitializeCollection(BsonDocument shared)
         {
             var client = DriverTestConfiguration.Client;
             var database = client.GetDatabase(__databaseName).WithWriteConcern(WriteConcern.WMajority);
-            database.DropCollection(__collectionName);
+            var collection = database.GetCollection<BsonDocument>(__collectionName);
+
+            DropCollection(database, __collectionName);
+            CreateCollection(database, __collectionName);
+            InsertData(collection, shared);
         }
 
-        private void CreateCollection()
-        {
-            var client = DriverTestConfiguration.Client;
-            var database = client.GetDatabase(__databaseName).WithWriteConcern(WriteConcern.WMajority);
-            database.CreateCollection(__collectionName);
-        }
-
-        private void InsertData(BsonDocument shared)
-        {
-            if (shared.Contains("data"))
-            {
-                var documents = shared["data"].AsBsonArray.Cast<BsonDocument>().ToList();
-                if (documents.Count > 0)
-                {
-                    var client = DriverTestConfiguration.Client;
-                    var database = client.GetDatabase(__databaseName);
-                    var collection = database.GetCollection<BsonDocument>(__collectionName).WithWriteConcern(WriteConcern.WMajority);
-                    collection.InsertMany(documents);
-                }
-            }
-        }
-
-        private DisposableMongoClient CreateClient(BsonDocument test, EventCapturer eventCapturer)
+        private DisposableMongoClient CreateDisposableClient(BsonDocument test, EventCapturer eventCapturer)
         {
             return DriverTestConfiguration.CreateDisposableClient((MongoClientSettings settings) =>
             {
@@ -230,11 +211,11 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
             }
         }
 
-        private JsonDrivenTestFactory CreateTestFactory(IMongoClient client, Dictionary<string, IClientSessionHandle> sessionMap)
+        private JsonDrivenClientTestFactory CreateTestFactory(IMongoClient client, Dictionary<string, IClientSessionHandle> sessionMap)
         {
             var database = client.GetDatabase(__databaseName);
             var collection = database.GetCollection<BsonDocument>(__collectionName);
-            return new JsonDrivenTestFactory(client, database, collection, sessionMap);
+            return new JsonDrivenClientTestFactory(client, database, collection, sessionMap);
         }
 
         private void AssertEvents(EventCapturer actualEvents, BsonDocument test, Dictionary<string, BsonValue> sessionIdMap)
@@ -331,7 +312,7 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
         }
 
         // nested types
-        public class TestCaseFactory : JsonDrivenTestCaseFactory
+        public class TransactionsTestCaseFactory : JsonDrivenTestCaseFactory
         {
             // protected properties
             protected override string PathPrefix
@@ -344,11 +325,6 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
                     return "MongoDB.Driver.Tests.Dotnet.Specifications.transactions.tests.";
 #endif
                 }
-            }
-
-            protected override bool ShouldReadJsonDocument(string path)
-            {
-                return base.ShouldReadJsonDocument(path); // && path.EndsWith("transaction-options.json");
             }
         }
     }

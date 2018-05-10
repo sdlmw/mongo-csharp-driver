@@ -80,6 +80,10 @@ namespace MongoDB.Driver.Tests.JsonDrivenTests
                 case "requests":
                     _requests = ParseWriteModels(value.AsBsonArray.Cast<BsonDocument>());
                     return;
+
+                case "options":
+                    _options = ParseBulkWriteOptions(value.AsBsonDocument);
+                    return;
             }
 
             base.SetArgument(name, value);
@@ -116,6 +120,29 @@ namespace MongoDB.Driver.Tests.JsonDrivenTests
 
                 default: throw new FormatException($"Invalid BulkWriteResult aspect name: {name}.");
             }
+        }
+
+        private BulkWriteOptions ParseBulkWriteOptions(BsonDocument document)
+        {
+            var options = new BulkWriteOptions();
+
+            foreach (var element in document)
+            {
+                var name = element.Name;
+                var value = element.Value;
+
+                switch (name)
+                {
+                    case "ordered":
+                        options.IsOrdered = value.ToBoolean();
+                        break;
+
+                    default:
+                        throw new FormatException($"Invalid BulkWriteOption field: {name}.");
+                }
+            }
+
+            return options;
         }
 
         private DeleteManyModel<BsonDocument> ParseDeleteManyModel(BsonDocument model)

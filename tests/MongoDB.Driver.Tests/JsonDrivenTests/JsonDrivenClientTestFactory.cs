@@ -19,7 +19,7 @@ using MongoDB.Bson;
 
 namespace MongoDB.Driver.Tests.JsonDrivenTests
 {
-    public class JsonDrivenTestFactory
+    public class JsonDrivenClientTestFactory
     {
         // private fields
         private readonly IMongoClient _client;
@@ -28,7 +28,7 @@ namespace MongoDB.Driver.Tests.JsonDrivenTests
         private readonly Dictionary<string, IClientSessionHandle> _sessionMap;
 
         // public constructors
-        public JsonDrivenTestFactory(IMongoClient client, IMongoDatabase database, IMongoCollection<BsonDocument> collection, Dictionary<string, IClientSessionHandle> sessionMap)
+        public JsonDrivenClientTestFactory(IMongoClient client, IMongoDatabase database, IMongoCollection<BsonDocument> collection, Dictionary<string, IClientSessionHandle> sessionMap)
         {
             _client = client;
             _database = database;

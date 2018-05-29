@@ -186,7 +186,14 @@ namespace MongoDB.Driver.Core.WireProtocol
             }
             Action<BsonWriterSettings> writerSettingsConfigurator = s => s.GuidRepresentation = GuidRepresentation.Unspecified;
 
-            if (_session.IsInTransaction)
+            string commandName = null;
+            if (_command.GetType() == typeof(BsonDocument))
+            {
+                commandName = _command.GetElement(0).Name;
+            }
+
+            _session.AboutToSendCommand(commandName);
+            if (_session.IsInTransaction || commandName == "commitTransaction")
             {
                 var transaction = _session.CurrentTransaction;
                 extraElements.Add(new BsonElement("txnNumber", transaction.TransactionNumber));

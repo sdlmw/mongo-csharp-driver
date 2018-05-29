@@ -21,6 +21,7 @@ namespace MongoDB.Driver.Core.Bindings
     public class CoreTransaction
     {
         // private fields
+        private CoreTransactionState _state;
         private int _statementId;
         private readonly long _transactionNumber;
         private readonly TransactionOptions _transactionOptions;
@@ -36,9 +37,18 @@ namespace MongoDB.Driver.Core.Bindings
             _transactionNumber = transactionNumber;
             _transactionOptions = transactionOptions;
             _statementId = 0;
+            _state = CoreTransactionState.Starting;
         }
 
         // public properties
+        /// <summary>
+        /// Gets the transaction state.
+        /// </summary>
+        /// <value>
+        /// The transaction state.
+        /// </value>
+        public CoreTransactionState State => _state;
+
         /// <summary>
         /// Gets the statement identifier.
         /// </summary>
@@ -71,6 +81,13 @@ namespace MongoDB.Driver.Core.Bindings
         public void AdvanceStatementId(int numberOfStatements)
         {
             _statementId += numberOfStatements;
+            _state = CoreTransactionState.InProgress;
+        }
+
+        // internal methods
+        internal void SetState(CoreTransactionState state)
+        {
+            _state = state;
         }
     }
 }

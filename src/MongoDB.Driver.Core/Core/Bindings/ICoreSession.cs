@@ -145,6 +145,12 @@ namespace MongoDB.Driver.Core.Bindings
         Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// The driver is about to send a command on this session. Called to track session state.
+        /// </summary>
+        /// <param name="commandName">The name of the command.</param>
+        void AboutToSendCommand(string commandName);
+
+        /// <summary>
         /// Starts a transaction.
         /// </summary>
         /// <param name="transactionOptions">The transaction options.</param>

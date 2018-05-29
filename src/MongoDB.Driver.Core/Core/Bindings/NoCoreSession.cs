@@ -126,6 +126,11 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
+        public void AboutToSendCommand(string commandName)
+        {
+        }
+
+        /// <inheritdoc />
         public void StartTransaction(TransactionOptions transactionOptions = null)
         {
             throw new NotSupportedException("NoCoreSession does not support StartTransaction.");

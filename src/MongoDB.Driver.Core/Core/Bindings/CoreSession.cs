@@ -75,7 +75,26 @@ namespace MongoDB.Driver.Core.Bindings
         public bool IsImplicit => _options.IsImplicit;
 
         /// <inheritdoc />
-        public bool IsInTransaction => _currentTransaction != null;
+        public bool IsInTransaction
+        {
+            get
+            {
+                if (_currentTransaction != null)
+                {
+                    switch (_currentTransaction.State)
+                    {
+                        case CoreTransactionState.Aborted:
+                        case CoreTransactionState.Committed:
+                            return false;
+
+                        default:
+                            return true;
+                    }
+                }
+
+                return false;
+            }
+        }
 
         /// <inheritdoc />
         public BsonTimestamp OperationTime => _operationClock.OperationTime;
@@ -90,7 +109,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// <inheritdoc />
         public void AbortTransaction(CancellationToken cancellationToken = default(CancellationToken))
         {
-            EnsureIsInTransaction(nameof(AbortTransaction));
+            EnsureAbortTransactionCanBeCalled(nameof(AbortTransaction));
 
             try
             {
@@ -130,14 +149,14 @@ namespace MongoDB.Driver.Core.Bindings
             }
             finally
             {
-                _currentTransaction = null;
+                _currentTransaction.SetState(CoreTransactionState.Aborted);
             }
         }
 
         /// <inheritdoc />
         public async Task AbortTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            EnsureIsInTransaction(nameof(AbortTransaction));
+            EnsureAbortTransactionCanBeCalled(nameof(AbortTransaction));
 
             try
             {
@@ -177,7 +196,7 @@ namespace MongoDB.Driver.Core.Bindings
             }
             finally
             {
-                _currentTransaction = null;
+                _currentTransaction.SetState(CoreTransactionState.Aborted);
             }
         }
 
@@ -202,7 +221,7 @@ namespace MongoDB.Driver.Core.Bindings
         /// <inheritdoc />
         public void CommitTransaction(CancellationToken cancellationToken = default(CancellationToken))
         {
-            EnsureIsInTransaction(nameof(CommitTransaction));
+            EnsureCommitTransactionCanBeCalled(nameof(CommitTransaction));
 
             try
             {
@@ -227,14 +246,14 @@ namespace MongoDB.Driver.Core.Bindings
             }
             finally
             {
-                _currentTransaction = null;
+                _currentTransaction.SetState(CoreTransactionState.Committed);
             }
         }
 
         /// <inheritdoc />
         public async Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            EnsureIsInTransaction(nameof(CommitTransaction));
+            EnsureCommitTransactionCanBeCalled(nameof(CommitTransaction));
 
             try
             {
@@ -259,7 +278,7 @@ namespace MongoDB.Driver.Core.Bindings
             }
             finally
             {
-                _currentTransaction = null;
+                _currentTransaction.SetState(CoreTransactionState.Committed);
             }
         }
 
@@ -286,12 +305,41 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
-        public void StartTransaction(TransactionOptions transactionOptions = null)
+        public void AboutToSendCommand(string commandName)
         {
             if (_currentTransaction != null)
             {
-                throw new InvalidOperationException("Transaction already in progress.");
+                switch (_currentTransaction.State)
+                {
+                    case CoreTransactionState.Starting:
+                        _currentTransaction.SetState(CoreTransactionState.InProgress);
+                        return;
+
+                    case CoreTransactionState.InProgress:
+                        return;
+
+                    case CoreTransactionState.Aborted:
+                        _currentTransaction = null;
+                        break;
+
+                    case CoreTransactionState.Committed:
+                        // don't set to null when retrying a commit
+                        if (commandName != "commitTransaction")
+                        {
+                            _currentTransaction = null;
+                        }
+                        return;
+
+                    default:
+                        throw new Exception($"Unexpected transaction state: {_currentTransaction.State}.");
+                }
             }
+        }
+
+        /// <inheritdoc />
+        public void StartTransaction(TransactionOptions transactionOptions = null)
+        {
+            EnsureStartTransactionCanBeCalled();
 
             var transactionNumber = AdvanceTransactionNumber();
             var effectiveTransactionOptions = GetEffectiveTransactionOptions(transactionOptions);
@@ -317,11 +365,67 @@ namespace MongoDB.Driver.Core.Bindings
             return new CommitTransactionOperation(GetTransactionWriteConcern());
         }
 
-        private void EnsureIsInTransaction(string methodName)
+        private void EnsureAbortTransactionCanBeCalled(string methodName)
         {
             if (_currentTransaction == null)
             {
-                throw new InvalidOperationException("No transaction started.");
+                throw new InvalidOperationException($"{methodName} cannot be called when no transaction started.");
+            }
+
+            switch (_currentTransaction.State)
+            {
+                case CoreTransactionState.Starting:
+                case CoreTransactionState.InProgress:
+                    return;
+
+                case CoreTransactionState.Aborted:
+                    throw new InvalidOperationException($"Cannot call {methodName} twice.");
+
+                case CoreTransactionState.Committed:
+                    throw new InvalidOperationException($"Cannot call {methodName} after calling CommitTransaction.");
+
+                default:
+                    throw new Exception($"{methodName} called in unexpected transaction state: {_currentTransaction.State}.");
+            }
+        }
+
+        private void EnsureCommitTransactionCanBeCalled(string methodName)
+        {
+            if (_currentTransaction == null)
+            {
+                throw new InvalidOperationException($"{methodName} cannot be called when no transaction started.");
+            }
+
+            switch (_currentTransaction.State)
+            {
+                case CoreTransactionState.Starting:
+                case CoreTransactionState.InProgress:
+                case CoreTransactionState.Committed:
+                    return;
+
+                case CoreTransactionState.Aborted:
+                    throw new InvalidOperationException($"Cannot call {methodName} after calling AbortTransaction.");
+
+                default:
+                    throw new Exception($"{methodName} called in unexpected transaction state: {_currentTransaction.State}.");
+            }
+        }
+
+        private void EnsureStartTransactionCanBeCalled()
+        {
+            if (_currentTransaction == null)
+            {
+                return;
+            }
+
+            switch (_currentTransaction.State)
+            {
+                case CoreTransactionState.Aborted:
+                case CoreTransactionState.Committed:
+                    return;
+
+                default:
+                    throw new InvalidOperationException("Transaction already in progress.");
             }
         }
 

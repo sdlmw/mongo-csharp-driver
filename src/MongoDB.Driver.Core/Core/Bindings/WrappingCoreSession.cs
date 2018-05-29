@@ -208,6 +208,13 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
+        public virtual void AboutToSendCommand(string commandName)
+        {
+            ThrowIfDisposed();
+            _wrapped.AboutToSendCommand(commandName);
+        }
+
+        /// <inheritdoc />
         public virtual void StartTransaction(TransactionOptions transactionOptions = null)
         {
             ThrowIfDisposed();

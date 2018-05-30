@@ -271,6 +271,30 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         [Fact]
+        public void AboutToSendCommand_should_call_wrapped()
+        {
+            Mock<ICoreSession> mockWrapped;
+            var subject = CreateSubject(out mockWrapped);
+            var commandName = "someCommand";
+
+            subject.AboutToSendCommand(commandName);
+
+            mockWrapped.Verify(m => m.AboutToSendCommand(commandName), Times.Once);
+        }
+
+        [Fact]
+        public void AboutToSendCommand_should_throw_when_disposed()
+        {
+            var subject = CreateDisposedSubject();
+            var commandName = "someCommand";
+
+            var exception = Record.Exception(() => subject.AboutToSendCommand(commandName));
+
+            var e = exception.Should().BeOfType<ObjectDisposedException>().Subject;
+            e.ObjectName.Should().Be(subject.GetType().FullName);
+        }
+
+        [Fact]
         public void AdvanceClusterTime_should_call_wrapped()
         {
             Mock<ICoreSession> mockWrapped;

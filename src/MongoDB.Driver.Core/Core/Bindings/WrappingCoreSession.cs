@@ -167,6 +167,13 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
+        public virtual void AboutToSendCommand(string commandName)
+        {
+            ThrowIfDisposed();
+            _wrapped.AboutToSendCommand(commandName);
+        }
+
+        /// <inheritdoc />
         public virtual void AdvanceClusterTime(BsonDocument newClusterTime)
         {
             ThrowIfDisposed();
@@ -205,13 +212,6 @@ namespace MongoDB.Driver.Core.Bindings
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        /// <inheritdoc />
-        public virtual void AboutToSendCommand(string commandName)
-        {
-            ThrowIfDisposed();
-            _wrapped.AboutToSendCommand(commandName);
         }
 
         /// <inheritdoc />

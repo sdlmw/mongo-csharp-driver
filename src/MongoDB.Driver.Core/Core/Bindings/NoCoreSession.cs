@@ -93,6 +93,11 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
+        public void AboutToSendCommand(string commandName)
+        {
+        }
+
+        /// <inheritdoc />
         public void AdvanceClusterTime(BsonDocument newClusterTime)
         {
         }
@@ -122,11 +127,6 @@ namespace MongoDB.Driver.Core.Bindings
 
         /// <inheritdoc />
         public void Dispose()
-        {
-        }
-
-        /// <inheritdoc />
-        public void AboutToSendCommand(string commandName)
         {
         }
 

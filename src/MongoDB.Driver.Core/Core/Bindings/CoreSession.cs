@@ -113,7 +113,7 @@ namespace MongoDB.Driver.Core.Bindings
 
             try
             {
-                if (_currentTransaction.StatementId == 0)
+                if (_currentTransaction.IsEmpty)
                 {
                     return;
                 }
@@ -160,7 +160,7 @@ namespace MongoDB.Driver.Core.Bindings
 
             try
             {
-                if (_currentTransaction.StatementId == 0)
+                if (_currentTransaction.IsEmpty)
                 {
                     return;
                 }
@@ -201,6 +201,35 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
+        public void AboutToSendCommand(string commandName)
+        {
+            if (_currentTransaction != null)
+            {
+                switch (_currentTransaction.State)
+                {
+                    case CoreTransactionState.Starting: // Starting changes to InProgress after the message is sent to the server
+                    case CoreTransactionState.InProgress:
+                        return;
+
+                    case CoreTransactionState.Aborted:
+                        _currentTransaction = null;
+                        break;
+
+                    case CoreTransactionState.Committed:
+                        // don't set to null when retrying a commit
+                        if (commandName != "commitTransaction")
+                        {
+                            _currentTransaction = null;
+                        }
+                        return;
+
+                    default:
+                        throw new Exception($"Unexpected transaction state: {_currentTransaction.State}.");
+                }
+            }
+        }
+
+        /// <inheritdoc />
         public void AdvanceClusterTime(BsonDocument newClusterTime)
         {
             _clusterClock.AdvanceClusterTime(newClusterTime);
@@ -225,7 +254,7 @@ namespace MongoDB.Driver.Core.Bindings
 
             try
             {
-                if (_currentTransaction.StatementId == 0)
+                if (_currentTransaction.IsEmpty)
                 {
                     return;
                 }
@@ -257,7 +286,8 @@ namespace MongoDB.Driver.Core.Bindings
 
             try
             {
-                if (_currentTransaction.StatementId == 0)
+
+                if (_currentTransaction.IsEmpty)
                 {
                     return;
                 }
@@ -301,38 +331,6 @@ namespace MongoDB.Driver.Core.Bindings
 
                 _serverSession.Dispose();
                 _disposed = true;
-            }
-        }
-
-        /// <inheritdoc />
-        public void AboutToSendCommand(string commandName)
-        {
-            if (_currentTransaction != null)
-            {
-                switch (_currentTransaction.State)
-                {
-                    case CoreTransactionState.Starting:
-                        _currentTransaction.SetState(CoreTransactionState.InProgress);
-                        return;
-
-                    case CoreTransactionState.InProgress:
-                        return;
-
-                    case CoreTransactionState.Aborted:
-                        _currentTransaction = null;
-                        break;
-
-                    case CoreTransactionState.Committed:
-                        // don't set to null when retrying a commit
-                        if (commandName != "commitTransaction")
-                        {
-                            _currentTransaction = null;
-                        }
-                        return;
-
-                    default:
-                        throw new Exception($"Unexpected transaction state: {_currentTransaction.State}.");
-                }
             }
         }
 

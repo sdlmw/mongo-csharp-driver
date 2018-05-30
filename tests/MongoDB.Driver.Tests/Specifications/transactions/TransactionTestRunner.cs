@@ -68,7 +68,7 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
             {
                 throw new SkipTestException(test["skipReason"].AsString);
             }
-            //if (test["description"].AsString != "transaction options inherited from client")
+            //if (test["description"].AsString != "rerun commit after empty transaction")
             //{
             //    return;
             //}
@@ -368,7 +368,7 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
 
             protected override bool ShouldReadJsonDocument(string path)
             {
-                return base.ShouldReadJsonDocument(path); // && path.EndsWith("transaction-options.json");
+                return base.ShouldReadJsonDocument(path); // && path.EndsWith("commit.json");
             }
         }
     }

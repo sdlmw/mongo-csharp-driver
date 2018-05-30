@@ -103,6 +103,26 @@ namespace MongoDB.Driver.Core.Bindings
             result.Should().Be(value);
         }
 
+        [Theory]
+        [InlineData(false, -1, false)]
+        [InlineData(true, CoreTransactionState.Aborted, false)]
+        [InlineData(true, CoreTransactionState.Committed, false)]
+        [InlineData(true, CoreTransactionState.InProgress, true)]
+        [InlineData(true, CoreTransactionState.Starting, true)]
+        public void IsInTransaction_should_return_expected_result(bool hasCurrentTransaction, CoreTransactionState transactionState, bool expectedResult)
+        {
+            var subject = CreateSubject();
+            if (hasCurrentTransaction)
+            {
+                subject.StartTransaction();
+                subject.CurrentTransaction.SetState(transactionState);
+            }
+
+            var result = subject.IsInTransaction;
+
+            result.Should().Be(expectedResult);
+        }
+
         [Fact]
         public void OperationTime_should_return_expected_result()
         {
@@ -124,6 +144,34 @@ namespace MongoDB.Driver.Core.Bindings
             var result = subject.ServerSession;
 
             result.Should().BeSameAs(serverSession);
+        }
+
+        [Theory]
+        [InlineData(false, -1, null, false)]
+        [InlineData(true, CoreTransactionState.Aborted, null, false)]
+        [InlineData(true, CoreTransactionState.Committed, null, false)]
+        [InlineData(true, CoreTransactionState.Committed, "commitTransaction", true)]
+        [InlineData(true, CoreTransactionState.InProgress, null, true)]
+        [InlineData(true, CoreTransactionState.Starting, null, true)]
+        public void AboutToSendCommand_should_have_expected_result(bool hasCurrentTransaction, CoreTransactionState transactionState, string commandName, bool expectedHasCurrentTransaction)
+        {
+            var subject = CreateSubject();
+            if (hasCurrentTransaction)
+            {
+                subject.StartTransaction();
+                subject.CurrentTransaction.SetState(transactionState);
+            }
+
+            subject.AboutToSendCommand(commandName);
+
+            if (expectedHasCurrentTransaction)
+            {
+                subject.CurrentTransaction.Should().NotBeNull();
+            }
+            else
+            {
+                subject.CurrentTransaction.Should().BeNull();
+            }
         }
 
         [Fact]

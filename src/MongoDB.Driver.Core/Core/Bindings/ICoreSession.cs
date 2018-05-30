@@ -114,6 +114,12 @@ namespace MongoDB.Driver.Core.Bindings
         Task AbortTransactionAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// The driver is about to send a command on this session. Called to track session state.
+        /// </summary>
+        /// <param name="commandName">The name of the command.</param>
+        void AboutToSendCommand(string commandName);
+
+        /// <summary>
         /// Advances the cluster time.
         /// </summary>
         /// <param name="newClusterTime">The new cluster time.</param>
@@ -143,12 +149,6 @@ namespace MongoDB.Driver.Core.Bindings
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A Task.</returns>
         Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// The driver is about to send a command on this session. Called to track session state.
-        /// </summary>
-        /// <param name="commandName">The name of the command.</param>
-        void AboutToSendCommand(string commandName);
 
         /// <summary>
         /// Starts a transaction.

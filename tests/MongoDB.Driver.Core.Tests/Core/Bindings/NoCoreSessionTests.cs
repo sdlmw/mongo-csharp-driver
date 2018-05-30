@@ -172,7 +172,7 @@ namespace MongoDB.Driver.Core.Bindings
         {
             var subject = CreateSubject();
 
-            subject.AboutToSendCommand(null);
+            subject.AboutToSendCommand();
         }
 
         [Fact]

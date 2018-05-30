@@ -275,20 +275,18 @@ namespace MongoDB.Driver.Core.Bindings
         {
             Mock<ICoreSession> mockWrapped;
             var subject = CreateSubject(out mockWrapped);
-            var commandName = "someCommand";
 
-            subject.AboutToSendCommand(commandName);
+            subject.AboutToSendCommand();
 
-            mockWrapped.Verify(m => m.AboutToSendCommand(commandName), Times.Once);
+            mockWrapped.Verify(m => m.AboutToSendCommand(), Times.Once);
         }
 
         [Fact]
         public void AboutToSendCommand_should_throw_when_disposed()
         {
             var subject = CreateDisposedSubject();
-            var commandName = "someCommand";
 
-            var exception = Record.Exception(() => subject.AboutToSendCommand(commandName));
+            var exception = Record.Exception(() => subject.AboutToSendCommand());
 
             var e = exception.Should().BeOfType<ObjectDisposedException>().Subject;
             e.ObjectName.Should().Be(subject.GetType().FullName);

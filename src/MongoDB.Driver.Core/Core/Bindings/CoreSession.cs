@@ -34,6 +34,7 @@ namespace MongoDB.Driver.Core.Bindings
         private readonly IClusterClock _clusterClock = new ClusterClock();
         private CoreTransaction _currentTransaction;
         private bool _disposed;
+        private bool _isCommitTransactionInProgress;
         private readonly IOperationClock _operationClock = new OperationClock();
         private readonly CoreSessionOptions _options;
         private readonly ICoreServerSession _serverSession;
@@ -84,8 +85,10 @@ namespace MongoDB.Driver.Core.Bindings
                     switch (_currentTransaction.State)
                     {
                         case CoreTransactionState.Aborted:
-                        case CoreTransactionState.Committed:
                             return false;
+
+                        case CoreTransactionState.Committed:
+                            return _isCommitTransactionInProgress; // when retrying a commit we are temporarily "back in" the already committed transaction
 
                         default:
                             return true;
@@ -201,7 +204,7 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
-        public void AboutToSendCommand(string commandName)
+        public void AboutToSendCommand()
         {
             if (_currentTransaction != null)
             {
@@ -217,7 +220,7 @@ namespace MongoDB.Driver.Core.Bindings
 
                     case CoreTransactionState.Committed:
                         // don't set to null when retrying a commit
-                        if (commandName != "commitTransaction")
+                        if (!_isCommitTransactionInProgress)
                         {
                             _currentTransaction = null;
                         }
@@ -254,6 +257,7 @@ namespace MongoDB.Driver.Core.Bindings
 
             try
             {
+                _isCommitTransactionInProgress = true;
                 if (_currentTransaction.IsEmpty)
                 {
                     return;
@@ -275,6 +279,7 @@ namespace MongoDB.Driver.Core.Bindings
             }
             finally
             {
+                _isCommitTransactionInProgress = false;
                 _currentTransaction.SetState(CoreTransactionState.Committed);
             }
         }
@@ -286,7 +291,7 @@ namespace MongoDB.Driver.Core.Bindings
 
             try
             {
-
+                _isCommitTransactionInProgress = true;
                 if (_currentTransaction.IsEmpty)
                 {
                     return;
@@ -308,6 +313,7 @@ namespace MongoDB.Driver.Core.Bindings
             }
             finally
             {
+                _isCommitTransactionInProgress = false;
                 _currentTransaction.SetState(CoreTransactionState.Committed);
             }
         }

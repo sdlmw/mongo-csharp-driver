@@ -93,7 +93,7 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
-        public void AboutToSendCommand(string commandName)
+        public void AboutToSendCommand()
         {
         }
 

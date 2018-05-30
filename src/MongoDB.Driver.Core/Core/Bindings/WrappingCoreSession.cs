@@ -167,10 +167,10 @@ namespace MongoDB.Driver.Core.Bindings
         }
 
         /// <inheritdoc />
-        public virtual void AboutToSendCommand(string commandName)
+        public virtual void AboutToSendCommand()
         {
             ThrowIfDisposed();
-            _wrapped.AboutToSendCommand(commandName);
+            _wrapped.AboutToSendCommand();
         }
 
         /// <inheritdoc />

@@ -228,6 +228,7 @@ namespace MongoDB.Driver.Core.Operations
         /// <value>
         /// The max scan.
         /// </value>
+        [Obsolete("MaxScan was deprecated in server version 4.0.")]
         public int? MaxScan
         {
             get { return _maxScan; }
@@ -477,6 +478,7 @@ namespace MongoDB.Driver.Core.Operations
                 }
             }
 
+#pragma warning disable 618
             var operation = new FindCommandOperation<TDocument>(
                 _collectionNamespace,
                 _resultSerializer,
@@ -507,6 +509,7 @@ namespace MongoDB.Driver.Core.Operations
                 Snapshot = snapshot,
                 Sort = sort
             };
+#pragma warning restore
 
             return operation;
         }
@@ -522,6 +525,7 @@ namespace MongoDB.Driver.Core.Operations
                 throw new NotSupportedException($"OP_QUERY does not support collations.");
             }
 
+#pragma warning disable 618
             var operation = new FindOpcodeOperation<TDocument>(
                 _collectionNamespace,
                 _resultSerializer,
@@ -551,6 +555,7 @@ namespace MongoDB.Driver.Core.Operations
 
             return operation;
         }
+#pragma warning restore
 
         private IReadOperation<IAsyncCursor<TDocument>> CreateOperation(SemanticVersion serverVersion)
         {

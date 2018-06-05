@@ -138,7 +138,9 @@ namespace MongoDB.Driver.Core.Operations
             subject.Limit.Should().NotHaveValue();
             subject.Max.Should().BeNull();
             subject.MaxAwaitTime.Should().NotHaveValue();
+#pragma warning disable 618
             subject.MaxScan.Should().NotHaveValue();
+#pragma warning restore
             subject.MaxTime.Should().NotHaveValue();
             subject.Min.Should().BeNull();
             subject.Modifiers.Should().BeNull();
@@ -184,6 +186,7 @@ namespace MongoDB.Driver.Core.Operations
         [Fact]
         public void CreateFindCommandOperation_should_return_expected_result()
         {
+#pragma warning disable 618
             var subject = new FindOperation<BsonDocument>(_collectionNamespace, BsonDocumentSerializer.Instance, _messageEncoderSettings)
             {
                 AllowPartialResults = true,
@@ -211,6 +214,7 @@ namespace MongoDB.Driver.Core.Operations
                 Snapshot = true,
                 Sort = new BsonDocument("sort", 1)
             };
+#pragma warning restore
 
             var result = subject.CreateFindCommandOperation();
 
@@ -226,7 +230,9 @@ namespace MongoDB.Driver.Core.Operations
             result.Limit.Should().Be(subject.Limit);
             result.Max.Should().BeSameAs(subject.Max);
             result.MaxAwaitTime.Should().Be(subject.MaxAwaitTime);
+#pragma warning disable 618
             result.MaxScan.Should().Be(subject.MaxScan);
+#pragma warning restore
             result.MaxTime.Should().Be(subject.MaxTime);
             result.MessageEncoderSettings.Should().BeSameAs(subject.MessageEncoderSettings);
             result.Min.Should().BeSameAs(subject.Min);
@@ -268,7 +274,9 @@ namespace MongoDB.Driver.Core.Operations
             result.Comment.Should().Be(subject.Modifiers["$comment"].AsString);
             result.Hint.Should().Be(subject.Modifiers["$hint"]);
             result.Max.Should().Be(subject.Modifiers["$max"].AsBsonDocument);
+#pragma warning disable 618
             result.MaxScan.Should().Be(subject.Modifiers["$maxScan"].AsInt32);
+#pragma warning restore
             result.MaxTime.Should().Be(TimeSpan.FromMilliseconds(subject.Modifiers["$maxTimeMS"].AsInt32));
             result.Min.Should().Be(subject.Modifiers["$min"].AsBsonDocument);
             result.ReturnKey.Should().Be(subject.Modifiers["$returnKey"].ToBoolean());
@@ -280,6 +288,7 @@ namespace MongoDB.Driver.Core.Operations
         [Fact]
         public void CreateFindOpcodeOperation_should_return_expected_result()
         {
+#pragma warning disable 618
             var subject = new FindOperation<BsonDocument>(_collectionNamespace, BsonDocumentSerializer.Instance, _messageEncoderSettings)
             {
                 AllowPartialResults = true,
@@ -305,6 +314,7 @@ namespace MongoDB.Driver.Core.Operations
                 Snapshot = true,
                 Sort = new BsonDocument("sort", 1)
             };
+#pragma warning restore
 
             var result = subject.CreateFindOpcodeOperation();
 
@@ -318,7 +328,9 @@ namespace MongoDB.Driver.Core.Operations
             result.Hint.Should().Be(subject.Hint);
             result.Limit.Should().Be(subject.Limit);
             result.Max.Should().Be(subject.Max);
+#pragma warning disable 618
             result.MaxScan.Should().Be(subject.MaxScan);
+#pragma warning restore
             result.MaxTime.Should().Be(subject.MaxTime);
             result.MessageEncoderSettings.Should().BeSameAs(subject.MessageEncoderSettings);
             result.Min.Should().Be(subject.Min);
@@ -693,8 +705,10 @@ namespace MongoDB.Driver.Core.Operations
         {
             var subject = new FindOperation<BsonDocument>(_collectionNamespace, BsonDocumentSerializer.Instance, _messageEncoderSettings);
 
+#pragma warning disable 618
             subject.MaxScan = value;
             var result = subject.MaxScan;
+#pragma warning restore
 
             result.Should().Be(value);
         }

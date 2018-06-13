@@ -128,7 +128,7 @@ namespace MongoDB.Driver.Tests.Specifications.transactions
             }
             catch (MongoCommandException)
             {
-                // ignore { ok : 0 } exceptions
+                // ignore MongoCommandExceptions
             }
         }
 

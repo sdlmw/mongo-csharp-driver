@@ -205,7 +205,7 @@ namespace MongoDB.Driver.Core.Operations
                 return true;
             }
 
-            if (exception is MongoNodeIsRecoveringException)
+            if (exception is MongoNotPrimaryException || exception is MongoNodeIsRecoveringException)
             {
                 return true;
             }

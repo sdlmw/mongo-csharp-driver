@@ -322,11 +322,6 @@ namespace MongoDB.Driver.Core.WireProtocol
                 {
                     return true;
                 }
-
-                if (exception is MongoNotPrimaryException)
-                {
-                    return true;
-                }
             }
 
             return false;

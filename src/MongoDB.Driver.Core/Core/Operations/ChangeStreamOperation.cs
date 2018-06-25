@@ -293,8 +293,8 @@ namespace MongoDB.Driver.Core.Operations
             }
 
             IAsyncCursor<RawBsonDocument> cursor;
-            using (var channelSource = binding.GetReadChannelSource(cancellationToken))
-            using (var channel = channelSource.GetChannel(cancellationToken))
+            using (var channelSource = await binding.GetReadChannelSourceAsync(cancellationToken).ConfigureAwait(false))
+            using (var channel = await channelSource.GetChannelAsync(cancellationToken).ConfigureAwait(false))
             using (var channelBinding = new ChannelReadBinding(channelSource.Server, channel, binding.ReadPreference, binding.Session.Fork()))
             {
                 cursor = await ResumeAsync(channelBinding, cancellationToken).ConfigureAwait(false);

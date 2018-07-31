@@ -6,6 +6,7 @@
     <LangVersion>6</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
+    <CodeAnalysisRuleSet>..\..\MongoDBLegacy.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -27,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\MongoDB.Shared\GlobalAssemblyInfo.cs" Link="Properties\GlobalAssemblyInfo.cs" />
     <Compile Include="..\MongoDB.Shared\IncrementalMD5.cs" Link="IncrementalMD5.cs" />
     <Compile Include="..\MongoDB.Shared\MaxTimeHelper.cs" Link="MaxTimeHelper.cs" />
   </ItemGroup>

@@ -43,6 +43,14 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MongoDB.Driver.Legacy.VB.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Driver.TestConsoleApplication", "tests\MongoDB.Driver.TestConsoleApplication\MongoDB.Driver.TestConsoleApplication.csproj", "{A9F6CC4C-9CE1-4027-B3DB-8171B4184397}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B071AF36-EED4-4CFF-A006-ECDAD0A87F99}"
+	ProjectSection(SolutionItems) = preProject
+		MongoDB.ruleset = MongoDB.ruleset
+		MongoDBLegacy.ruleset = MongoDBLegacy.ruleset
+		MongoDBLegacyTest.ruleset = MongoDBLegacyTest.ruleset
+		MongoDBTest.ruleset = MongoDBTest.ruleset
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
